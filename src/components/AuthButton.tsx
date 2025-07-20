@@ -25,8 +25,12 @@ export default function AuthButton() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err && "message" in err) {
+        setError(String((err as { message: string }).message));
+      } else {
+        setError("Login failed");
+      }
     }
     setLoading(false);
   };
@@ -37,8 +41,12 @@ export default function AuthButton() {
     setError("");
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err && "message" in err) {
+        setError(String((err as { message: string }).message));
+      } else {
+        setError("Registration failed");
+      }
     }
     setLoading(false);
   };

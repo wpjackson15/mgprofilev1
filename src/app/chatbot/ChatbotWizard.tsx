@@ -17,11 +17,10 @@ interface Message {
 }
 
 interface ChatbotWizardProps {
-  answers: Record<string, string[]>;
   setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
 }
 
-export default function ChatbotWizard({ answers, setAnswers }: ChatbotWizardProps) {
+export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
