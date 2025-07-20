@@ -126,7 +126,7 @@ export default function ChatbotWizard() {
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring"
+          className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring text-gray-900"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={awaitingSummaryConsent ? "Yes or No" : "Type your answer..."}
