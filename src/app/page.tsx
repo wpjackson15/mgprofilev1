@@ -1,8 +1,12 @@
 import Link from "next/link";
+import AuthButton from "@/components/AuthButton";
 
 export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8">
+      <div className="w-full flex justify-end mb-4">
+        <AuthButton />
+      </div>
       <h1 className="text-4xl font-bold mb-4">My Genius Profile</h1>
       <p className="mb-6 text-center max-w-xl">
         Welcome! My Genius Profile helps parents and children build a strength-based profile to share with teachers, aiming to inspire more personalized learning experiences.
