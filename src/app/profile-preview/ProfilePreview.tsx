@@ -1,16 +1,28 @@
 import React, { useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useEmailSender } from "@/hooks/useEmailSender";
 
 interface ProfilePreviewProps {
   answers: Record<string, string[]>;
 }
 
+function generateSummaryText(answers: Record<string, string[]>): string {
+  let summary = "My Genius Profile Summary\n\n";
+  Object.entries(answers).forEach(([key, value]) => {
+    const [module] = key.split("-");
+    summary += `--- ${module.replace(/-/g, " ")} ---\n`;
+    value.forEach((resp, i) => {
+      summary += `• ${resp}\n`;
+    });
+    summary += "\n";
+  });
+  return summary;
+}
+
 export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [emailStatus, setEmailStatus] = useState<string | null>(null);
-
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -19,7 +31,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
     return () => unsubscribe();
   }, []);
 
-  // Group answers by module
+  const { send, isSending, error, success, reset } = useEmailSender();
+
+  // Group answers by module for display
   const grouped: Record<string, string[]> = {};
   Object.entries(answers).forEach(([key, value]) => {
     const [module] = key.split("-");
@@ -28,9 +42,14 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   });
 
   const handleEmailSummary = async () => {
-    setEmailStatus("Sending...");
-    // TODO: Implement email sending logic
-    setTimeout(() => setEmailStatus("Summary sent! (MVP placeholder)"), 1000);
+    if (!user?.email) return;
+    reset();
+    const summaryText = generateSummaryText(answers);
+    await send({
+      to: user.email,
+      subject: "Your Genius Profile Summary",
+      text: summaryText,
+    });
   };
 
   return (
@@ -60,15 +79,23 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
           <button className="px-4 py-2 bg-gray-300 rounded" disabled>Checking login...</button>
         ) : user ? (
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
             onClick={handleEmailSummary}
+            disabled={isSending || success}
           >
-            Email Summary
+            {isSending ? "Sending..." : success ? "Email Sent!" : "Email Summary"}
           </button>
         ) : (
           <div className="text-sm text-gray-600">Please log in to email your summary.</div>
         )}
-        {emailStatus && <div className="text-xs text-green-600">{emailStatus}</div>}
+        {error && (
+          <div className="text-xs text-red-600">
+            {error} <button className="underline ml-2" onClick={reset}>Retry</button>
+          </div>
+        )}
+        {success && (
+          <div className="text-xs text-green-600">Email sent! Check your inbox.</div>
+        )}
       </div>
     </div>
   );
