@@ -11,7 +11,7 @@ export default function ChatbotPage() {
       <h1 className="text-3xl font-bold mb-4">My Genius Profile</h1>
       <div className="flex flex-col sm:flex-row gap-6 w-full max-w-5xl">
         <div className="flex-1">
-          <ChatbotWizard answers={answers} setAnswers={setAnswers} />
+          <ChatbotWizard setAnswers={setAnswers} />
         </div>
         <div className="flex-1">
           <ProfilePreview answers={answers} />
