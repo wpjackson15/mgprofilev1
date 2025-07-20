@@ -1,3 +1,4 @@
+"use client";
 import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
 import React, { useState } from "react";
