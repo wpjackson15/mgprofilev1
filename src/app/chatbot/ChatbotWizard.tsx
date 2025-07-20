@@ -16,7 +16,12 @@ interface Message {
   text: string;
 }
 
-export default function ChatbotWizard() {
+interface ChatbotWizardProps {
+  answers: Record<string, string[]>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+}
+
+export default function ChatbotWizard({ answers, setAnswers }: ChatbotWizardProps) {
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,6 +54,14 @@ export default function ChatbotWizard() {
     setInput("");
 
     if (step.type === "question") {
+      // Save answer
+      const key = `${currentModuleData.module}-${currentStep}`;
+      setAnswers((prev) => {
+        return {
+          ...prev,
+          [key]: prev[key] ? [...prev[key], text] : [text],
+        };
+      });
       // Move to next step
       setTimeout(() => nextStep(), 500);
     } else if (step.type === "offer_summary") {
