@@ -1,0 +1,53 @@
+[
+  {
+    "module": "Interest Awareness",
+    "steps": [
+      {"type": "question", "text": "What are 2 or 3 things your child loves doing all the time, even when no one tells them to?"},
+      {"type": "question", "text": "What are 2 or 3 careers your child has said they want to do one day?"},
+      {"type": "question", "text": "Has your child started liking any new hobbies or activities recently?"},
+      {"type": "offer_summary", "text": "Would you like a short summary of their interests so far to share with teachers?"}
+    ]
+  },
+  {
+    "module": "Racial Identity",
+    "steps": [
+      {"type": "question", "text": "What are 2 or 3 feelings your child has when they think about being Black? (Good or hard feelings are okay.)"},
+      {"type": "question", "text": "Can you name 2 or 3 traditions or cultural things your child connects with being Black?"},
+      {"type": "question", "text": "Who are 2 or 3 Black people your child looks up to or feels inspired by?"},
+      {"type": "offer_summary", "text": "Would you like a summary of their racial identity reflections added to your teacher message?"}
+    ]
+  },
+  {
+    "module": "Can-Do Attitude",
+    "steps": [
+      {"type": "question", "text": "What are 1-3 ways your child defines success?"},
+      {"type": "question", "text": "What makes a space feel good for your child to focus or be creative in?"},
+      {"type": "question", "text": "How can you tell when your child needs help?"},
+      {"type": "question", "text": "What are some ways your child pushes through challenges in things they care about?"},
+      {"type": "offer_summary", "text": "Would you like a summary of this section added to your teacher message?"}
+    ]
+  },
+  {
+    "module": "Multicultural Navigation",
+    "steps": [
+      {"type": "question", "text": "How is your child’s behavior or personality different at home compared to school?"},
+      {"type": "question", "text": "What does your child usually do when they’re somewhere new or unfamiliar?"},
+      {"type": "offer_summary", "text": "Want to add a short summary about how they navigate different cultures/environments to the teacher note?"}
+    ]
+  },
+  {
+    "module": "Selective Trust",
+    "steps": [
+      {"type": "question", "text": "What are 1-3 things you’ve taught your child to notice when deciding who to trust?"},
+      {"type": "question", "text": "What are some ways a teacher or mentor can earn your child’s trust?"},
+      {"type": "offer_summary", "text": "Shall I add a summary of how your child builds trust to your draft?"}
+    ]
+  },
+  {
+    "module": "Social Justice / Fairness",
+    "steps": [
+      {"type": "question", "text": "What are some causes or community issues your child really cares about?"},
+      {"type": "offer_summary", "text": "Would you like a final summary that puts everything together in one message for teachers or others?"}
+    ]
+  }
+] 
