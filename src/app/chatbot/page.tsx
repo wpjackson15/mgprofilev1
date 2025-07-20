@@ -1,6 +1,7 @@
 "use client";
 import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
+import AuthButton from "@/components/AuthButton";
 import React, { useState } from "react";
 
 export default function ChatbotPage() {
@@ -8,6 +9,9 @@ export default function ChatbotPage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
+      <div className="w-full flex justify-end mb-4">
+        <AuthButton />
+      </div>
       <h1 className="text-3xl font-bold mb-4">My Genius Profile</h1>
       <div className="flex flex-col sm:flex-row gap-6 w-full max-w-5xl">
         <div className="flex-1">
