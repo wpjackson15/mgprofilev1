@@ -28,6 +28,8 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
   const [input, setInput] = useState("");
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Add a ref for the chat container
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Load conversation flow
   useEffect(() => {
@@ -43,6 +45,13 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
         }
       });
   }, []);
+
+  // Autoscroll to bottom when messages change
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   // Handle sending a message
   const sendMessage = (text: string) => {
@@ -79,6 +88,7 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
         ...msgs,
         { sender: "bot", text: "[Summary placeholder: This is where a brief, affirming summary for the teacher will appear.]" },
       ]);
+      // Advance to next step after showing summary
       setTimeout(() => nextStep(), 1000);
     } else {
       setTimeout(() => nextStep(), 500);
@@ -124,7 +134,7 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
+    <div ref={chatContainerRef} className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
       <div className="flex-1 overflow-y-auto mb-2">
         {messages.map((msg, i) => (
           <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
