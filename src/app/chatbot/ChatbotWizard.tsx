@@ -22,7 +22,6 @@ export default function ChatbotWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,20 +43,12 @@ export default function ChatbotWizard() {
   // Handle sending a message
   const sendMessage = (text: string) => {
     if (!flow.length) return;
-    const module = flow[currentModule];
-    const step = module.steps[currentStep];
+    const currentModuleData = flow[currentModule];
+    const step = currentModuleData.steps[currentStep];
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     setInput("");
 
     if (step.type === "question") {
-      // Save answer
-      setAnswers((prev) => {
-        const key = `${module.module}-${currentStep}`;
-        return {
-          ...prev,
-          [key]: prev[key] ? [...prev[key], text] : [text],
-        };
-      });
       // Move to next step
       setTimeout(() => nextStep(), 500);
     } else if (step.type === "offer_summary") {
@@ -86,12 +77,12 @@ export default function ChatbotWizard() {
   // Move to next step or module
   const nextStep = () => {
     if (!flow.length) return;
-    const module = flow[currentModule];
-    if (currentStep + 1 < module.steps.length) {
+    const currentModuleData = flow[currentModule];
+    if (currentStep + 1 < currentModuleData.steps.length) {
       setCurrentStep(currentStep + 1);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: module.steps[currentStep + 1].text },
+        { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
       ]);
     } else if (currentModule + 1 < flow.length) {
       setCurrentModule(currentModule + 1);
