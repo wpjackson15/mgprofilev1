@@ -1,10 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 interface ProfilePreviewProps {
   answers: Record<string, string[]>;
 }
 
 export default function ProfilePreview({ answers }: ProfilePreviewProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setCheckingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Group answers by module
   const grouped: Record<string, string[]> = {};
   Object.entries(answers).forEach(([key, value]) => {
@@ -12,6 +26,12 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
     if (!grouped[module]) grouped[module] = [];
     grouped[module].push(...value);
   });
+
+  const handleEmailSummary = async () => {
+    setEmailStatus("Sending...");
+    // TODO: Implement email sending logic
+    setTimeout(() => setEmailStatus("Summary sent! (MVP placeholder)"), 1000);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6 h-full">
@@ -35,6 +55,21 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
           ))}
         </div>
       )}
+      <div className="mt-6 flex flex-col items-center gap-2">
+        {checkingAuth ? (
+          <button className="px-4 py-2 bg-gray-300 rounded" disabled>Checking login...</button>
+        ) : user ? (
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={handleEmailSummary}
+          >
+            Email Summary
+          </button>
+        ) : (
+          <div className="text-sm text-gray-600">Please log in to email your summary.</div>
+        )}
+        {emailStatus && <div className="text-xs text-green-600">{emailStatus}</div>}
+      </div>
     </div>
   );
 } 
