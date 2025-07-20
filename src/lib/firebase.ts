@@ -2,13 +2,13 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBst5SczNGD6UQ5PEy_qczOLfTjQJNhVBM",
-  authDomain: "mygeniusprofile.firebaseapp.com",
-  projectId: "mygeniusprofile",
-  storageBucket: "mygeniusprofile.firebasestorage.app",
-  messagingSenderId: "1082167301175",
-  appId: "1:1082167301175:web:30084a18c2a8db836cdbb2",
-  measurementId: "G-2TWMH4VD0T"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
