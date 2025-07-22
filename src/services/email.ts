@@ -20,4 +20,4 @@ export async function sendSummaryEmail({ to, subject, text, html }: SendSummaryE
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
-} 
+} Fu
