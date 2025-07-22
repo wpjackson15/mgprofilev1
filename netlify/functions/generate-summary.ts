@@ -1,7 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod !== 'POST') {
@@ -11,10 +10,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  if (!GEMINI_API_KEY) {
+  if (!CLAUDE_API_KEY) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Missing GEMINI_API_KEY' }),
+      body: JSON.stringify({ error: 'Missing CLAUDE_API_KEY' }),
     };
   }
 
@@ -30,11 +29,25 @@ export const handler: Handler = async (event: HandlerEvent) => {
     // Compose the prompt
     const prompt = `You are an affirming, culturally responsive assistant. Based on the following parent answers, generate a brief, positive summary for a teacher. Use the parent's words as much as possible. ${context ? `Context: ${context}` : ''}\n\nAnswers:\n${answers.map((a: string) => '- ' + a).join('\n')}`;
 
-    // Use Gemini SDK with the correct model name
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-    const result = await model.generateContent(prompt);
-    const summary = result.response.text();
+    // Call Claude API
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': CLAUDE_API_KEY,
+        'content-type': 'application/json',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 1024,
+        messages: [
+          { role: 'user', content: prompt }
+        ]
+      }),
+    });
+    const data = await response.json();
+    // Claude returns content as an array of message parts
+    const summary = data.content?.[0]?.text || '';
 
     return {
       statusCode: 200,
