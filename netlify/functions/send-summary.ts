@@ -34,7 +34,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'no-reply@mygeniusprofile.com',
+        from: 'no-reply@villageofwisdom.org',
         to,
         subject,
         text,
