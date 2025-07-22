@@ -29,6 +29,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   // Add a ref for the chat container
@@ -52,9 +53,19 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
 
   // Autoscroll to bottom when messages change
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    };
+    
+    // Scroll immediately
+    scrollToBottom();
+    
+    // Also scroll after a small delay to ensure content is rendered
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [messages]);
 
   // Handle sending a message
@@ -84,10 +95,23 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
 
   // Handle summary consent
   const handleSummaryConsent = async (text: string) => {
+    const userResponse = text.trim().toLowerCase();
+    
+    // Prevent multiple submissions
+    if (!awaitingSummaryConsent) return;
+    
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     setAwaitingSummaryConsent(false);
     
-    if (text.trim().toLowerCase().startsWith("y")) {
+    // Check for various "yes" responses
+    const isYes = userResponse.startsWith("y") || 
+                  userResponse === "yes" || 
+                  userResponse === "yeah" || 
+                  userResponse === "sure" || 
+                  userResponse === "ok" || 
+                  userResponse === "okay";
+    
+    if (isYes) {
       // Get current module answers
       const currentModuleData = flow[currentModule];
       const moduleAnswers: string[] = [];
@@ -103,6 +127,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       }
 
       if (moduleAnswers.length > 0) {
+        setIsGeneratingSummary(true);
+        
         // Show generating message
         setMessages((msgs) => [
           ...msgs,
@@ -128,6 +154,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
             ...msgs,
             { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
           ]);
+        } finally {
+          setIsGeneratingSummary(false);
         }
       } else {
         setMessages((msgs) => [
@@ -172,7 +200,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   // Handle input submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isGeneratingSummary) return;
     if (awaitingSummaryConsent) {
       handleSummaryConsent(input);
     } else {
@@ -204,10 +232,10 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          disabled={!input.trim() || !flow.length}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+          disabled={!input.trim() || !flow.length || isGeneratingSummary}
         >
-          Send
+          {isGeneratingSummary ? "Generating..." : "Send"}
         </button>
       </form>
     </div>
