@@ -12,9 +12,9 @@ export default function Home() {
         Welcome! My Genius Profile helps parents and children build a strength-based profile to share with teachers, aiming to inspire more personalized learning experiences.
       </p>
       <div className="flex gap-4">
-        <Link href="/chatbot" className="px-6 py-3 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">Start Conversation Wizard</Link>
+        <Link href="/chatbot" className="px-6 py-3 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">Start Profile Generation</Link>
         <Link href="/profile-preview" className="px-6 py-3 bg-gray-200 text-gray-800 rounded shadow hover:bg-gray-300 transition">View Profile Preview</Link>
-      </div>
-    </main>
+        </div>
+      </main>
   );
 }
