@@ -46,9 +46,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
       }),
     });
     const data = await response.json();
+    const summary = data.content?.[0]?.text || '';
     return {
       statusCode: 200,
-      body: JSON.stringify({ data }), // Return full response for debugging
+      body: JSON.stringify({ summary }),
     };
   } catch (err) {
     return {
