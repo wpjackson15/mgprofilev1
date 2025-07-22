@@ -32,7 +32,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     // Use Gemini SDK with the correct model name
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
     const result = await model.generateContent(prompt);
     const summary = result.response.text();
 
