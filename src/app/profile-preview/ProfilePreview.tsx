@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
+import { useProfileProgress } from "@/hooks/useProfileProgress";
 
 interface ProfilePreviewProps {
   answers: Record<string, string[]>;
@@ -31,7 +32,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
     return () => unsubscribe();
   }, []);
 
-  const { send, isSending, error, success, reset } = useEmailSender();
+  const { send, isSending, error, success, reset: resetEmail } = useEmailSender();
+  const { reset: resetProgress } = useProfileProgress();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Group answers by module for display
   const grouped: Record<string, string[]> = {};
@@ -43,7 +46,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
 
   const handleEmailSummary = async () => {
     if (!user?.email) return;
-    reset();
+    resetEmail();
     const summaryText = generateSummaryText(answers);
     await send({
       to: user.email,
@@ -88,9 +91,25 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         ) : (
           <div className="text-sm text-gray-600">Please log in to email your summary.</div>
         )}
+        {showConfirm ? (
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-sm text-gray-700">Are you sure you want to clear all progress?</span>
+            <div className="flex gap-2">
+              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); setShowConfirm(false); }}>Yes, clear all</button>
+              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setShowConfirm(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition mt-2"
+            onClick={() => setShowConfirm(true)}
+          >
+            Clear Chat and Start Over
+          </button>
+        )}
         {error && (
           <div className="text-xs text-red-600">
-            {error} <button className="underline ml-2" onClick={reset}>Retry</button>
+            {error} <button className="underline ml-2" onClick={resetEmail}>Retry</button>
           </div>
         )}
         {success && (
