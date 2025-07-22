@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useModuleSummaries } from "@/hooks/useModuleSummaries";
 
 interface Step {
   type: "question" | "offer_summary";
@@ -18,18 +19,21 @@ interface Message {
 
 interface ChatbotWizardProps {
   setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+  onModuleComplete?: (module: string, answers: string[]) => void;
 }
 
-export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
+export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotWizardProps) {
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   // Add a ref for the chat container
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { generateSummary } = useModuleSummaries();
 
   // Load conversation flow
   useEffect(() => {
@@ -64,12 +68,12 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
     if (step.type === "question") {
       // Save answer
       const key = `${currentModuleData.module}-${currentStep}`;
-      setAnswers((prev) => {
-        return {
-          ...prev,
-          [key]: prev[key] ? [...prev[key], text] : [text],
-        };
-      });
+      const newAnswers = {
+        ...localAnswers,
+        [key]: localAnswers[key] ? [...localAnswers[key], text] : [text],
+      };
+      setLocalAnswers(newAnswers);
+      setAnswers(newAnswers);
       // Move to next step
       setTimeout(() => nextStep(), 500);
     } else if (step.type === "offer_summary") {
@@ -79,17 +83,61 @@ export default function ChatbotWizard({ setAnswers }: ChatbotWizardProps) {
   };
 
   // Handle summary consent
-  const handleSummaryConsent = (text: string) => {
+  const handleSummaryConsent = async (text: string) => {
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     setAwaitingSummaryConsent(false);
+    
     if (text.trim().toLowerCase().startsWith("y")) {
-      // Placeholder summary
-      setMessages((msgs) => [
-        ...msgs,
-        { sender: "bot", text: "[Summary placeholder: This is where a brief, affirming summary for the teacher will appear.]" },
-      ]);
+      // Get current module answers
+      const currentModuleData = flow[currentModule];
+      const moduleAnswers: string[] = [];
+      
+      // Collect all answers for this module
+      for (let i = 0; i < currentStep; i++) {
+        const step = currentModuleData.steps[i];
+        if (step.type === "question") {
+          const key = `${currentModuleData.module}-${i}`;
+          const stepAnswers = localAnswers[key] || [];
+          moduleAnswers.push(...stepAnswers);
+        }
+      }
+
+      if (moduleAnswers.length > 0) {
+        // Show generating message
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "bot", text: "Generating a summary of your responses..." },
+        ]);
+
+        try {
+          // Generate summary
+          const summary = await generateSummary(currentModuleData.module, moduleAnswers);
+          
+          // Show the summary
+          setMessages((msgs) => [
+            ...msgs,
+            { sender: "bot", text: summary },
+          ]);
+
+          // Notify parent component
+          if (onModuleComplete) {
+            onModuleComplete(currentModuleData.module, moduleAnswers);
+          }
+        } catch (error) {
+          setMessages((msgs) => [
+            ...msgs,
+            { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
+          ]);
+        }
+      } else {
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "bot", text: "I don't have enough information to generate a summary yet. Let's continue with the questions." },
+        ]);
+      }
+      
       // Advance to next step after showing summary
-      setTimeout(() => nextStep(), 1000);
+      setTimeout(() => nextStep(), 2000);
     } else {
       setTimeout(() => nextStep(), 500);
     }

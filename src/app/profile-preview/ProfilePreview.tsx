@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
+import { useModuleSummaries } from "@/hooks/useModuleSummaries";
+import ModuleProgressBar from "@/components/ModuleProgressBar";
 
 interface ProfilePreviewProps {
   answers: Record<string, string[]>;
@@ -24,6 +26,8 @@ function generateSummaryText(answers: Record<string, string[]>): string {
 export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const { summaries, generateSummary, resetSummaries } = useModuleSummaries();
+  
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -43,6 +47,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
     if (!grouped[module]) grouped[module] = [];
     grouped[module].push(...value);
   });
+
+  // Get all unique modules from answers
+  const modules = Array.from(new Set(Object.keys(answers).map(key => key.split("-")[0])));
 
   const handleEmailSummary = async () => {
     if (!user?.email) return;
@@ -65,16 +72,41 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         <div className="text-gray-400 text-center mb-2">[Profile Preview Placeholder]</div>
       ) : (
         <div className="space-y-4">
-          {Object.entries(grouped).map(([module, responses]) => (
-            <div key={module}>
-              <h3 className="font-semibold capitalize mb-1">{module.replace(/-/g, " ")}</h3>
-              <ul className="list-disc list-inside text-sm text-gray-800">
-                {responses.map((resp, i) => (
-                  <li key={i}>{resp}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {modules.map((module) => {
+            const moduleSummary = summaries.find(s => s.module === module);
+            const moduleAnswers = grouped[module] || [];
+            const hasAnswers = moduleAnswers.length > 0;
+            
+            // Calculate progress based on answers and summary status
+            let progress = 0;
+            let status: "idle" | "generating" | "completed" | "error" = "idle";
+            
+            if (hasAnswers) {
+              progress = 50; // Base progress for having answers
+              if (moduleSummary) {
+                status = moduleSummary.status;
+                if (status === "completed") {
+                  progress = 100;
+                } else if (status === "generating") {
+                  progress = 75;
+                } else if (status === "error") {
+                  progress = 50;
+                }
+              }
+            }
+
+            return (
+              <ModuleProgressBar
+                key={module}
+                module={module}
+                status={status}
+                summary={moduleSummary?.summary}
+                error={moduleSummary?.error}
+                progress={progress}
+                onRetry={hasAnswers ? () => generateSummary(module, moduleAnswers) : undefined}
+              />
+            );
+          })}
         </div>
       )}
       <div className="mt-6 flex flex-col items-center gap-2">
@@ -95,7 +127,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
           <div className="flex flex-col items-center gap-2">
             <span className="text-sm text-gray-700">Are you sure you want to clear all progress?</span>
             <div className="flex gap-2">
-              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); setShowConfirm(false); }}>Yes, clear all</button>
+              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); resetSummaries(); setShowConfirm(false); }}>Yes, clear all</button>
               <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setShowConfirm(false)}>Cancel</button>
             </div>
           </div>

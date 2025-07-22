@@ -52,14 +52,20 @@ export default function ChatbotPage() {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row gap-6 w-full max-w-5xl">
-          <div className="flex-1">
-            <ChatbotWizard setAnswers={setAnswers} />
-          </div>
-          <div className="flex-1">
-            <ProfilePreview answers={answers} />
-          </div>
-        </div>
+                            <div className="flex flex-col sm:flex-row gap-6 w-full max-w-5xl">
+                      <div className="flex-1">
+                        <ChatbotWizard 
+                          setAnswers={setAnswers} 
+                          onModuleComplete={(module, answers) => {
+                            // This will trigger summary generation in the ProfilePreview
+                            console.log(`Module ${module} completed with ${answers.length} answers`);
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <ProfilePreview answers={answers} />
+                      </div>
+                    </div>
       )}
     </main>
   );
