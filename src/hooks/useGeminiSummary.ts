@@ -13,8 +13,14 @@ export function useGeminiSummary() {
     try {
       const summary = await generateGeminiSummary(answers, context);
       setResult(summary);
-    } catch (err: any) {
-      setError(err.message || "Failed to generate summary");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === "string") {
+        setError(err);
+      } else {
+        setError("Failed to generate summary");
+      }
     } finally {
       setLoading(false);
     }
