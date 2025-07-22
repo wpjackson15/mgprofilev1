@@ -46,12 +46,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
       }),
     });
     const data = await response.json();
-    // Claude returns content as an array of message parts
-    const summary = data.content?.[0]?.text || '';
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ summary }),
+      body: JSON.stringify({ data }), // Return full response for debugging
     };
   } catch (err) {
     return {
