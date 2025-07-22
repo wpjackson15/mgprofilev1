@@ -30,9 +30,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
     // Compose the prompt
     const prompt = `You are an affirming, culturally responsive assistant. Based on the following parent answers, generate a brief, positive summary for a teacher. Use the parent's words as much as possible. ${context ? `Context: ${context}` : ''}\n\nAnswers:\n${answers.map((a: string) => '- ' + a).join('\n')}`;
 
-    // Use Gemini SDK
+    // Use Gemini SDK with the correct model name
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
     const result = await model.generateContent(prompt);
     const summary = result.response.text();
 
