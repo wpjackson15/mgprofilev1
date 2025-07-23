@@ -126,13 +126,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
         // Generate summary
         const summary = await generateSummary(currentModuleData.module, moduleAnswers);
         
-        // Show the summary
-        setMessages((msgs) => [
-          ...msgs,
-          { sender: "bot", text: summary },
-        ]);
-
-        // Notify parent component
+        // Notify parent component (ProfilePreview will show summary)
         if (onModuleComplete) {
           onModuleComplete(currentModuleData.module, moduleAnswers);
         }

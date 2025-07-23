@@ -51,6 +51,20 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   // Get all unique modules from answers
   const modules = Array.from(new Set(Object.keys(answers).map(key => key.split("-")[0])));
 
+  // Get total questions per module from conversation flow
+  const [moduleQuestionCounts, setModuleQuestionCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetch("/conversationFlow.json")
+      .then(res => res.json())
+      .then((data) => {
+        const counts: Record<string, number> = {};
+        data.forEach((mod: any) => {
+          counts[mod.module] = mod.steps.filter((s: any) => s.type === "question").length;
+        });
+        setModuleQuestionCounts(counts);
+      });
+  }, []);
+
   const handleEmailSummary = async () => {
     if (!user?.email) return;
     resetEmail();
@@ -64,6 +78,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
 
   return (
     <div className="bg-white rounded-lg shadow p-6 h-full">
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-center text-sm font-medium">
+        When you finish, you’ll unlock local resources matched to your child’s Genius Profile!
+      </div>
       <h2 className="text-2xl font-bold mb-4">Profile Preview</h2>
       <p className="mb-4 text-gray-600">
         This panel shows a real-time summary of your child’s strengths and story as you answer questions.
@@ -76,25 +93,23 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             const moduleSummary = summaries.find(s => s.module === module);
             const moduleAnswers = grouped[module] || [];
             const hasAnswers = moduleAnswers.length > 0;
-            
+            const totalQuestions = moduleQuestionCounts[module] || 1;
             // Calculate progress based on answers and summary status
             let progress = 0;
             let status: "idle" | "generating" | "completed" | "error" = "idle";
-            
             if (hasAnswers) {
-              progress = 50; // Base progress for having answers
+              progress = Math.min((moduleAnswers.length / totalQuestions) * 100, 99); // Don't show 100% until summary is done
               if (moduleSummary) {
                 status = moduleSummary.status;
                 if (status === "completed") {
                   progress = 100;
                 } else if (status === "generating") {
-                  progress = 75;
+                  progress = 99;
                 } else if (status === "error") {
-                  progress = 50;
+                  progress = Math.min((moduleAnswers.length / totalQuestions) * 100, 99);
                 }
               }
             }
-
             return (
               <ModuleProgressBar
                 key={module}
