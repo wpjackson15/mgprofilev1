@@ -126,7 +126,10 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         <div className="space-y-4">
           {modules.map((module) => {
             const displayName = moduleDisplayNames[module.toLowerCase().replace(/[^a-z0-9]/gi, "")] || module;
-            const moduleSummary = summaries.find(s => s.module === displayName);
+            // Fix: case-insensitive, trimmed summary lookup
+            const moduleSummary = summaries.find(
+              s => s.module.trim().toLowerCase() === displayName.trim().toLowerCase()
+            );
             const moduleAnswers = grouped[module] || [];
             const hasAnswers = moduleAnswers.length > 0;
             const totalQuestions = moduleQuestionCounts[module] || 1;
