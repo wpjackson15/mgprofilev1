@@ -7,73 +7,71 @@ from k8_resources.items import K8ResourceItem
 class CommunityResourcesSpider(scrapy.Spider):
     name = "community_resources"
     
-    # Target major cities for K-8 resources
-    cities = [
-        "Atlanta", "Chicago", "New York", "Los Angeles", "Houston",
-        "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas"
+    # Target specific resource websites directly
+    start_urls = [
+        # Library systems
+        "https://www.nypl.org/events/programs/kids",
+        "https://www.chipublib.org/programs-and-partnerships/programs/",
+        "https://www.lapl.org/kids",
+        "https://www.houstonlibrary.org/kids",
+        "https://www.phila.gov/programs/",
+        
+        # Community centers
+        "https://www.ymca.org/programs",
+        "https://www.boysandgirlsclubs.org/programs",
+        "https://www.girlscouts.org/en/programs.html",
+        "https://www.scouting.org/programs/",
+        
+        # Cultural organizations
+        "https://www.naacp.org/programs/",
+        "https://www.urbanleague.org/programs/",
+        "https://www.nationalmuseumofafricanamericanhistoryandculture.si.edu/",
+        
+        # Tutoring services
+        "https://www.kumon.com/",
+        "https://www.mathnasium.com/",
+        "https://www.sylvanlearning.com/",
+        "https://www.huntingtonlearning.com/",
+        
+        # Educational resources
+        "https://www.khanacademy.org/",
+        "https://www.pbs.org/parents/",
+        "https://www.scholastic.com/parents/",
     ]
     
-    def start_requests(self):
-        """Start with search queries for each city"""
-        for city in self.cities:
-            # Search for various types of K-8 resources
-            searches = [
-                f"{city} K-8 tutoring programs",
-                f"{city} children's library programs",
-                f"{city} youth mentorship programs",
-                f"{city} cultural programs for kids",
-                f"{city} after school programs",
-                f"{city} community center youth programs"
-            ]
-            
-            for search in searches:
-                yield scrapy.Request(
-                    url=f"https://www.google.com/search?q={search.replace(' ', '+')}",
-                    callback=self.parse_search_results,
-                    meta={'city': city, 'search_type': search}
-                )
-
-    def parse_search_results(self, response):
-        """Parse Google search results to find resource websites"""
-        # Extract links from search results
-        links = response.css('a[href^="http"]::attr(href)').getall()
+    def parse(self, response):
+        """Parse resource websites to find K-8 programs"""
         
-        for link in links:
-            # Filter for relevant domains
-            if self.is_relevant_domain(link):
-                yield scrapy.Request(
-                    url=link,
-                    callback=self.parse_resource_site,
-                    meta={'city': response.meta['city']}
-                )
-
-    def is_relevant_domain(self, url):
-        """Check if URL is from a relevant domain"""
-        relevant_domains = [
-            'library', 'community', 'youth', 'kids', 'children',
-            'tutoring', 'mentorship', 'cultural', 'education',
-            'city.gov', 'county.gov', 'parks', 'recreation'
-        ]
-        
-        url_lower = url.lower()
-        return any(domain in url_lower for domain in relevant_domains)
-
-    def parse_resource_site(self, response):
-        """Parse individual resource websites"""
-        # Look for program listings, services, or resource pages
-        program_links = response.css('a[href*="program"], a[href*="service"], a[href*="class"], a[href*="activity"]::attr(href)').getall()
+        # Extract program links
+        program_links = response.css('a[href*="program"], a[href*="class"], a[href*="activity"], a[href*="kids"], a[href*="youth"]::attr(href)').getall()
         
         for link in program_links:
             if link.startswith('/'):
                 link = response.urljoin(link)
+            elif not link.startswith('http'):
+                continue
+                
             yield scrapy.Request(
                 url=link,
                 callback=self.parse_resource_detail,
-                meta={'city': response.meta['city'], 'source_site': response.url}
+                meta={'source_site': response.url}
             )
+        
+        # Also look for program information on the current page
+        if self.has_program_content(response):
+            yield self.extract_resource_from_page(response)
 
-    def parse_resource_detail(self, response):
-        """Parse individual resource/program details"""
+    def has_program_content(self, response):
+        """Check if page contains program information"""
+        text = response.text.lower()
+        program_keywords = [
+            'program', 'class', 'activity', 'workshop', 'tutoring',
+            'mentorship', 'after school', 'summer camp', 'enrichment'
+        ]
+        return any(keyword in text for keyword in program_keywords)
+
+    def extract_resource_from_page(self, response):
+        """Extract resource information from the current page"""
         item = K8ResourceItem()
         
         # Basic info
@@ -127,9 +125,11 @@ class CommunityResourcesSpider(scrapy.Spider):
         item['rating'] = self.extract_rating(response)
         item['accreditation'] = self.extract_accreditation(response)
         
-        # Only yield if it's relevant for K-8
-        if self.is_k8_relevant(item):
-            yield item
+        return item
+
+    def parse_resource_detail(self, response):
+        """Parse individual resource/program details"""
+        return self.extract_resource_from_page(response)
 
     def extract_name(self, response):
         """Extract resource name"""
@@ -138,13 +138,20 @@ class CommunityResourcesSpider(scrapy.Spider):
             '.title::text',
             '.program-name::text',
             'h2::text',
-            'title::text'
+            'title::text',
+            '.hero-title::text',
+            '.main-title::text',
+            '[class*="title"]::text',
+            '[class*="heading"]::text'
         ]
         
         for selector in selectors:
             name = response.css(selector).get()
             if name:
-                return name.strip()
+                name = name.strip()
+                # Filter out generic names
+                if name and len(name) > 3 and name.lower() not in ['home', 'about', 'contact', 'programs', 'services']:
+                    return name
         return None
 
     def extract_description(self, response):
@@ -153,27 +160,49 @@ class CommunityResourcesSpider(scrapy.Spider):
             '.description::text',
             '.program-description::text',
             '.content p::text',
+            '.hero-description::text',
+            '.main-content p::text',
+            '[class*="description"]::text',
+            '[class*="content"] p::text',
             'p::text'
         ]
         
+        descriptions = []
         for selector in selectors:
-            desc = response.css(selector).get()
-            if desc and len(desc.strip()) > 20:
-                return desc.strip()
+            descs = response.css(selector).getall()
+            for desc in descs:
+                desc = desc.strip()
+                if desc and len(desc) > 20 and len(desc) < 500:
+                    descriptions.append(desc)
+        
+        # Return the best description
+        if descriptions:
+            # Prefer descriptions with program-related keywords
+            program_keywords = ['program', 'class', 'activity', 'learn', 'teach', 'help', 'support', 'youth', 'child']
+            for desc in descriptions:
+                if any(keyword in desc.lower() for keyword in program_keywords):
+                    return desc
+            return descriptions[0]
         return None
 
     def determine_category(self, response):
         """Determine the main category"""
         text = response.text.lower()
+        url = response.url.lower()
         
-        if any(word in text for word in ['tutor', 'academic', 'homework']):
+        # More specific category detection
+        if any(word in text or word in url for word in ['tutor', 'academic', 'homework', 'kumon', 'mathnasium', 'sylvan', 'huntington', 'learning center']):
             return 'tutoring'
-        elif any(word in text for word in ['cultural', 'heritage', 'ethnic']):
+        elif any(word in text or word in url for word in ['cultural', 'heritage', 'ethnic', 'naacp', 'urban league', 'museum', 'african american', 'black history']):
             return 'cultural'
-        elif any(word in text for word in ['mentor', 'leadership', 'role model']):
+        elif any(word in text or word in url for word in ['mentor', 'leadership', 'role model', 'scouting', 'girl scouts', 'boys and girls', 'big brothers', 'big sisters']):
             return 'mentorship'
-        elif any(word in text for word in ['library', 'reading', 'book']):
+        elif any(word in text or word in url for word in ['library', 'reading', 'book', 'nypl', 'chipublib', 'lapl', 'houstonlibrary']):
             return 'library'
+        elif any(word in text or word in url for word in ['ymca', 'boys and girls', 'community center', 'recreation', 'parks']):
+            return 'community'
+        elif any(word in text or word in url for word in ['after school', 'summer camp', 'enrichment', 'extracurricular']):
+            return 'enrichment'
         else:
             return 'community'
 
@@ -207,7 +236,8 @@ class CommunityResourcesSpider(scrapy.Spider):
                         'grade_max': self.age_to_grade(int(match.group(2)))
                     }
         
-        return {'min': None, 'max': None, 'grade_min': None, 'grade_max': None}
+        # Default to K-8 if no specific age found
+        return {'min': 5, 'max': 14, 'grade_min': 'K', 'grade_max': '8'}
 
     def grade_to_age(self, grade):
         """Convert grade to approximate age"""
@@ -223,7 +253,35 @@ class CommunityResourcesSpider(scrapy.Spider):
 
     def extract_location(self, response):
         """Extract location information"""
-        # This is a simplified version - would need more sophisticated parsing
+        text = response.text
+        
+        # Look for address patterns
+        address_patterns = [
+            r'(\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Place|Pl|Court|Ct|Way|Circle|Cir|Terrace|Ter))',
+            r'([A-Za-z\s]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?)',
+            r'(\d+\s+[A-Za-z\s]+,\s*[A-Za-z\s]+,\s*[A-Z]{2})'
+        ]
+        
+        for pattern in address_patterns:
+            match = re.search(pattern, text)
+            if match:
+                address = match.group(1).strip()
+                # Extract city and state
+                city_state_match = re.search(r'([A-Za-z\s]+),\s*([A-Z]{2})', address)
+                if city_state_match:
+                    return {
+                        'address': address,
+                        'city': city_state_match.group(1).strip(),
+                        'state': city_state_match.group(2),
+                        'zip': None
+                    }
+                return {
+                    'address': address,
+                    'city': None,
+                    'state': None,
+                    'zip': None
+                }
+        
         return {
             'name': None,
             'address': None,
@@ -234,28 +292,49 @@ class CommunityResourcesSpider(scrapy.Spider):
 
     def extract_phone(self, response):
         """Extract phone number"""
-        phone_pattern = r'\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}'
-        match = re.search(phone_pattern, response.text)
-        return match.group() if match else None
+        # Look for phone numbers in various formats
+        phone_patterns = [
+            r'\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}',
+            r'\d{3}[\s.-]?\d{3}[\s.-]?\d{4}',
+            r'1[\s.-]?\d{3}[\s.-]?\d{3}[\s.-]?\d{4}'
+        ]
+        
+        for pattern in phone_patterns:
+            matches = re.findall(pattern, response.text)
+            for match in matches:
+                # Clean up the phone number
+                phone = re.sub(r'[^\d]', '', match)
+                if len(phone) >= 10:
+                    return phone
+        return None
 
     def extract_email(self, response):
         """Extract email address"""
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        match = re.search(email_pattern, response.text)
-        return match.group() if match else None
+        matches = re.findall(email_pattern, response.text)
+        
+        # Filter out common non-contact emails
+        exclude_patterns = ['noreply', 'no-reply', 'donotreply', 'example', 'test']
+        for match in matches:
+            if not any(pattern in match.lower() for pattern in exclude_patterns):
+                return match
+        return None
 
     def determine_cost_range(self, response):
         """Determine cost range"""
         text = response.text.lower()
         
-        if any(word in text for word in ['free', 'no cost', 'complimentary']):
+        # More sophisticated cost detection
+        if any(word in text for word in ['free', 'no cost', 'complimentary', 'no charge', 'zero cost']):
             return 'free'
-        elif any(word in text for word in ['low cost', 'affordable', 'sliding scale']):
+        elif any(word in text for word in ['low cost', 'affordable', 'sliding scale', 'scholarship', 'financial aid', 'reduced fee']):
             return 'low_cost'
-        elif any(word in text for word in ['expensive', 'premium', 'high cost']):
+        elif any(word in text for word in ['expensive', 'premium', 'high cost', 'luxury', 'exclusive']):
             return 'high'
-        else:
+        elif any(word in text for word in ['fee', 'cost', 'price', 'payment', 'tuition']):
             return 'moderate'
+        else:
+            return 'unknown'
 
     def is_k8_relevant(self, item):
         """Check if resource is relevant for K-8 students"""

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useModuleSummaries } from "@/hooks/useModuleSummaries";
 
 interface Step {
-  type: "question" | "offer_summary";
+  type: "question" | "auto_summary";
   text: string;
 }
 
@@ -87,88 +87,72 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       setAnswers(newAnswers);
       // Move to next step
       setTimeout(() => nextStep(), 500);
-    } else if (step.type === "offer_summary") {
-      // Expect yes/no
-      setAwaitingSummaryConsent(true);
+    } else if (step.type === "auto_summary") {
+      // Automatically generate summary
+      handleSummaryConsent("yes");
     }
   };
 
-  // Handle summary consent
+  // Handle summary generation - now automatically triggered
   const handleSummaryConsent = async (text: string) => {
     const userResponse = text.trim().toLowerCase();
     
-    // Prevent multiple submissions
-    if (!awaitingSummaryConsent) return;
-    
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
-    setAwaitingSummaryConsent(false);
     
-    // Check for various "yes" responses
-    const isYes = userResponse.startsWith("y") || 
-                  userResponse === "yes" || 
-                  userResponse === "yeah" || 
-                  userResponse === "sure" || 
-                  userResponse === "ok" || 
-                  userResponse === "okay";
+    // Always generate summary automatically (no need to ask)
+    const currentModuleData = flow[currentModule];
+    const moduleAnswers: string[] = [];
     
-    if (isYes) {
-      // Get current module answers
-      const currentModuleData = flow[currentModule];
-      const moduleAnswers: string[] = [];
-      
-      // Collect all answers for this module
-      for (let i = 0; i < currentStep; i++) {
-        const step = currentModuleData.steps[i];
-        if (step.type === "question") {
-          const key = `${currentModuleData.module}-${i}`;
-          const stepAnswers = localAnswers[key] || [];
-          moduleAnswers.push(...stepAnswers);
-        }
+    // Collect all answers for this module
+    for (let i = 0; i < currentStep; i++) {
+      const step = currentModuleData.steps[i];
+      if (step.type === "question") {
+        const key = `${currentModuleData.module}-${i}`;
+        const stepAnswers = localAnswers[key] || [];
+        moduleAnswers.push(...stepAnswers);
       }
-
-      if (moduleAnswers.length > 0) {
-        setIsGeneratingSummary(true);
-        
-        // Show generating message
-        setMessages((msgs) => [
-          ...msgs,
-          { sender: "bot", text: "Generating a summary of your responses..." },
-        ]);
-
-        try {
-          // Generate summary
-          const summary = await generateSummary(currentModuleData.module, moduleAnswers);
-          
-          // Show the summary
-          setMessages((msgs) => [
-            ...msgs,
-            { sender: "bot", text: summary },
-          ]);
-
-          // Notify parent component
-          if (onModuleComplete) {
-            onModuleComplete(currentModuleData.module, moduleAnswers);
-          }
-        } catch (error) {
-          setMessages((msgs) => [
-            ...msgs,
-            { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
-          ]);
-        } finally {
-          setIsGeneratingSummary(false);
-        }
-      } else {
-        setMessages((msgs) => [
-          ...msgs,
-          { sender: "bot", text: "I don't have enough information to generate a summary yet. Let's continue with the questions." },
-        ]);
-      }
-      
-      // Advance to next step after showing summary
-      setTimeout(() => nextStep(), 2000);
-    } else {
-      setTimeout(() => nextStep(), 500);
     }
+
+    if (moduleAnswers.length > 0) {
+      setIsGeneratingSummary(true);
+      
+      // Show generating message
+      setMessages((msgs) => [
+        ...msgs,
+        { sender: "bot", text: "Generating a summary of your responses..." },
+      ]);
+
+      try {
+        // Generate summary
+        const summary = await generateSummary(currentModuleData.module, moduleAnswers);
+        
+        // Show the summary
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "bot", text: summary },
+        ]);
+
+        // Notify parent component
+        if (onModuleComplete) {
+          onModuleComplete(currentModuleData.module, moduleAnswers);
+        }
+      } catch (error) {
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
+        ]);
+      } finally {
+        setIsGeneratingSummary(false);
+      }
+    } else {
+      setMessages((msgs) => [
+        ...msgs,
+        { sender: "bot", text: "I don't have enough information to generate a summary yet. Let's continue with the questions." },
+      ]);
+    }
+    
+    // Advance to next step after showing summary
+    setTimeout(() => nextStep(), 2000);
     setInput("");
   };
 
@@ -210,8 +194,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   };
 
   return (
-    <div ref={chatContainerRef} className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
-      <div className="flex-1 overflow-y-auto mb-2">
+    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-2">
         {messages.map((msg, i) => (
           <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`px-4 py-2 rounded-lg max-w-[80%] ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}>
