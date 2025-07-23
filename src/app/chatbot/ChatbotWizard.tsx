@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { useModuleSummaries } from "@/hooks/useModuleSummaries";
+import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 
 interface Step {
   type: "question" | "auto_summary";
