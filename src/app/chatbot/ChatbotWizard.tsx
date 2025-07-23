@@ -28,7 +28,6 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
@@ -155,11 +154,16 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
     if (currentStep + 1 < currentModuleData.steps.length) {
+      const nextStepObj = currentModuleData.steps[currentStep + 1];
       setCurrentStep(currentStep + 1);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
+        { sender: "bot", text: nextStepObj.text },
       ]);
+      // If the next step is auto_summary, trigger summary generation immediately
+      if (nextStepObj.type === "auto_summary") {
+        setTimeout(() => handleSummaryConsent("yes"), 500);
+      }
     } else if (currentModule + 1 < flow.length) {
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
@@ -179,7 +183,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isGeneratingSummary) return;
-    if (awaitingSummaryConsent) {
+    if (input.trim().toLowerCase() === "yes") {
       handleSummaryConsent(input);
     } else {
       sendMessage(input);
@@ -205,7 +209,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
           className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring text-gray-900"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={awaitingSummaryConsent ? "Yes or No" : "Type your answer..."}
+          placeholder={isGeneratingSummary ? "Yes or No" : "Type your answer..."}
           disabled={!flow.length}
         />
         <button
