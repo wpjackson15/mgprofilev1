@@ -4,6 +4,7 @@ import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
 import { useModuleSummaries } from "@/hooks/useModuleSummaries";
+import { useResourceMatches } from "@/hooks/useResourceMatches";
 import ModuleProgressBar from "@/components/ModuleProgressBar";
 
 interface ProfilePreviewProps {
@@ -65,6 +66,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const { send, isSending, error, success, reset: resetEmail } = useEmailSender();
   const { reset: resetProgress } = useProfileProgress();
   const [showConfirm, setShowConfirm] = useState(false);
+  const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
 
   // Group answers by module for display
   const grouped: Record<string, string[]> = {};
@@ -94,6 +96,11 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         setModuleDisplayNames(names);
       });
   }, []);
+
+  // Debug: log summaries and progress bar props
+  useEffect(() => {
+    console.log("[ProfilePreview] summaries:", summaries);
+  }, [summaries]);
 
   const handleEmailSummary = async () => {
     if (!user?.email) return;
@@ -142,6 +149,8 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
                 }
               }
             }
+            // Debug: log progress bar props
+            console.log(`[ProgressBar] ${displayName}: progress=${progress}, status=${status}, summary=`, moduleSummary?.summary);
             return (
               <ModuleProgressBar
                 key={module}
@@ -193,6 +202,40 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         )}
         {success && (
           <div className="text-xs text-green-600">Email sent! Check your inbox.</div>
+        )}
+      </div>
+      {/* Recommended Resources Section */}
+      <div className="mt-8 w-full">
+        <h3 className="text-lg font-semibold mb-2 text-green-700">Recommended Local Resources</h3>
+        {resourcesLoading ? (
+          <div className="text-gray-500 text-sm">Loading resources...</div>
+        ) : resourcesError ? (
+          <div className="text-red-500 text-sm">{resourcesError}</div>
+        ) : resources.length === 0 ? (
+          <div className="text-gray-500 text-sm">No matches yet. Complete your profile to unlock local resources!</div>
+        ) : (
+          <ul className="space-y-4">
+            {resources.map((res) => (
+              <li key={res.url} className="border rounded-lg p-4 bg-green-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-green-900">{res.name}</span>
+                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">{res.category}</span>
+                </div>
+                <div className="text-gray-700 text-sm mt-1">{res.description}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {res.city && res.state ? `${res.city}, ${res.state}` : ""}
+                </div>
+                <a
+                  href={res.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-green-700 underline text-xs"
+                >
+                  Visit Website
+                </a>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
