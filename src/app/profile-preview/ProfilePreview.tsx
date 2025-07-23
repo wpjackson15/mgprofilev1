@@ -3,7 +3,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
-import { useModuleSummaries } from "@/hooks/useModuleSummaries";
+import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { useResourceMatches } from "@/hooks/useResourceMatches";
 import ModuleProgressBar from "@/components/ModuleProgressBar";
 
