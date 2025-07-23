@@ -144,17 +144,34 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       ]);
     }
     
-    // Advance to next step after showing summary
-    setTimeout(() => nextStep(), 2000);
+    // Advance to next step after showing summary, skipping auto_summary
+    setTimeout(() => nextStep(true), 2000);
     setInput("");
   };
 
   // Move to next step or module
-  const nextStep = () => {
+  const nextStep = (skipAutoSummary = false) => {
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
     if (currentStep + 1 < currentModuleData.steps.length) {
       const nextStepObj = currentModuleData.steps[currentStep + 1];
+      // If the next step is auto_summary and we're skipping, go to next module
+      if (nextStepObj.type === "auto_summary" && skipAutoSummary) {
+        if (currentModule + 1 < flow.length) {
+          setCurrentModule(currentModule + 1);
+          setCurrentStep(0);
+          setMessages((msgs) => [
+            ...msgs,
+            { sender: "bot", text: flow[currentModule + 1].steps[0].text },
+          ]);
+        } else {
+          setMessages((msgs) => [
+            ...msgs,
+            { sender: "bot", text: "Thank you! You’ve completed the conversation. You can now view or share your child’s Genius Profile." },
+          ]);
+        }
+        return;
+      }
       setCurrentStep(currentStep + 1);
       setMessages((msgs) => [
         ...msgs,
