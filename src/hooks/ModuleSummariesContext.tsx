@@ -34,6 +34,7 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
       } else {
         newSummaries.push(moduleSummary);
       }
+      console.log("[ModuleSummariesContext] set to generating:", newSummaries);
       return newSummaries;
     });
     try {
@@ -59,6 +60,7 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
         } else {
           newSummaries.push({ module, summary, status: "completed" });
         }
+        console.log("[ModuleSummariesContext] set to completed:", newSummaries);
         return newSummaries;
       });
       return summary;
@@ -77,6 +79,7 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
         } else {
           newSummaries.push({ module, summary: "", status: "error", error: errorMessage });
         }
+        console.log("[ModuleSummariesContext] set to error:", newSummaries);
         return newSummaries;
       });
       throw error;
