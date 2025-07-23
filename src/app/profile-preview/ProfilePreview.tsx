@@ -23,6 +23,29 @@ function generateSummaryText(answers: Record<string, string[]>): string {
   return summary;
 }
 
+function generateLLMSummaryEmail(summaries: { module: string; summary: string }[], answers: Record<string, string[]>) {
+  let email = "My Genius Profile (LLM Summaries)\n\n";
+  summaries.forEach(({ module, summary }) => {
+    if (summary && summary.trim()) {
+      email += `--- ${module} ---\n`;
+      email += summary + "\n\n";
+    }
+  });
+  // Optionally, add raw responses as appendix
+  if (Object.keys(answers).length > 0) {
+    email += "\n\n--- Appendix: Raw Responses ---\n";
+    Object.entries(answers).forEach(([key, value]) => {
+      const [module] = key.split("-");
+      email += `--- ${module.replace(/-/g, " ")} ---\n`;
+      value.forEach((resp) => {
+        email += `• ${resp}\n`;
+      });
+      email += "\n";
+    });
+  }
+  return email;
+}
+
 type ConversationStep = { type: string; text: string };
 type ConversationModule = { module: string; steps: ConversationStep[] };
 
@@ -54,24 +77,29 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   // Get all unique modules from answers
   const modules = Array.from(new Set(Object.keys(answers).map(key => key.split("-")[0])));
 
-  // Get total questions per module from conversation flow
+  // Get total questions and display names per module from conversation flow
   const [moduleQuestionCounts, setModuleQuestionCounts] = useState<Record<string, number>>({});
+  const [moduleDisplayNames, setModuleDisplayNames] = useState<Record<string, string>>({});
   useEffect(() => {
     fetch("/conversationFlow.json")
       .then(res => res.json())
       .then((data: ConversationModule[]) => {
         const counts: Record<string, number> = {};
+        const names: Record<string, string> = {};
         data.forEach((mod: ConversationModule) => {
           counts[mod.module] = mod.steps.filter((s: ConversationStep) => s.type === "question").length;
+          names[mod.module.toLowerCase().replace(/[^a-z0-9]/gi, "")] = mod.module;
         });
         setModuleQuestionCounts(counts);
+        setModuleDisplayNames(names);
       });
   }, []);
 
   const handleEmailSummary = async () => {
     if (!user?.email) return;
     resetEmail();
-    const summaryText = generateSummaryText(answers);
+    // Use LLM summaries for the email
+    const summaryText = generateLLMSummaryEmail(summaries, answers);
     await send({
       to: user.email,
       subject: "Your Genius Profile Summary",
@@ -93,7 +121,8 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
       ) : (
         <div className="space-y-4">
           {modules.map((module) => {
-            const moduleSummary = summaries.find(s => s.module === module);
+            const displayName = moduleDisplayNames[module.toLowerCase().replace(/[^a-z0-9]/gi, "")] || module;
+            const moduleSummary = summaries.find(s => s.module === displayName);
             const moduleAnswers = grouped[module] || [];
             const hasAnswers = moduleAnswers.length > 0;
             const totalQuestions = moduleQuestionCounts[module] || 1;
@@ -116,12 +145,12 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             return (
               <ModuleProgressBar
                 key={module}
-                module={module}
+                module={displayName}
                 status={status}
                 summary={moduleSummary?.summary}
                 error={moduleSummary?.error}
                 progress={progress}
-                onRetry={hasAnswers ? () => generateSummary(module, moduleAnswers) : undefined}
+                onRetry={hasAnswers ? () => generateSummary(displayName, moduleAnswers) : undefined}
               />
             );
           })}
