@@ -23,6 +23,9 @@ function generateSummaryText(answers: Record<string, string[]>): string {
   return summary;
 }
 
+type ConversationStep = { type: string; text: string };
+type ConversationModule = { module: string; steps: ConversationStep[] };
+
 export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -56,10 +59,10 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   useEffect(() => {
     fetch("/conversationFlow.json")
       .then(res => res.json())
-      .then((data) => {
+      .then((data: ConversationModule[]) => {
         const counts: Record<string, number> = {};
-        data.forEach((mod: any) => {
-          counts[mod.module] = mod.steps.filter((s: any) => s.type === "question").length;
+        data.forEach((mod: ConversationModule) => {
+          counts[mod.module] = mod.steps.filter((s: ConversationStep) => s.type === "question").length;
         });
         setModuleQuestionCounts(counts);
       });
