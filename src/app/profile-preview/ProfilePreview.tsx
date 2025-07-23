@@ -116,9 +116,6 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
 
   return (
     <div className="bg-white rounded-lg shadow p-6 h-full">
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-center text-sm font-medium">
-        When you finish, you’ll unlock local resources matched to your child’s Genius Profile!
-      </div>
       <h2 className="text-2xl font-bold mb-4">Profile Preview</h2>
       <p className="mb-4 text-gray-600">
         This panel shows a real-time summary of your child’s strengths and story as you answer questions.
@@ -206,6 +203,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
       </div>
       {/* Recommended Resources Section */}
       <div className="mt-8 w-full">
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-center text-sm font-medium">
+          When you finish, you’ll unlock local resources matched to your child’s Genius Profile!
+        </div>
         <h3 className="text-lg font-semibold mb-2 text-green-700">Recommended Local Resources</h3>
         {resourcesLoading ? (
           <div className="text-gray-500 text-sm">Loading resources...</div>
@@ -215,7 +215,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
           <div className="text-gray-500 text-sm">No matches yet. Complete your profile to unlock local resources!</div>
         ) : (
           <ul className="space-y-4">
-            {resources.map((res) => (
+            {resources.slice(0, 5).map((res) => (
               <li key={res.url} className="border rounded-lg p-4 bg-green-50">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-green-900">{res.name}</span>
