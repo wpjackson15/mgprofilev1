@@ -20,10 +20,7 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
   const [summaries, setSummaries] = useState<ModuleSummary[]>([]);
 
   const generateSummary = useCallback(async (module: string, answers: string[]) => {
-    const existingIndex = summaries.findIndex(s => s.module === module);
-    if (existingIndex >= 0 && summaries[existingIndex].status === "completed") {
-      return summaries[existingIndex].summary;
-    }
+    // Always use functional setSummaries to avoid stale closure
     setSummaries(prev => {
       const newSummaries = [...prev];
       const index = newSummaries.findIndex(s => s.module === module);
@@ -59,6 +56,8 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
             summary,
             status: "completed"
           };
+        } else {
+          newSummaries.push({ module, summary, status: "completed" });
         }
         return newSummaries;
       });
@@ -75,12 +74,14 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
             status: "error",
             error: errorMessage
           };
+        } else {
+          newSummaries.push({ module, summary: "", status: "error", error: errorMessage });
         }
         return newSummaries;
       });
       throw error;
     }
-  }, [summaries]);
+  }, []);
 
   const getModuleSummary = useCallback((module: string) => {
     return summaries.find(s => s.module === module);
