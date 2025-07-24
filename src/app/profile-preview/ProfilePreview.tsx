@@ -125,11 +125,12 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
       ) : (
         <div className="space-y-4">
           {modules.map((module) => {
-            const displayName = moduleDisplayNames[module.toLowerCase().replace(/[^a-z0-9]/gi, "")] || module;
+            // Use the canonical module name from the config for all logic
+            const displayName = moduleDisplayNames[module] || module;
             // Log displayName and summaries before lookup
             console.log(`[SummaryLookup] displayName: '${displayName}'`, summaries);
             const moduleSummary = summaries.find(
-              s => s.module.trim().toLowerCase() === displayName.trim().toLowerCase()
+              s => s.module === displayName
             );
             const moduleAnswers = grouped[module] || [];
             const hasAnswers = moduleAnswers.length > 0;

@@ -46,8 +46,8 @@ export default function ModuleProgressBar({
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-800 capitalize">
-          {module.replace(/-/g, " ")}
+        <h3 className="font-semibold text-gray-800">
+          {module}
         </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${
           status === "completed" ? "bg-green-100 text-green-800" :
@@ -62,7 +62,7 @@ export default function ModuleProgressBar({
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
         <div 
-          className={`h-2 rounded-full transition-all duration-500 ${getStatusColor()}`}
+          className={`h-2 rounded-full transition-all duration-500 bg-green-500`}
           style={{ width: `${progress}%` }}
         />
       </div>

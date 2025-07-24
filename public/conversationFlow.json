@@ -18,7 +18,7 @@
     ]
   },
   {
-    "module": "Can-Do Attitude",
+    "module": "Can-Do-Attitude",
     "steps": [
       {"type": "question", "text": "What are 1-3 ways your child defines success?"},
       {"type": "question", "text": "What makes a space feel good for your child to focus or be creative in?"},
