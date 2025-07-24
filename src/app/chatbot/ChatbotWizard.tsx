@@ -63,9 +63,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
       if (progress) {
         setLocalAnswers(progress.answers || {});
         setAnswers(progress.answers || {});
-        // Optionally restore currentModule/currentStep if you want exact resume
-        // setCurrentModule(progress.currentModule || 0);
-        // setCurrentStep(progress.lastStep || 0);
+        if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
+        if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
       }
     })();
   }, [user, setAnswers]);
@@ -75,6 +74,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
     if (!user) return;
     saveUserProgress(user.uid, {
       answers: localAnswers,
+      currentModule,
       lastStep: currentStep,
       updatedAt: new Date().toISOString(),
     }).then(() => {
