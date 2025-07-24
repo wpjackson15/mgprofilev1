@@ -28,6 +28,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <footer className="w-full text-center py-4 text-xs text-gray-500 border-t mt-8">
+          <a href="/terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Terms & Conditions (PDF)</a>
+        </footer>
       </body>
     </html>
   );
