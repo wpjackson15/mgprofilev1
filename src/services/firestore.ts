@@ -11,16 +11,20 @@ export interface ProfileProgress {
 }
 
 export async function saveUserProgress(uid: string, progress: ProfileProgress) {
+  console.log('[Firestore] Saving progress for', uid, progress);
   await setDoc(doc(db, "progress", uid), {
     ...progress,
     updatedAt: new Date().toISOString(),
   });
+  console.log('[Firestore] Save complete for', uid);
 }
 
 export async function loadUserProgress(uid: string): Promise<ProfileProgress | null> {
+  console.log('[Firestore] Loading progress for', uid);
   const docSnap = await getDoc(doc(db, "progress", uid));
   if (docSnap.exists()) {
     const data = docSnap.data();
+    console.log('[Firestore] Loaded data:', data);
     return {
       answers: data.answers || {},
       lastStep: typeof data.lastStep === 'number' ? data.lastStep : 0,
@@ -28,5 +32,6 @@ export async function loadUserProgress(uid: string): Promise<ProfileProgress | n
       updatedAt: data.updatedAt || '',
     };
   }
+  console.log('[Firestore] No progress found for', uid);
   return null;
 } 

@@ -59,12 +59,16 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
   useEffect(() => {
     if (!user) return;
     (async () => {
+      console.log('[Wizard] Attempting to load progress for', user.uid);
       const progress = await loadUserProgress(user.uid);
       if (progress) {
+        console.log('[Wizard] Loaded progress:', progress);
         setLocalAnswers(progress.answers || {});
         setAnswers(progress.answers || {});
         if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
         if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
+      } else {
+        console.log('[Wizard] No progress found for', user.uid);
       }
     })();
   }, [user, setAnswers]);
@@ -72,12 +76,14 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
   // Save progress to Firestore on every answer or step change
   useEffect(() => {
     if (!user) return;
+    console.log('[Wizard] Saving progress for', user.uid, { localAnswers, currentModule, currentStep });
     saveUserProgress(user.uid, {
       answers: localAnswers,
       currentModule,
       lastStep: currentStep,
       updatedAt: new Date().toISOString(),
     }).then(() => {
+      console.log('[Wizard] Save complete, showing notification');
       setShowSaved(true);
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
       saveTimeout.current = setTimeout(() => setShowSaved(false), 2000);
