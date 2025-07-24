@@ -4,11 +4,14 @@ import ProfilePreview from "../profile-preview/ProfilePreview";
 import AuthButton from "@/components/AuthButton";
 import React, { useState, useEffect } from "react";
 import { ModuleSummariesProvider } from "@/hooks/ModuleSummariesContext";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function ChatbotPage() {
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [accepted, setAccepted] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Check localStorage for prior acceptance
@@ -16,6 +19,13 @@ export default function ChatbotPage() {
       const val = localStorage.getItem("mgp_terms_accepted");
       if (val === "true") setAccepted(true);
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleStart = () => {
@@ -58,6 +68,7 @@ export default function ChatbotPage() {
             <div className="flex-1">
               <ChatbotWizard 
                 setAnswers={setAnswers} 
+                user={user}
                 onModuleComplete={(module, answers) => {
                   // This will trigger summary generation in the ProfilePreview
                   console.log(`Module ${module} completed with ${answers.length} answers`);

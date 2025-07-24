@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
+import { saveUserProgress, loadUserProgress } from "@/services/firestore";
 
 interface Step {
   type: "question" | "auto_summary";
@@ -20,9 +21,10 @@ interface Message {
 interface ChatbotWizardProps {
   setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   onModuleComplete?: (module: string, answers: string[]) => void;
+  user: import("firebase/auth").User | null;
 }
 
-export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotWizardProps) {
+export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: ChatbotWizardProps) {
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,6 +51,31 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
         }
       });
   }, []);
+
+  // Load progress from Firestore on mount or when user changes
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const progress = await loadUserProgress(user.uid);
+      if (progress) {
+        setLocalAnswers(progress.answers || {});
+        setAnswers(progress.answers || {});
+        // Optionally restore currentModule/currentStep if you want exact resume
+        // setCurrentModule(progress.currentModule || 0);
+        // setCurrentStep(progress.lastStep || 0);
+      }
+    })();
+  }, [user, setAnswers]);
+
+  // Save progress to Firestore on every answer or step change
+  useEffect(() => {
+    if (!user) return;
+    saveUserProgress(user.uid, {
+      answers: localAnswers,
+      lastStep: currentStep,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [localAnswers, currentStep, user]);
 
   // Autoscroll to bottom when messages change
   useEffect(() => {
