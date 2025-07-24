@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { saveUserProgress, loadUserProgress } from "@/services/firestore";
+import { CheckCircle } from "lucide-react";
 
 interface Step {
   type: "question" | "auto_summary";
@@ -36,6 +37,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
   // Add a ref for the chat container
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { generateSummary } = useModuleSummaries();
+  const [showSaved, setShowSaved] = useState(false);
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load conversation flow
   useEffect(() => {
@@ -74,8 +77,19 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
       answers: localAnswers,
       lastStep: currentStep,
       updatedAt: new Date().toISOString(),
+    }).then(() => {
+      setShowSaved(true);
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      saveTimeout.current = setTimeout(() => setShowSaved(false), 2000);
     });
   }, [localAnswers, currentStep, user]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    };
+  }, []);
 
   // Autoscroll to bottom when messages change
   useEffect(() => {
@@ -246,6 +260,12 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
           </div>
         ))}
       </div>
+      {user && showSaved && (
+        <div className="flex items-center justify-center gap-2 text-green-700 bg-green-100 border border-green-300 rounded px-3 py-2 mb-2 animate-fade-in">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <span className="font-medium">Progress saved!</span>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
