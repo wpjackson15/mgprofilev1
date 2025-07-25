@@ -61,13 +61,36 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
 
   // Sync progress from hook to local state on load
   useEffect(() => {
-    if (progress) {
+    if (progress && flow.length > 0) {
       setLocalAnswers(progress.answers || {});
       setAnswers(progress.answers || {});
       if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
       if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
+
+      // Rebuild chat history up to current module/step
+      const rebuiltMessages: Message[] = [];
+      for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
+        const module = flow[m];
+        if (!module) continue;
+        const lastStepInModule = m === (progress.currentModule ?? 0) ? (progress.lastStep ?? 0) : module.steps.length - 1;
+        for (let s = 0; s <= lastStepInModule; s++) {
+          const step = module.steps[s];
+          if (!step) continue;
+          // Add bot question/summary
+          rebuiltMessages.push({ sender: "bot", text: step.text });
+          // Add user answer(s) if question
+          if (step.type === "question") {
+            const key = `${module.module}-${s}`;
+            const answersArr = (progress.answers && progress.answers[key]) || [];
+            for (const ans of answersArr) {
+              rebuiltMessages.push({ sender: "user", text: ans });
+            }
+          }
+        }
+      }
+      setMessages(rebuiltMessages);
     }
-  }, [progress, setAnswers]);
+  }, [progress, flow, setAnswers]);
 
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
