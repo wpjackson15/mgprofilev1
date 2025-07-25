@@ -33,7 +33,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { generateSummary } = useModuleSummaries();
+  const { summaries, generateSummary } = useModuleSummaries();
   const [showSaved, setShowSaved] = useState(false);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -131,12 +131,14 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
             moduleAnswers.push(...stepAnswers);
           }
         }
-        if (moduleAnswers.length > 0) {
+        // Only generate summary if not already completed
+        const existingSummary = summaries.find((s: { module: string; status: string }) => s.module === moduleData.module && s.status === "completed");
+        if (moduleAnswers.length > 0 && !existingSummary) {
           generateSummary(moduleData.module, moduleAnswers);
         }
       }
     }
-  }, [progress, flow, generateSummary]);
+  }, [progress, flow, generateSummary, summaries]);
 
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
