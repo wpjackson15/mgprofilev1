@@ -112,7 +112,12 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
 
   // Regenerate summaries for completed modules on load
   useEffect(() => {
-    if (progress && flow.length > 0 && generateSummary) {
+    if (
+      progress &&
+      flow.length > 0 &&
+      generateSummary &&
+      Object.keys(progress.answers || {}).length > 0
+    ) {
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
         const moduleData = flow[m];
         if (!moduleData) continue;
