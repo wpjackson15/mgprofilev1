@@ -136,6 +136,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
     if (!user) return;
+    if (isGeneratingSummary) return; // Prevent autosave during summary generation
     if (Object.keys(localAnswers).length === 0 && currentStep === 0 && currentModule === 0) return;
     save({
       answers: localAnswers,
@@ -147,7 +148,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
       saveTimeout.current = setTimeout(() => setShowSaved(false), 2000);
     });
-  }, [localAnswers, currentStep, currentModule, user, save]);
+  }, [localAnswers, currentStep, currentModule, user, save, isGeneratingSummary]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
