@@ -12,19 +12,6 @@ interface ProfilePreviewProps {
   onClearChat?: () => void;
 }
 
-function generateSummaryText(answers: Record<string, string[]>): string {
-  let summary = "My Genius Profile Summary\n\n";
-  Object.entries(answers).forEach(([key, value]) => {
-    const [module] = key.split("-");
-    summary += `--- ${module.replace(/-/g, " ")} ---\n`;
-    value.forEach((resp, i) => {
-      summary += `• ${resp}\n`;
-    });
-    summary += "\n";
-  });
-  return summary;
-}
-
 function generateLLMSummaryEmail(summaries: { module: string; summary: string }[], answers: Record<string, string[]>) {
   let email = "My Genius Profile (LLM Summaries)\n\n";
   summaries.forEach(({ module, summary }) => {

@@ -28,12 +28,8 @@ export default function AuthButton() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: unknown) {
-      if (typeof err === "object" && err && "message" in err) {
-        setError(String((err as { message: string }).message));
-      } else {
-        setError("Login failed");
-      }
+    } catch {
+      setError("Login failed");
     }
     setLoading(false);
   };
@@ -44,12 +40,8 @@ export default function AuthButton() {
     setError("");
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-    } catch (err: unknown) {
-      if (typeof err === "object" && err && "message" in err) {
-        setError(String((err as { message: string }).message));
-      } else {
-        setError("Registration failed");
-      }
+    } catch {
+      setError("Registration failed");
     }
     setLoading(false);
   };
@@ -66,7 +58,7 @@ export default function AuthButton() {
     try {
       await sendPasswordResetEmail(auth, resetEmail);
       setResetMessage("Password reset email sent! Check your inbox.");
-    } catch (err: unknown) {
+    } catch {
       setResetMessage("Failed to send reset email. Please check the address and try again.");
     }
   };

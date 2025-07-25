@@ -17,19 +17,6 @@ export default function ModuleProgressBar({
   progress,
   onRetry
 }: ModuleProgressBarProps) {
-  const getStatusColor = () => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500";
-      case "generating":
-        return "bg-blue-500";
-      case "error":
-        return "bg-red-500";
-      default:
-        return "bg-gray-300";
-    }
-  };
-
   const getStatusText = () => {
     switch (status) {
       case "completed":

@@ -13,7 +13,7 @@ export default function ChatbotPage() {
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [clearChatSignal, setClearChatSignal] = useState(0);
-  const chatbotRef = useRef<any>(null);
+  const chatbotRef = useRef<{ clearChat: () => void } | null>(null);
 
   useEffect(() => {
     // Check localStorage for prior acceptance

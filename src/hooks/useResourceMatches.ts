@@ -46,7 +46,7 @@ export function useResourceMatches() {
         setResources(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Failed to load resources");
         setLoading(false);
       });
