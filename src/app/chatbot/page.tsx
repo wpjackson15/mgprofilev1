@@ -2,7 +2,7 @@
 import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
 import AuthButton from "@/components/AuthButton";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ModuleSummariesProvider } from "@/hooks/ModuleSummariesContext";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -12,6 +12,8 @@ export default function ChatbotPage() {
   const [accepted, setAccepted] = useState(false);
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [clearChatSignal, setClearChatSignal] = useState(0);
+  const chatbotRef = useRef<any>(null);
 
   useEffect(() => {
     // Check localStorage for prior acceptance
@@ -66,9 +68,11 @@ export default function ChatbotPage() {
         ) : (
           <div className="flex flex-col sm:flex-row gap-6 w-full max-w-5xl">
             <div className="flex-1">
-              <ChatbotWizard 
-                setAnswers={setAnswers} 
+              <ChatbotWizard
+                ref={chatbotRef}
+                setAnswers={setAnswers}
                 user={user}
+                clearChatSignal={clearChatSignal}
                 onModuleComplete={(module, answers) => {
                   // This will trigger summary generation in the ProfilePreview
                   console.log(`Module ${module} completed with ${answers.length} answers`);
@@ -76,7 +80,10 @@ export default function ChatbotPage() {
               />
             </div>
             <div className="flex-1">
-              <ProfilePreview answers={answers} />
+              <ProfilePreview
+                answers={answers}
+                onClearChat={() => setClearChatSignal((sig) => sig + 1)}
+              />
             </div>
           </div>
         )}

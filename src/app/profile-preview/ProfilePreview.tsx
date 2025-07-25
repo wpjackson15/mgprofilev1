@@ -9,6 +9,7 @@ import ModuleProgressBar from "@/components/ModuleProgressBar";
 
 interface ProfilePreviewProps {
   answers: Record<string, string[]>;
+  onClearChat?: () => void;
 }
 
 function generateSummaryText(answers: Record<string, string[]>): string {
@@ -50,7 +51,7 @@ function generateLLMSummaryEmail(summaries: { module: string; summary: string }[
 type ConversationStep = { type: string; text: string };
 type ConversationModule = { module: string; steps: ConversationStep[] };
 
-export default function ProfilePreview({ answers }: ProfilePreviewProps) {
+export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const { summaries, generateSummary, resetSummaries } = useModuleSummaries();
@@ -185,7 +186,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
           <div className="flex flex-col items-center gap-2">
             <span className="text-sm text-gray-700">Are you sure you want to clear all progress?</span>
             <div className="flex gap-2">
-              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); resetSummaries(); setShowConfirm(false); }}>Yes, clear all</button>
+              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); resetSummaries(); setShowConfirm(false); if (onClearChat) onClearChat(); }}>Yes, clear all</button>
               <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setShowConfirm(false)}>Cancel</button>
             </div>
           </div>

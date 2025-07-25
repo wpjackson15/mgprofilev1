@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { CheckCircle } from "lucide-react";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
@@ -23,9 +23,10 @@ interface ChatbotWizardProps {
   setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   onModuleComplete?: (module: string, answers: string[]) => void;
   user: import("firebase/auth").User | null;
+  clearChatSignal?: number; // increment this prop to trigger chat clear
 }
 
-export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotWizardProps) {
+const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleComplete, clearChatSignal }: ChatbotWizardProps, ref) {
   const [flow, setFlow] = useState<Module[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -44,6 +45,19 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Expose clearChat to parent if needed
+  useImperativeHandle(ref, () => ({
+    clearChat: () => setMessages([])
+  }));
+
+  // Clear chat when clearChatSignal changes
+  useEffect(() => {
+    setMessages([]);
+    setLocalAnswers({});
+    setCurrentModule(0);
+    setCurrentStep(0);
+  }, [clearChatSignal]);
+
   // Load conversation flow
   useEffect(() => {
     fetch("/conversationFlow.json")
@@ -59,7 +73,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       });
   }, []);
 
-  // Sync progress from hook to local state on load
+  // Improved chat history reconstruction
   useEffect(() => {
     if (progress && flow.length > 0) {
       setLocalAnswers(progress.answers || {});
@@ -67,7 +81,7 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
       if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
 
-      // Rebuild chat history up to current module/step
+      // Rebuild chat history up to current module/step, including summaries
       const rebuiltMessages: Message[] = [];
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
         const module = flow[m];
@@ -91,6 +105,29 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       setMessages(rebuiltMessages);
     }
   }, [progress, flow, setAnswers]);
+
+  // Regenerate summaries for completed modules on load
+  useEffect(() => {
+    if (progress && flow.length > 0 && generateSummary) {
+      for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
+        const module = flow[m];
+        if (!module) continue;
+        // Collect all answers for this module
+        const moduleAnswers: string[] = [];
+        for (let s = 0; s < module.steps.length; s++) {
+          const step = module.steps[s];
+          if (step.type === "question") {
+            const key = `${module.module}-${s}`;
+            const stepAnswers = (progress.answers && progress.answers[key]) || [];
+            moduleAnswers.push(...stepAnswers);
+          }
+        }
+        if (moduleAnswers.length > 0) {
+          generateSummary(module.module, moduleAnswers);
+        }
+      }
+    }
+  }, [progress, flow, generateSummary]);
 
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
@@ -293,4 +330,6 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotW
       </form>
     </div>
   );
-} 
+});
+
+export default ChatbotWizard; 
