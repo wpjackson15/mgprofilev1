@@ -84,17 +84,17 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       // Rebuild chat history up to current module/step, including summaries
       const rebuiltMessages: Message[] = [];
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
-        const module = flow[m];
-        if (!module) continue;
-        const lastStepInModule = m === (progress.currentModule ?? 0) ? (progress.lastStep ?? 0) : module.steps.length - 1;
+        const moduleData = flow[m];
+        if (!moduleData) continue;
+        const lastStepInModule = m === (progress.currentModule ?? 0) ? (progress.lastStep ?? 0) : moduleData.steps.length - 1;
         for (let s = 0; s <= lastStepInModule; s++) {
-          const step = module.steps[s];
+          const step = moduleData.steps[s];
           if (!step) continue;
           // Add bot question/summary
           rebuiltMessages.push({ sender: "bot", text: step.text });
           // Add user answer(s) if question
           if (step.type === "question") {
-            const key = `${module.module}-${s}`;
+            const key = `${moduleData.module}-${s}`;
             const answersArr = (progress.answers && progress.answers[key]) || [];
             for (const ans of answersArr) {
               rebuiltMessages.push({ sender: "user", text: ans });
@@ -110,20 +110,20 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   useEffect(() => {
     if (progress && flow.length > 0 && generateSummary) {
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
-        const module = flow[m];
-        if (!module) continue;
+        const moduleData = flow[m];
+        if (!moduleData) continue;
         // Collect all answers for this module
         const moduleAnswers: string[] = [];
-        for (let s = 0; s < module.steps.length; s++) {
-          const step = module.steps[s];
+        for (let s = 0; s < moduleData.steps.length; s++) {
+          const step = moduleData.steps[s];
           if (step.type === "question") {
-            const key = `${module.module}-${s}`;
+            const key = `${moduleData.module}-${s}`;
             const stepAnswers = (progress.answers && progress.answers[key]) || [];
             moduleAnswers.push(...stepAnswers);
           }
         }
         if (moduleAnswers.length > 0) {
-          generateSummary(module.module, moduleAnswers);
+          generateSummary(moduleData.module, moduleAnswers);
         }
       }
     }
@@ -191,7 +191,6 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
 
   // Handle summary generation - now automatically triggered
   const handleSummaryConsent = async (text: string) => {
-    const userResponse = text.trim().toLowerCase();
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     const currentModuleData = flow[currentModule];
     const moduleAnswers: string[] = [];
@@ -214,7 +213,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         if (onModuleComplete) {
           onModuleComplete(currentModuleData.module, moduleAnswers);
         }
-      } catch (error) {
+      } catch {
         setMessages((msgs) => [
           ...msgs,
           { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
