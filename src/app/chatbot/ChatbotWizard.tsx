@@ -56,6 +56,10 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     setLocalAnswers({});
     setCurrentModule(0);
     setCurrentStep(0);
+    // After clearing, show the first question if flow is loaded
+    if (flow.length > 0 && flow[0].steps.length > 0) {
+      setMessages([{ sender: "bot", text: flow[0].steps[0].text }]);
+    }
   }, [clearChatSignal]);
 
   // Load conversation flow
@@ -81,7 +85,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
       if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
 
-      // Rebuild chat history up to current module/step, including summaries
+      // Rebuild chat history up to current module/step, including user answers
       const rebuiltMessages: Message[] = [];
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
         const moduleData = flow[m];
