@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
-import { saveUserProgress, loadUserProgress } from "@/services/firestore";
 import { CheckCircle } from "lucide-react";
+import { useProfileProgress } from "@/hooks/useProfileProgress";
 
 interface Step {
   type: "question" | "auto_summary";
@@ -25,20 +25,24 @@ interface ChatbotWizardProps {
   user: import("firebase/auth").User | null;
 }
 
-export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: ChatbotWizardProps) {
+export default function ChatbotWizard({ setAnswers, onModuleComplete }: ChatbotWizardProps) {
   const [flow, setFlow] = useState<Module[]>([]);
-  const [currentModule, setCurrentModule] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
-  // Add a ref for the chat container
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { generateSummary } = useModuleSummaries();
   const [showSaved, setShowSaved] = useState(false);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Use the custom hook for progress
+  const { progress, save, user, loading } = useProfileProgress();
+
+  // Local state mirrors progress for editing before save
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
+  const [currentModule, setCurrentModule] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   // Load conversation flow
   useEffect(() => {
@@ -55,40 +59,31 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
       });
   }, []);
 
-  // Load progress from Firestore on mount or when user changes
+  // Sync progress from hook to local state on load
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      console.log('[Wizard] Attempting to load progress for', user.uid);
-      const progress = await loadUserProgress(user.uid);
-      if (progress) {
-        console.log('[Wizard] Loaded progress:', progress);
-        setLocalAnswers(progress.answers || {});
-        setAnswers(progress.answers || {});
-        if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
-        if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
-      } else {
-        console.log('[Wizard] No progress found for', user.uid);
-      }
-    })();
-  }, [user, setAnswers]);
+    if (progress) {
+      setLocalAnswers(progress.answers || {});
+      setAnswers(progress.answers || {});
+      if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
+      if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
+    }
+  }, [progress, setAnswers]);
 
-  // Save progress to Firestore on every answer or step change
+  // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
     if (!user) return;
-    console.log('[Wizard] Saving progress for', user.uid, { localAnswers, currentModule, currentStep });
-    saveUserProgress(user.uid, {
+    if (Object.keys(localAnswers).length === 0 && currentStep === 0 && currentModule === 0) return;
+    save({
       answers: localAnswers,
       currentModule,
       lastStep: currentStep,
       updatedAt: new Date().toISOString(),
     }).then(() => {
-      console.log('[Wizard] Save complete, showing notification');
       setShowSaved(true);
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
       saveTimeout.current = setTimeout(() => setShowSaved(false), 2000);
     });
-  }, [localAnswers, currentStep, user]);
+  }, [localAnswers, currentStep, currentModule, user, save]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -104,13 +99,8 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
       }
     };
-    
-    // Scroll immediately
     scrollToBottom();
-    
-    // Also scroll after a small delay to ensure content is rendered
     const timeoutId = setTimeout(scrollToBottom, 100);
-    
     return () => clearTimeout(timeoutId);
   }, [messages]);
 
@@ -142,14 +132,9 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
   // Handle summary generation - now automatically triggered
   const handleSummaryConsent = async (text: string) => {
     const userResponse = text.trim().toLowerCase();
-    
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
-    
-    // Always generate summary automatically (no need to ask)
     const currentModuleData = flow[currentModule];
     const moduleAnswers: string[] = [];
-    
-    // Collect all answers for this module
     for (let i = 0; i < currentStep; i++) {
       const step = currentModuleData.steps[i];
       if (step.type === "question") {
@@ -158,21 +143,14 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
         moduleAnswers.push(...stepAnswers);
       }
     }
-
     if (moduleAnswers.length > 0) {
       setIsGeneratingSummary(true);
-      
-      // Show generating message
       setMessages((msgs) => [
         ...msgs,
         { sender: "bot", text: "Generating a summary of your responses..." },
       ]);
-
       try {
-        // Generate summary
-        const summary = await generateSummary(currentModuleData.module, moduleAnswers);
-        
-        // Notify parent component (ProfilePreview will show summary)
+        await generateSummary(currentModuleData.module, moduleAnswers);
         if (onModuleComplete) {
           onModuleComplete(currentModuleData.module, moduleAnswers);
         }
@@ -190,8 +168,6 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
         { sender: "bot", text: "I don't have enough information to generate a summary yet. Let's continue with the questions." },
       ]);
     }
-    
-    // Advance to next step after showing summary, skipping auto_summary
     setTimeout(() => nextStep(true), 2000);
     setInput("");
   };
@@ -202,7 +178,6 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
     const currentModuleData = flow[currentModule];
     if (currentStep + 1 < currentModuleData.steps.length) {
       const nextStepObj = currentModuleData.steps[currentStep + 1];
-      // If the next step is auto_summary and we're skipping, go to next module
       if (nextStepObj.type === "auto_summary" && skipAutoSummary) {
         if (currentModule + 1 < flow.length) {
           setCurrentModule(currentModule + 1);
@@ -224,7 +199,6 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
         ...msgs,
         { sender: "bot", text: nextStepObj.text },
       ]);
-      // If the next step is auto_summary, trigger summary generation immediately
       if (nextStepObj.type === "auto_summary") {
         setTimeout(() => handleSummaryConsent("yes"), 500);
       }
@@ -254,6 +228,10 @@ export default function ChatbotWizard({ setAnswers, onModuleComplete, user }: Ch
     }
     inputRef.current?.focus();
   };
+
+  if (loading) {
+    return <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh] items-center justify-center text-gray-600">Loading your progress...</div>;
+  }
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">

@@ -1,7 +1,5 @@
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-import { app } from "@/lib/firebase";
-
-const db = getFirestore(app);
+import { db } from "@/lib/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export interface ProfileProgress {
   answers: Record<string, string[]>;
@@ -11,27 +9,15 @@ export interface ProfileProgress {
 }
 
 export async function saveUserProgress(uid: string, progress: ProfileProgress) {
-  console.log('[Firestore] Saving progress for', uid, progress);
-  await setDoc(doc(db, "progress", uid), {
-    ...progress,
-    updatedAt: new Date().toISOString(),
-  });
-  console.log('[Firestore] Save complete for', uid);
+  const docRef = doc(db, "progress", uid);
+  await setDoc(docRef, progress, { merge: true });
 }
 
 export async function loadUserProgress(uid: string): Promise<ProfileProgress | null> {
-  console.log('[Firestore] Loading progress for', uid);
-  const docSnap = await getDoc(doc(db, "progress", uid));
+  const docRef = doc(db, "progress", uid);
+  const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    const data = docSnap.data();
-    console.log('[Firestore] Loaded data:', data);
-    return {
-      answers: data.answers || {},
-      lastStep: typeof data.lastStep === 'number' ? data.lastStep : 0,
-      currentModule: typeof data.currentModule === 'number' ? data.currentModule : 0,
-      updatedAt: data.updatedAt || '',
-    };
+    return docSnap.data() as ProfileProgress;
   }
-  console.log('[Firestore] No progress found for', uid);
   return null;
 } 
