@@ -186,11 +186,19 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       };
       setLocalAnswers(newAnswers);
       setAnswers(newAnswers);
-      // Move to next step
-      setTimeout(() => nextStep(), 500);
+      // Check if next step is auto_summary (i.e., last question in module)
+      if (
+        currentStep + 1 < currentModuleData.steps.length &&
+        currentModuleData.steps[currentStep + 1].type === "auto_summary"
+      ) {
+        setTimeout(() => nextStep(), 500); // Advance to summary step
+        setTimeout(() => handleSummaryConsent("yes"), 600); // Trigger summary after advancing
+      } else {
+        // Move to next step
+        setTimeout(() => nextStep(), 500);
+      }
     } else if (step.type === "auto_summary") {
-      // Automatically generate summary
-      handleSummaryConsent("yes");
+      // Do not trigger summary here; it is handled after last question
     }
   };
 
@@ -263,9 +271,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         ...msgs,
         { sender: "bot", text: nextStepObj.text },
       ]);
-      if (nextStepObj.type === "auto_summary") {
-        setTimeout(() => handleSummaryConsent("yes"), 500);
-      }
+      // Removed summary trigger from here
     } else if (currentModule + 1 < flow.length) {
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
