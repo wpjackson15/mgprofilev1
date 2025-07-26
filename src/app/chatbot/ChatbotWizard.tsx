@@ -36,6 +36,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const { summaries, generateSummary } = useModuleSummaries();
   const [showSaved, setShowSaved] = useState(false);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const hasLoadedSummaries = useRef(false);
 
   // Use the custom hook for progress
   const { progress, save, user, loading } = useProfileProgress();
@@ -110,9 +111,10 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     }
   }, [progress, flow, setAnswers]);
 
-  // Regenerate summaries for completed modules on load
+  // Regenerate summaries for completed modules on load (only once)
   useEffect(() => {
     if (
+      !hasLoadedSummaries.current &&
       progress &&
       flow.length > 0 &&
       generateSummary &&
@@ -137,8 +139,14 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           generateSummary(moduleData.module, moduleAnswers);
         }
       }
+      hasLoadedSummaries.current = true;
     }
-  }, [progress, flow, generateSummary, summaries]);
+  }, [progress, flow, generateSummary]);
+
+  // Reset hasLoadedSummaries when chat is cleared
+  useEffect(() => {
+    hasLoadedSummaries.current = false;
+  }, [clearChatSignal]);
 
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {
