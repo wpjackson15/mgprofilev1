@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { Upload, Plus, Users, BookOpen, X, FileText, User, Trash2, Download } from "lucide-react";
+import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download } from "lucide-react";
 
 interface StudentProfile {
   id: string;
@@ -57,7 +57,6 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         // Simple CSV parsing (you can enhance this)
         const lines = text.split('\n').filter(line => line.trim());
-        const headers = lines[0].split(',').map(h => h.trim());
         
         for (let j = 1; j < lines.length; j++) {
           const values = lines[j].split(',').map(v => v.trim());
@@ -80,7 +79,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
       } else {
         setError('No valid profiles found in uploaded files');
       }
-    } catch (err) {
+    } catch {
       setError('Error processing files. Please check the format.');
     } finally {
       setIsUploading(false);

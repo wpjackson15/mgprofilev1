@@ -165,7 +165,7 @@ export default function ChatbotPage() {
               {/* Recommended Resources Section - Spans across bottom */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-center text-sm font-medium">
-                  When you finish, you'll unlock local resources matched to your child's Genius Profile!
+                  When you finish, you&apos;ll unlock local resources matched to your child&apos;s Genius Profile!
                 </div>
                 <h3 className="text-lg font-semibold mb-4 text-green-700">Recommended Local Resources</h3>
                 {resourcesLoading ? (

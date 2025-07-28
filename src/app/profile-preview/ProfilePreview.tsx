@@ -37,11 +37,10 @@ function generateLLMSummaryEmail(summaries: { module: string; summary: string }[
 type ConversationStep = { type: string; text: string };
 type ConversationModule = { module: string; steps: ConversationStep[] };
 
-export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewProps) {
+export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const { summaries, generateSummary, resetSummaries } = useModuleSummaries();
-  const { reset: resetProgress } = useProfileProgress();
+  const { summaries, generateSummary } = useModuleSummaries();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -99,7 +98,7 @@ export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewP
     <div className="flex flex-col h-[600px]">
       <div className="flex-1 overflow-y-auto">
         <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-          This panel shows a real-time summary of your child's strengths and story as you answer questions.
+          This panel shows a real-time summary of your child&apos;s strengths and story as you answer questions.
         </p>
         
         {Object.keys(grouped).length === 0 ? (
