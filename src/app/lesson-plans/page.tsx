@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { Upload, Plus, Users, BookOpen } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Upload, Plus, Users, BookOpen, X, FileText, User, Trash2, Download } from "lucide-react";
 
 interface StudentProfile {
   id: string;
@@ -8,6 +8,7 @@ interface StudentProfile {
   grade: string;
   subject: string;
   profile: string;
+  createdAt: string;
 }
 
 interface LessonPlan {
@@ -18,26 +19,381 @@ interface LessonPlan {
   objectives: string[];
   activities: string[];
   assessment: string;
+  materials: string[];
+  duration: string;
   createdAt: string;
+}
+
+interface UploadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onUpload: (profiles: StudentProfile[]) => void;
+}
+
+interface ManualEntryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (profile: StudentProfile) => void;
+}
+
+function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const profiles: StudentProfile[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const text = await file.text();
+        
+        // Simple CSV parsing (you can enhance this)
+        const lines = text.split('\n').filter(line => line.trim());
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        for (let j = 1; j < lines.length; j++) {
+          const values = lines[j].split(',').map(v => v.trim());
+          if (values.length >= 4) {
+            profiles.push({
+              id: `upload-${Date.now()}-${j}`,
+              name: values[0] || 'Unknown',
+              grade: values[1] || 'Unknown',
+              subject: values[2] || 'Unknown',
+              profile: values[3] || 'No profile provided',
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      if (profiles.length > 0) {
+        onUpload(profiles);
+        onClose();
+      } else {
+        setError('No valid profiles found in uploaded files');
+      }
+    } catch (err) {
+      setError('Error processing files. Please check the format.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Upload Student Profiles</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Upload CSV files with columns: Name, Grade, Subject, Profile
+          </p>
+          <div className="text-center">
+            <a
+              href="/sample-student-profiles.csv"
+              download
+              className="text-blue-600 hover:text-blue-800 text-sm underline"
+            >
+              Download sample CSV file
+            </a>
+          </div>
+          
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".csv,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-600 mb-2">
+              {isUploading ? 'Processing files...' : 'Click to select files or drag and drop'}
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isUploading ? 'Uploading...' : 'Select Files'}
+            </button>
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded">
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ManualEntryModal({ isOpen, onClose, onAdd }: ManualEntryModalProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    grade: '',
+    subject: '',
+    profile: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.grade || !formData.subject || !formData.profile) {
+      return;
+    }
+
+    const newProfile: StudentProfile = {
+      id: `manual-${Date.now()}`,
+      ...formData,
+      createdAt: new Date().toISOString()
+    };
+
+    onAdd(newProfile);
+    setFormData({ name: '', grade: '', subject: '', profile: '' });
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Add Student Profile</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Student Name *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Grade Level *
+            </label>
+            <select
+              value={formData.grade}
+              onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select Grade</option>
+              <option value="K">Kindergarten</option>
+              <option value="1">1st Grade</option>
+              <option value="2">2nd Grade</option>
+              <option value="3">3rd Grade</option>
+              <option value="4">4th Grade</option>
+              <option value="5">5th Grade</option>
+              <option value="6">6th Grade</option>
+              <option value="7">7th Grade</option>
+              <option value="8">8th Grade</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Subject *
+            </label>
+            <input
+              type="text"
+              value={formData.subject}
+              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Math, Science, ELA"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Student Profile *
+            </label>
+            <textarea
+              value={formData.profile}
+              onChange={(e) => setFormData({ ...formData, profile: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe the student's learning style, strengths, challenges, cultural background, interests..."
+              required
+            />
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            >
+              Add Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 export default function LessonPlansPage() {
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const handleUploadFiles = () => {
-    // TODO: Implement file upload functionality
-    console.log("Upload files clicked");
+    setIsUploadModalOpen(true);
   };
 
   const handleManualEntry = () => {
-    // TODO: Implement manual entry functionality
-    console.log("Manual entry clicked");
+    setIsManualModalOpen(true);
   };
 
-  const handleGenerateLessonPlan = () => {
-    // TODO: Implement lesson plan generation with LLM
-    console.log("Generate lesson plan clicked");
+  const handleAddProfile = (profile: StudentProfile) => {
+    setStudentProfiles(prev => [...prev, profile]);
+  };
+
+  const handleUploadProfiles = (profiles: StudentProfile[]) => {
+    setStudentProfiles(prev => [...prev, ...profiles]);
+  };
+
+  const handleRemoveProfile = (id: string) => {
+    setStudentProfiles(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleGenerateLessonPlan = async () => {
+    if (studentProfiles.length === 0) return;
+
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      // Create a prompt for the AI based on student profiles
+      const profilesText = studentProfiles.map(p => 
+        `Student: ${p.name} (Grade ${p.grade}, ${p.subject})\nProfile: ${p.profile}`
+      ).join('\n\n');
+
+      const prompt = `Create a culturally responsive, differentiated lesson plan based on these student profiles:
+
+${profilesText}
+
+Please provide a comprehensive lesson plan with:
+1. Title and subject
+2. Grade level
+3. Learning objectives
+4. Engaging activities that accommodate different learning styles
+5. Assessment methods
+6. Required materials
+7. Estimated duration
+
+Format the response as JSON with the following structure:
+{
+  "title": "Lesson Title",
+  "subject": "Subject",
+  "grade": "Grade Level",
+  "objectives": ["Objective 1", "Objective 2"],
+  "activities": ["Activity 1", "Activity 2"],
+  "assessment": "Assessment description",
+  "materials": ["Material 1", "Material 2"],
+  "duration": "45 minutes"
+}`;
+
+      // Call your existing AI service (you'll need to implement this)
+      const response = await fetch('/api/generate-lesson-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, studentProfiles })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate lesson plan');
+      }
+
+      const data = await response.json();
+      
+      const newLessonPlan: LessonPlan = {
+        id: `lesson-${Date.now()}`,
+        ...data,
+        createdAt: new Date().toISOString()
+      };
+
+      setLessonPlan(newLessonPlan);
+    } catch (error) {
+      setGenerationError('Failed to generate lesson plan. Please try again.');
+      console.error('Lesson plan generation error:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadLessonPlan = () => {
+    if (!lessonPlan) return;
+    
+    const content = `Lesson Plan: ${lessonPlan.title}
+Subject: ${lessonPlan.subject}
+Grade: ${lessonPlan.grade}
+Duration: ${lessonPlan.duration}
+
+OBJECTIVES:
+${lessonPlan.objectives.map(obj => `• ${obj}`).join('\n')}
+
+ACTIVITIES:
+${lessonPlan.activities.map(act => `• ${act}`).join('\n')}
+
+ASSESSMENT:
+${lessonPlan.assessment}
+
+MATERIALS:
+${lessonPlan.materials.map(mat => `• ${mat}`).join('\n')}
+
+Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
+`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -52,7 +408,7 @@ export default function LessonPlansPage() {
         {/* Student Profiles Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Student Profiles</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Student Profiles ({studentProfiles.length})</h2>
             <div className="flex gap-3">
               <button
                 onClick={handleUploadFiles}
@@ -80,25 +436,73 @@ export default function LessonPlansPage() {
             </div>
           )}
 
-          {/* TODO: Add student profiles list when profiles are added */}
+          {/* Student Profiles List */}
+          {studentProfiles.length > 0 && (
+            <div className="space-y-4">
+              {studentProfiles.map((profile) => (
+                <div key={profile.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <User className="w-5 h-5 text-blue-600" />
+                        <h3 className="font-semibold text-gray-800">{profile.name}</h3>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">
+                          Grade {profile.grade}
+                        </span>
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded">
+                          {profile.subject}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm">{profile.profile}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveProfile(profile.id)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Generated Lesson Plan Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Generated Lesson Plan</h2>
-            {studentProfiles.length > 0 && (
-              <button
-                onClick={handleGenerateLessonPlan}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Generate Lesson Plan
-              </button>
-            )}
+            <div className="flex gap-3">
+              {lessonPlan && (
+                <button
+                  onClick={handleDownloadLessonPlan}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              )}
+              {studentProfiles.length > 0 && (
+                <button
+                  onClick={handleGenerateLessonPlan}
+                  disabled={isGenerating}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  {isGenerating ? 'Generating...' : 'Generate Lesson Plan'}
+                </button>
+              )}
+            </div>
           </div>
 
+          {/* Error State */}
+          {generationError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{generationError}</p>
+            </div>
+          )}
+
           {/* Empty State */}
-          {!lessonPlan && (
+          {!lessonPlan && !isGenerating && (
             <div className="text-center py-12">
               <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Ready to Generate</p>
@@ -111,9 +515,83 @@ export default function LessonPlansPage() {
             </div>
           )}
 
-          {/* TODO: Add lesson plan display when generated */}
+          {/* Loading State */}
+          {isGenerating && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Generating your personalized lesson plan...</p>
+            </div>
+          )}
+
+          {/* Lesson Plan Display */}
+          {lessonPlan && !isGenerating && (
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">{lessonPlan.title}</h3>
+                <div className="flex gap-4 text-sm text-gray-600">
+                  <span>Subject: {lessonPlan.subject}</span>
+                  <span>Grade: {lessonPlan.grade}</span>
+                  <span>Duration: {lessonPlan.duration}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Learning Objectives</h4>
+                <ul className="space-y-2">
+                  {lessonPlan.objectives.map((objective, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-1">•</span>
+                      <span className="text-gray-700">{objective}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Activities</h4>
+                <ul className="space-y-2">
+                  {lessonPlan.activities.map((activity, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-green-600 mt-1">•</span>
+                      <span className="text-gray-700">{activity}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Assessment</h4>
+                <p className="text-gray-700">{lessonPlan.assessment}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Materials Needed</h4>
+                <ul className="space-y-1">
+                  {lessonPlan.materials.map((material, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <span className="text-purple-600">•</span>
+                      <span className="text-gray-700">{material}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modals */}
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleUploadProfiles}
+      />
+      
+      <ManualEntryModal
+        isOpen={isManualModalOpen}
+        onClose={() => setIsManualModalOpen(false)}
+        onAdd={handleAddProfile}
+      />
     </main>
   );
 } 
