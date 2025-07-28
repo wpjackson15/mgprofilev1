@@ -2,9 +2,28 @@
 import React, { useState } from "react";
 import { Upload, Plus, Users, BookOpen } from "lucide-react";
 
+interface StudentProfile {
+  id: string;
+  name: string;
+  grade: string;
+  subject: string;
+  profile: string;
+}
+
+interface LessonPlan {
+  id: string;
+  title: string;
+  subject: string;
+  grade: string;
+  objectives: string[];
+  activities: string[];
+  assessment: string;
+  createdAt: string;
+}
+
 export default function LessonPlansPage() {
-  const [studentProfiles, setStudentProfiles] = useState<any[]>([]);
-  const [lessonPlan, setLessonPlan] = useState<any>(null);
+  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
+  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
 
   const handleUploadFiles = () => {
     // TODO: Implement file upload functionality
