@@ -96,7 +96,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
 
   return (
     <div className="flex flex-col h-[600px]">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
         <p className="text-gray-600 mb-6 text-sm leading-relaxed">
           This panel shows a real-time summary of your child&apos;s strengths and story as you answer questions.
         </p>
@@ -110,7 +110,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             <p className="text-gray-400">Start answering questions to see your profile summary</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-4">
             {modules.map((module, index) => {
               // Use the canonical module name from the config for all logic
               const displayName = moduleDisplayNames[module] || module;
@@ -188,6 +188,9 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             })}
           </div>
         )}
+        
+        {/* Light demarcation line at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
       </div>
     </div>
   );
