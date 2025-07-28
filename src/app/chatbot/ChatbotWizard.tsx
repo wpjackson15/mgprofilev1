@@ -315,31 +315,45 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   };
 
   if (loading) {
-    return <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh] items-center justify-center text-gray-600">Loading your progress...</div>;
+    return (
+      <div className="flex flex-col h-[600px] items-center justify-center text-gray-600">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-lg">Loading your progress...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-2">
+    <div className="flex flex-col h-[600px]">
+      {/* Chat Messages */}
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-4">
         {messages.map((msg, i) => (
-          <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`px-4 py-2 rounded-lg max-w-[80%] ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}>
-              {msg.text}
+          <div key={i} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`px-4 py-3 rounded-lg max-w-[85%] shadow-sm ${
+              msg.sender === "user" 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-100 text-gray-800 border border-gray-200"
+            }`}>
+              <p className="text-sm leading-relaxed">{msg.text}</p>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Save Status */}
       {user && showSaved && (
-        <div className="flex items-center justify-center gap-2 text-green-700 bg-green-100 border border-green-300 rounded px-3 py-2 mb-2 animate-fade-in">
+        <div className="flex items-center justify-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
           <CheckCircle className="w-5 h-5 text-green-600" />
-          <span className="font-medium">Progress saved!</span>
+          <span className="font-medium text-sm">Progress saved!</span>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="flex gap-2">
+
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="flex gap-3">
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring text-gray-900"
+          className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={isGeneratingSummary ? "Yes or No" : "Type your answer..."}
@@ -347,7 +361,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           disabled={!input.trim() || !flow.length || isGeneratingSummary}
         >
           {isGeneratingSummary ? "Generating..." : "Send"}

@@ -103,8 +103,7 @@ export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewP
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 h-full">
-      <h2 className="text-2xl font-bold mb-4">Profile Preview</h2>
+    <div className="flex flex-col h-[600px]">
       <p className="mb-4 text-gray-600">
         This panel shows a real-time summary of your child’s strengths and story as you answer questions.
       </p>
@@ -155,43 +154,61 @@ export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewP
           })}
         </div>
       )}
-      <div className="mt-6 flex flex-col items-center gap-2">
+      
+      {/* Action Buttons */}
+      <div className="mt-6 space-y-3">
         {checkingAuth ? (
-          <button className="px-4 py-2 bg-gray-300 rounded" disabled>Checking login...</button>
+          <button className="w-full px-4 py-3 bg-gray-300 rounded-lg text-gray-600" disabled>
+            Checking login...
+          </button>
         ) : user ? (
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
             onClick={handleEmailSummary}
             disabled={isSending || success}
           >
             {isSending ? "Sending..." : success ? "Email Sent!" : "Email Summary"}
           </button>
         ) : (
-          <div className="text-sm text-gray-600">Please log in to email your summary.</div>
+          <div className="text-sm text-gray-600 text-center">Please log in to email your summary.</div>
         )}
+        
         {showConfirm ? (
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-sm text-gray-700">Are you sure you want to clear all progress?</span>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => { resetProgress(); resetSummaries(); setShowConfirm(false); if (onClearChat) onClearChat(); }}>Yes, clear all</button>
-              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setShowConfirm(false)}>Cancel</button>
+          <div className="space-y-3">
+            <span className="text-sm text-gray-700 text-center block">Are you sure you want to clear all progress?</span>
+            <div className="flex gap-3">
+              <button 
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium" 
+                onClick={() => { resetProgress(); resetSummaries(); setShowConfirm(false); if (onClearChat) onClearChat(); }}
+              >
+                Yes, clear all
+              </button>
+              <button 
+                className="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium" 
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         ) : (
           <button
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition mt-2"
+            className="w-full px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
             onClick={() => setShowConfirm(true)}
           >
             Clear Chat and Start Over
           </button>
         )}
+        
         {error && (
-          <div className="text-xs text-red-600">
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             {error} <button className="underline ml-2" onClick={resetEmail}>Retry</button>
           </div>
         )}
         {success && (
-          <div className="text-xs text-green-600">Email sent! Check your inbox.</div>
+          <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+            Email sent! Check your inbox.
+          </div>
         )}
       </div>
       {/* Recommended Resources Section */}
