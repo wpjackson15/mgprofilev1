@@ -155,8 +155,7 @@ export default function ProfilePreview({ answers, onClearChat }: ProfilePreviewP
         </div>
       )}
       
-      {/* Action Buttons */}
-      <div className="mt-6 space-y-3">
+
         {checkingAuth ? (
           <button className="w-full px-4 py-3 bg-gray-300 rounded-lg text-gray-600" disabled>
             Checking login...
