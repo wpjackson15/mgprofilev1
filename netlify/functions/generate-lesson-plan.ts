@@ -12,6 +12,7 @@ interface StudentProfile {
 interface GenerateLessonPlanRequest {
   prompt: string;
   studentProfiles: StudentProfile[];
+  outputFormat?: 'pdf' | 'google-doc';
 }
 
 interface GenerateLessonPlanResponse {
@@ -23,6 +24,8 @@ interface GenerateLessonPlanResponse {
   assessment: string;
   materials: string[];
   duration: string;
+  outputFormat?: 'pdf' | 'google-doc';
+  googleDocUrl?: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -34,7 +37,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { prompt, studentProfiles }: GenerateLessonPlanRequest = JSON.parse(event.body || '{}');
+    const { prompt, studentProfiles, outputFormat = 'pdf' }: GenerateLessonPlanRequest = JSON.parse(event.body || '{}');
 
     if (!prompt || !studentProfiles || studentProfiles.length === 0) {
       return {
@@ -104,7 +107,17 @@ export const handler: Handler = async (event) => {
         assessment: 'Ongoing formative assessment',
         materials: ['Standard classroom materials'],
         duration: '45 minutes',
+        outputFormat,
       };
+    }
+
+    // Add output format to the response
+    lessonPlan.outputFormat = outputFormat;
+    
+    // For Google Docs, you would typically create the doc here and return the URL
+    // For now, we'll return a placeholder URL
+    if (outputFormat === 'google-doc') {
+      lessonPlan.googleDocUrl = `https://docs.google.com/document/d/placeholder-${Date.now()}`;
     }
 
     return {

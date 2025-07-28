@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download } from "lucide-react";
+import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
 
 interface StudentProfile {
   id: string;
@@ -22,6 +22,8 @@ interface LessonPlan {
   materials: string[];
   duration: string;
   createdAt: string;
+  outputFormat?: 'pdf' | 'google-doc';
+  googleDocUrl?: string;
 }
 
 interface UploadModalProps {
@@ -53,22 +55,32 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const text = await file.text();
         
-        // Simple CSV parsing (you can enhance this)
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        for (let j = 1; j < lines.length; j++) {
-          const values = lines[j].split(',').map(v => v.trim());
-          if (values.length >= 4) {
-            profiles.push({
-              id: `upload-${Date.now()}-${j}`,
-              name: values[0] || 'Unknown',
-              grade: values[1] || 'Unknown',
-              subject: values[2] || 'Unknown',
-              profile: values[3] || 'No profile provided',
-              createdAt: new Date().toISOString()
-            });
+        if (file.type === 'application/pdf') {
+          // Handle PDF files - you'll need to implement PDF text extraction
+          // For now, we'll show a placeholder message
+          setError('PDF processing is coming soon! For now, please use CSV files.');
+          setIsUploading(false);
+          return;
+        } else {
+          // Handle CSV/TXT files
+          const text = await file.text();
+          
+          // Simple CSV parsing (you can enhance this)
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          for (let j = 1; j < lines.length; j++) {
+            const values = lines[j].split(',').map(v => v.trim());
+            if (values.length >= 4) {
+              profiles.push({
+                id: `upload-${Date.now()}-${j}`,
+                name: values[0] || 'Unknown',
+                grade: values[1] || 'Unknown',
+                subject: values[2] || 'Unknown',
+                profile: values[3] || 'No profile provided',
+                createdAt: new Date().toISOString()
+              });
+            }
           }
         }
       }
@@ -100,7 +112,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Upload CSV files with columns: Name, Grade, Subject, Profile
+            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF support coming soon!
           </p>
           <div className="text-center">
             <a
@@ -117,7 +129,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".csv,.txt"
+              accept=".csv,.txt,.pdf"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -275,6 +287,7 @@ export default function LessonPlansPage() {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [outputFormat, setOutputFormat] = useState<'pdf' | 'google-doc'>('pdf');
 
   const handleUploadFiles = () => {
     setIsUploadModalOpen(true);
@@ -334,10 +347,10 @@ Format the response as JSON with the following structure:
 }`;
 
       // Call your existing AI service (you'll need to implement this)
-      const response = await fetch('/api/generate-lesson-plan', {
+      const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, studentProfiles })
+        body: JSON.stringify({ prompt, studentProfiles, outputFormat })
       });
 
       if (!response.ok) {
@@ -349,6 +362,7 @@ Format the response as JSON with the following structure:
       const newLessonPlan: LessonPlan = {
         id: `lesson-${Date.now()}`,
         ...data,
+        outputFormat,
         createdAt: new Date().toISOString()
       };
 
@@ -364,6 +378,13 @@ Format the response as JSON with the following structure:
   const handleDownloadLessonPlan = () => {
     if (!lessonPlan) return;
     
+    if (lessonPlan.outputFormat === 'google-doc' && lessonPlan.googleDocUrl) {
+      // Open Google Doc in new tab
+      window.open(lessonPlan.googleDocUrl, '_blank');
+      return;
+    }
+    
+    // Generate PDF or text file
     const content = `Lesson Plan: ${lessonPlan.title}
 Subject: ${lessonPlan.subject}
 Grade: ${lessonPlan.grade}
@@ -388,7 +409,8 @@ Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    const extension = lessonPlan.outputFormat === 'pdf' ? 'pdf' : 'txt';
+    a.download = `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -477,8 +499,12 @@ Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
                   onClick={handleDownloadLessonPlan}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  <Download className="w-4 h-4" />
-                  Download
+                  {lessonPlan.outputFormat === 'google-doc' ? (
+                    <ExternalLink className="w-4 h-4" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  {lessonPlan.outputFormat === 'google-doc' ? 'Open Doc' : 'Download'}
                 </button>
               )}
               {studentProfiles.length > 0 && (
@@ -492,6 +518,39 @@ Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
               )}
             </div>
           </div>
+
+          {/* Output Format Selection */}
+          {studentProfiles.length > 0 && !lessonPlan && !isGenerating && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-3">Output Format</h4>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="outputFormat"
+                    value="pdf"
+                    checked={outputFormat === 'pdf'}
+                    onChange={(e) => setOutputFormat(e.target.value as 'pdf' | 'google-doc')}
+                    className="text-blue-600"
+                  />
+                  <File className="w-4 h-4 text-blue-600" />
+                  <span className="text-blue-900">PDF Document</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="outputFormat"
+                    value="google-doc"
+                    checked={outputFormat === 'google-doc'}
+                    onChange={(e) => setOutputFormat(e.target.value as 'pdf' | 'google-doc')}
+                    className="text-blue-600"
+                  />
+                  <FileText className="w-4 h-4 text-green-600" />
+                  <span className="text-blue-900">Google Doc</span>
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Error State */}
           {generationError && (
@@ -507,8 +566,8 @@ Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
               <p className="text-gray-500 text-lg mb-2">Ready to Generate</p>
               <p className="text-gray-400">
                 {studentProfiles.length === 0 
-                  ? "Add student profiles and click 'Generate Lesson Plan' to create culturally responsive, differentiated lessons."
-                  : "Click 'Generate Lesson Plan' to create culturally responsive, differentiated lessons."
+                  ? "Add student profiles and click 'Generate Lesson Plan' to create culturally responsive, differentiated lessons as PDFs or Google Docs."
+                  : "Click 'Generate Lesson Plan' to create culturally responsive, differentiated lessons as PDFs or Google Docs."
                 }
               </p>
             </div>
