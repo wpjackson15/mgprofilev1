@@ -110,7 +110,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             <p className="text-gray-400">Start answering questions to see your profile summary</p>
           </div>
         ) : (
-          <div className="space-y-4 pb-4">
+          <div className="space-y-4 pb-6">
             {modules.map((module, index) => {
               // Use the canonical module name from the config for all logic
               const displayName = moduleDisplayNames[module] || module;
@@ -188,10 +188,10 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
             })}
           </div>
         )}
-        
-        {/* Light demarcation line at the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
       </div>
+      
+      {/* Demarcation line at the bottom of the container */}
+      <div className="border-t border-gray-200 mt-2"></div>
     </div>
   );
 } 
