@@ -8,6 +8,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { MessageCircle, User as UserIcon, RotateCcw } from "lucide-react";
 import { useResourceMatches } from "@/hooks/useResourceMatches";
+import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 
 export default function ChatbotPage() {
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -18,6 +19,7 @@ export default function ChatbotPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const chatbotRef = useRef<{ clearChat: () => void } | null>(null);
   const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
+  const { resetSummaries } = useModuleSummaries();
 
   useEffect(() => {
     // Check localStorage for prior acceptance
@@ -47,6 +49,7 @@ export default function ChatbotPage() {
 
   const confirmClearChat = () => {
     setClearChatSignal((sig) => sig + 1);
+    resetSummaries(); // Reset all summaries when clearing chat
     setShowConfirm(false);
   };
 

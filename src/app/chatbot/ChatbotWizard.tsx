@@ -141,7 +141,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       }
       hasLoadedSummaries.current = true;
     }
-  }, [progress, flow, generateSummary, summaries]);
+  }, [progress, flow, generateSummary]); // Removed 'summaries' dependency to prevent regeneration loop
 
   // Reset hasLoadedSummaries when chat is cleared
   useEffect(() => {
