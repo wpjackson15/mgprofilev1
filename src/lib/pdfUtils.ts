@@ -5,6 +5,15 @@ if (typeof window !== 'undefined') {
   pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 }
 
+// PDF.js text content item type
+interface TextItem {
+  str: string;
+  dir?: string;
+  transform?: number[];
+  width?: number;
+  height?: number;
+}
+
 export async function extractTextFromPDF(file: File): Promise<string> {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -16,6 +25,7 @@ export async function extractTextFromPDF(file: File): Promise<string> {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => item.str)
         .join(' ');
       fullText += pageText + '\n';

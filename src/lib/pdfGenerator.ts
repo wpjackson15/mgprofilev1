@@ -91,7 +91,7 @@ export function generateLessonPlanPDF(data: LessonPlanData): jsPDF {
   doc.setFont('helvetica', 'normal');
   yPosition += 5;
   
-  data.materials.forEach((material, index) => {
+  data.materials.forEach((material) => {
     yPosition = addWrappedText(`• ${material}`, margin + 10, yPosition, pageWidth - 2 * margin - 10);
   });
   yPosition += 10;
@@ -123,7 +123,7 @@ export function generateLessonPlanPDF(data: LessonPlanData): jsPDF {
     doc.setFont('helvetica', 'normal');
     yPosition += 5;
 
-    data.studentProfiles.forEach((profile, index) => {
+    data.studentProfiles.forEach((profile) => {
       if (yPosition > 250) {
         doc.addPage();
         yPosition = margin;

@@ -74,7 +74,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
                 createdAt: new Date().toISOString()
               });
             });
-          } catch (pdfError) {
+          } catch {
             setError('Failed to process PDF file. Please ensure it contains readable text.');
             setIsUploading(false);
             return;

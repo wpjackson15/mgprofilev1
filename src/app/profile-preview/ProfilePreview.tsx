@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
-import { useProfileProgress } from "@/hooks/useProfileProgress";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import ModuleProgressBar from "@/components/ModuleProgressBar";
 
