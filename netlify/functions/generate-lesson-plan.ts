@@ -114,10 +114,52 @@ export const handler: Handler = async (event) => {
     // Add output format to the response
     lessonPlan.outputFormat = outputFormat;
     
-    // For Google Docs, you would typically create the doc here and return the URL
-    // For now, we'll return a placeholder URL
+    // Create Google Doc if requested
     if (outputFormat === 'google-doc') {
-      lessonPlan.googleDocUrl = `https://docs.google.com/document/d/placeholder-${Date.now()}`;
+      try {
+        const content = `Lesson Plan: ${lessonPlan.title}
+Subject: ${lessonPlan.subject}
+Grade: ${lessonPlan.grade}
+Duration: ${lessonPlan.duration}
+
+Learning Objectives:
+${lessonPlan.objectives.map((obj, i) => `${i + 1}. ${obj}`).join('\n')}
+
+Activities:
+${lessonPlan.activities.map((act, i) => `${i + 1}. ${act}`).join('\n')}
+
+Assessment:
+${lessonPlan.assessment}
+
+Materials:
+${lessonPlan.materials.map(mat => `• ${mat}`).join('\n')}
+
+Student Profiles:
+${studentProfiles.map(profile => 
+  `${profile.name} (${profile.grade})\nSubject: ${profile.subject}\nProfile: ${profile.profile.substring(0, 200)}${profile.profile.length > 200 ? '...' : ''}`
+).join('\n\n')}`;
+
+        const googleDocResponse = await fetch('/.netlify/functions/create-google-doc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: lessonPlan.title,
+            content: content,
+            studentProfiles: studentProfiles
+          })
+        });
+
+        if (googleDocResponse.ok) {
+          const googleDocData = await googleDocResponse.json();
+          lessonPlan.googleDocUrl = googleDocData.documentUrl;
+        } else {
+          console.error('Failed to create Google Doc');
+          lessonPlan.googleDocUrl = `https://docs.google.com/document/d/placeholder-${Date.now()}`;
+        }
+      } catch (error) {
+        console.error('Error creating Google Doc:', error);
+        lessonPlan.googleDocUrl = `https://docs.google.com/document/d/placeholder-${Date.now()}`;
+      }
     }
 
     return {

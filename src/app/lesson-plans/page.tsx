@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
+import { extractTextFromPDF, parseStudentProfilesFromText } from "@/lib/pdfUtils";
+import { downloadLessonPlanPDF } from "@/lib/pdfGenerator";
 
 interface StudentProfile {
   id: string;
@@ -57,11 +59,26 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         const file = files[i];
         
         if (file.type === 'application/pdf') {
-          // Handle PDF files - you'll need to implement PDF text extraction
-          // For now, we'll show a placeholder message
-          setError('PDF processing is coming soon! For now, please use CSV files.');
-          setIsUploading(false);
-          return;
+          // Handle PDF files with real text extraction
+          try {
+            const text = await extractTextFromPDF(file);
+            const extractedProfiles = parseStudentProfilesFromText(text);
+            
+            extractedProfiles.forEach((profile, index) => {
+              profiles.push({
+                id: `upload-${Date.now()}-${i}-${index}`,
+                name: profile.name,
+                grade: profile.grade,
+                subject: profile.subject,
+                profile: profile.profile,
+                createdAt: new Date().toISOString()
+              });
+            });
+          } catch (pdfError) {
+            setError('Failed to process PDF file. Please ensure it contains readable text.');
+            setIsUploading(false);
+            return;
+          }
         } else {
           // Handle CSV/TXT files
           const text = await file.text();
@@ -346,7 +363,7 @@ Format the response as JSON with the following structure:
   "duration": "45 minutes"
 }`;
 
-      // Call your existing AI service (you'll need to implement this)
+      // Call the lesson plan generation service
       const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -384,37 +401,20 @@ Format the response as JSON with the following structure:
       return;
     }
     
-    // Generate PDF or text file
-    const content = `Lesson Plan: ${lessonPlan.title}
-Subject: ${lessonPlan.subject}
-Grade: ${lessonPlan.grade}
-Duration: ${lessonPlan.duration}
+    // Generate PDF using the PDF generator
+    const lessonPlanData = {
+      title: lessonPlan.title,
+      subject: lessonPlan.subject,
+      grade: lessonPlan.grade,
+      objectives: lessonPlan.objectives,
+      activities: lessonPlan.activities,
+      assessment: lessonPlan.assessment,
+      materials: lessonPlan.materials,
+      duration: lessonPlan.duration,
+      studentProfiles: studentProfiles
+    };
 
-OBJECTIVES:
-${lessonPlan.objectives.map(obj => `• ${obj}`).join('\n')}
-
-ACTIVITIES:
-${lessonPlan.activities.map(act => `• ${act}`).join('\n')}
-
-ASSESSMENT:
-${lessonPlan.assessment}
-
-MATERIALS:
-${lessonPlan.materials.map(mat => `• ${mat}`).join('\n')}
-
-Generated on: ${new Date(lessonPlan.createdAt).toLocaleDateString()}
-`;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const extension = lessonPlan.outputFormat === 'pdf' ? 'pdf' : 'txt';
-    a.download = `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.${extension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadLessonPlanPDF(lessonPlanData, `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
   };
 
   return (
