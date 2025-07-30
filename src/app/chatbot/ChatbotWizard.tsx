@@ -107,6 +107,16 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           }
         }
       }
+      
+      // Add the next bot message if we're not at the end of a module
+      const currentModuleData = flow[progress.currentModule ?? 0];
+      if (currentModuleData && (progress.lastStep ?? 0) < currentModuleData.steps.length - 1) {
+        const nextStep = currentModuleData.steps[(progress.lastStep ?? 0) + 1];
+        if (nextStep) {
+          rebuiltMessages.push({ sender: "bot", text: nextStep.text });
+        }
+      }
+      
       setMessages(rebuiltMessages);
     }
   }, [progress, flow, setAnswers]);
