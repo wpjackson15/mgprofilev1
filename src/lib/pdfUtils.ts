@@ -1,8 +1,12 @@
-import * as pdfjs from 'pdfjs-dist';
+// Only import pdfjs on the client side
+let pdfjs: any = null;
 
-// Set up PDF.js worker
 if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  // Dynamic import to avoid SSR issues
+  import('pdfjs-dist').then((module) => {
+    pdfjs = module;
+    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  });
 }
 
 // PDF.js text content item type
@@ -15,6 +19,25 @@ interface TextItem {
 }
 
 export async function extractTextFromPDF(file: File): Promise<string> {
+  // Ensure we're on the client side
+  if (typeof window === 'undefined') {
+    throw new Error('PDF extraction is only available on the client side');
+  }
+
+  // Wait for pdfjs to be loaded
+  if (!pdfjs) {
+    await new Promise<void>((resolve) => {
+      const checkPdfjs = () => {
+        if (pdfjs) {
+          resolve();
+        } else {
+          setTimeout(checkPdfjs, 100);
+        }
+      };
+      checkPdfjs();
+    });
+  }
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;

@@ -1,4 +1,12 @@
-import jsPDF from 'jspdf';
+// Only import jsPDF on the client side
+let jsPDF: any = null;
+
+if (typeof window !== 'undefined') {
+  // Dynamic import to avoid SSR issues
+  import('jspdf').then((module) => {
+    jsPDF = module.default;
+  });
+}
 
 export interface LessonPlanData {
   title: string;
@@ -17,7 +25,17 @@ export interface LessonPlanData {
   }>;
 }
 
-export function generateLessonPlanPDF(data: LessonPlanData): jsPDF {
+export function generateLessonPlanPDF(data: LessonPlanData): any {
+  // Ensure we're on the client side
+  if (typeof window === 'undefined') {
+    throw new Error('PDF generation is only available on the client side');
+  }
+
+  // Wait for jsPDF to be loaded
+  if (!jsPDF) {
+    throw new Error('jsPDF is not loaded yet. Please try again.');
+  }
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const margin = 20;
@@ -140,6 +158,11 @@ export function generateLessonPlanPDF(data: LessonPlanData): jsPDF {
 }
 
 export function downloadLessonPlanPDF(data: LessonPlanData, filename: string = 'lesson-plan.pdf'): void {
+  // Ensure we're on the client side
+  if (typeof window === 'undefined') {
+    throw new Error('PDF download is only available on the client side');
+  }
+
   const doc = generateLessonPlanPDF(data);
   doc.save(filename);
 } 

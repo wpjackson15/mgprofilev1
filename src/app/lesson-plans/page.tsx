@@ -2,7 +2,6 @@
 import React, { useState, useRef } from "react";
 import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
 import { extractTextFromPDF, parseStudentProfilesFromText } from "@/lib/pdfUtils";
-import { downloadLessonPlanPDF } from "@/lib/pdfGenerator";
 
 interface StudentProfile {
   id: string;
@@ -392,7 +391,7 @@ Format the response as JSON with the following structure:
     }
   };
 
-  const handleDownloadLessonPlan = () => {
+  const handleDownloadLessonPlan = async () => {
     if (!lessonPlan) return;
     
     if (lessonPlan.outputFormat === 'google-doc' && lessonPlan.googleDocUrl) {
@@ -401,20 +400,27 @@ Format the response as JSON with the following structure:
       return;
     }
     
-    // Generate PDF using the PDF generator
-    const lessonPlanData = {
-      title: lessonPlan.title,
-      subject: lessonPlan.subject,
-      grade: lessonPlan.grade,
-      objectives: lessonPlan.objectives,
-      activities: lessonPlan.activities,
-      assessment: lessonPlan.assessment,
-      materials: lessonPlan.materials,
-      duration: lessonPlan.duration,
-      studentProfiles: studentProfiles
-    };
+    // Dynamically import PDF generator to avoid SSR issues
+    try {
+      const { downloadLessonPlanPDF } = await import('@/lib/pdfGenerator');
+      
+      const lessonPlanData = {
+        title: lessonPlan.title,
+        subject: lessonPlan.subject,
+        grade: lessonPlan.grade,
+        objectives: lessonPlan.objectives,
+        activities: lessonPlan.activities,
+        assessment: lessonPlan.assessment,
+        materials: lessonPlan.materials,
+        duration: lessonPlan.duration,
+        studentProfiles: studentProfiles
+      };
 
-    downloadLessonPlanPDF(lessonPlanData, `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      downloadLessonPlanPDF(lessonPlanData, `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
