@@ -1,5 +1,5 @@
 // Only import jsPDF on the client side
-let jsPDF: any = null;
+let jsPDF: typeof import('jspdf').default | null = null;
 
 if (typeof window !== 'undefined') {
   // Dynamic import to avoid SSR issues
@@ -25,7 +25,7 @@ export interface LessonPlanData {
   }>;
 }
 
-export function generateLessonPlanPDF(data: LessonPlanData): any {
+export function generateLessonPlanPDF(data: LessonPlanData): import('jspdf').default {
   // Ensure we're on the client side
   if (typeof window === 'undefined') {
     throw new Error('PDF generation is only available on the client side');

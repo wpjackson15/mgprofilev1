@@ -1,5 +1,5 @@
 // Only import pdfjs on the client side
-let pdfjs: any = null;
+let pdfjs: typeof import('pdfjs-dist') | null = null;
 
 if (typeof window !== 'undefined') {
   // Dynamic import to avoid SSR issues
@@ -9,14 +9,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// PDF.js text content item type
-interface TextItem {
-  str: string;
-  dir?: string;
-  transform?: number[];
-  width?: number;
-  height?: number;
-}
+
 
 export async function extractTextFromPDF(file: File): Promise<string> {
   // Ensure we're on the client side
@@ -39,6 +32,9 @@ export async function extractTextFromPDF(file: File): Promise<string> {
   }
 
   try {
+    if (!pdfjs) {
+      throw new Error('PDF.js is not loaded yet');
+    }
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
     
