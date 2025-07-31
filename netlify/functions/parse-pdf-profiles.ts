@@ -40,20 +40,6 @@ If you can't find structured student information, try to identify any individual
 
 Return only the JSON array, no additional text.`;
 
-Please extract all student profiles you can find and return them as a JSON array with the following structure:
-[
-  {
-    "name": "Student Name",
-    "grade": "Grade Level (e.g., 3rd Grade, Grade 3, 3)",
-    "subject": "Subject (e.g., Math, Science, ELA)",
-    "profile": "Description of the student's learning style, strengths, challenges, cultural background, interests, etc."
-  }
-]
-
-If you can't find structured student information, try to identify any individuals mentioned and create profiles based on the context. If no clear student information is found, return an empty array.
-
-Return only the JSON array, no additional text.`;
-
     console.log('Calling Claude API...');
     
     // Call Claude API with the PDF directly
