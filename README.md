@@ -247,6 +247,90 @@ The project uses a custom `netlify.toml` configuration:
 4. Test thoroughly
 5. Submit a pull request
 
+## Monetization Strategy & Development Roadmap
+
+### Current State
+- **Core Features**: AI-powered PDF profile extraction, standards-aligned lesson plan generation
+- **Target Users**: K-8 teachers and educators
+- **Value Proposition**: Culturally responsive, differentiated lesson planning with state standards integration
+
+### Paywall Strategy
+
+#### Freemium Model (Planned)
+- **Free Tier**: 
+  - 3 lesson plans per month
+  - Manual profile entry only
+  - Basic lesson plan generation
+  - No profile library/saving
+  
+- **Premium Tier** ($X/month):
+  - Unlimited lesson plans
+  - PDF upload and AI profile extraction
+  - Profile library with save/edit functionality
+  - Advanced features (Google Docs export, etc.)
+  - Priority support
+
+#### Alternative Models to Test
+- **Feature-Based**: Free manual entry, paid PDF upload
+- **Usage-Based**: Free 5 profiles, paid unlimited
+- **Tiered Pricing**: Basic/Pro/Enterprise plans
+
+### Development Phases
+
+#### Phase 1: Foundation (Current)
+- [x] Core lesson plan generation
+- [x] PDF profile extraction
+- [x] State standards integration
+- [ ] User authentication system
+- [ ] Usage tracking and analytics
+- [ ] Feature flag infrastructure
+
+#### Phase 2: Paywall Infrastructure
+- [ ] Stripe payment integration
+- [ ] Subscription management
+- [ ] Usage limits and enforcement
+- [ ] User dashboard with usage stats
+- [ ] Profile library and management
+
+#### Phase 3: Monetization Launch
+- [ ] Free tier restrictions
+- [ ] Premium feature rollout
+- [ ] Payment flow implementation
+- [ ] A/B testing framework
+- [ ] Analytics and optimization
+
+### Testing Strategy
+
+#### User Behavior Testing
+- **Feature Usage Analytics**: Track which features drive engagement
+- **Conversion Funnel**: Monitor free-to-paid conversion rates
+- **User Feedback**: Collect qualitative feedback on value perception
+
+#### A/B Testing Framework
+- **Free Tier Limits**: Test different usage limits (3 vs 5 lesson plans)
+- **Feature Combinations**: Determine which features are most valuable
+- **Pricing Tiers**: Test different price points and structures
+- **Onboarding**: Optimize user experience for conversion
+
+#### Technical Implementation
+- **Feature Flags**: Easy enable/disable of premium features
+- **Usage Tracking**: Monitor lesson plans created, profiles saved, etc.
+- **Analytics Integration**: Google Analytics, Mixpanel, or similar
+- **User Segmentation**: Identify power users and conversion opportunities
+
+### Success Metrics
+- **User Engagement**: Daily/monthly active users
+- **Conversion Rate**: Free-to-paid conversion percentage
+- **Retention**: User retention rates by tier
+- **Revenue**: Monthly recurring revenue (MRR)
+- **Customer Satisfaction**: Net Promoter Score (NPS)
+
+### Technical Considerations
+- **Scalability**: Ensure infrastructure can handle growth
+- **Security**: Protect user data and payment information
+- **Compliance**: GDPR, COPPA, and educational data privacy
+- **Performance**: Fast loading times for better conversion
+
 ## License
 
 [Add your license information here]
