@@ -61,7 +61,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     if (flow.length > 0 && flow[0].steps.length > 0) {
       setMessages([{ sender: "bot", text: flow[0].steps[0].text }]);
     }
-  }, [clearChatSignal]);
+  }, [clearChatSignal, flow]);
 
   // Load conversation flow
   useEffect(() => {

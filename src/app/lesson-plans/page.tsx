@@ -78,7 +78,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             const data = await response.json();
             const extractedProfiles = data.profiles || [];
             
-            extractedProfiles.forEach((profile: any, index: number) => {
+            extractedProfiles.forEach((profile: { name?: string; grade?: string; subject?: string; profile?: string }, index: number) => {
               profiles.push({
                 id: `upload-${Date.now()}-${i}-${index}`,
                 name: profile.name || 'Unknown Student',
