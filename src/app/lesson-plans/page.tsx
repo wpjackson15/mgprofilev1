@@ -73,8 +73,9 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
                 createdAt: new Date().toISOString()
               });
             });
-          } catch {
-            setError('Failed to process PDF file. Please ensure it contains readable text.');
+          } catch (pdfError) {
+            console.error('PDF processing error:', pdfError);
+            setError('Failed to process PDF file. Please ensure it contains readable text and try again.');
             setIsUploading(false);
             return;
           }
@@ -128,7 +129,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF support coming soon!
+            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF files with readable text are also supported!
           </p>
           <div className="text-center">
             <a

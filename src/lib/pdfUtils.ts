@@ -81,17 +81,35 @@ export function parseStudentProfilesFromText(text: string): Array<{
   
   // If no CSV format found, try to extract structured information
   if (profiles.length === 0) {
-    // Simple text parsing - look for patterns like "Name:", "Grade:", etc.
-    const nameMatch = text.match(/Name[:\s]+([^\n\r]+)/i);
-    const gradeMatch = text.match(/Grade[:\s]+([^\n\r]+)/i);
-    const subjectMatch = text.match(/Subject[:\s]+([^\n\r]+)/i);
+    // Look for multiple student profiles in the text
+    const studentBlocks = text.split(/(?=Student|Name|Grade|Subject)/i);
     
-    if (nameMatch || gradeMatch || subjectMatch) {
+    for (const block of studentBlocks) {
+      if (block.trim().length < 10) continue; // Skip very short blocks
+      
+      // Try different patterns for extracting student information
+      const nameMatch = block.match(/(?:Student|Name)[:\s]+([^\n\r,]+)/i);
+      const gradeMatch = block.match(/Grade[:\s]+([^\n\r,]+)/i);
+      const subjectMatch = block.match(/Subject[:\s]+([^\n\r,]+)/i);
+      
+      if (nameMatch || gradeMatch || subjectMatch) {
+        const profile = block.trim();
+        profiles.push({
+          name: nameMatch?.[1]?.trim() || 'Unknown Student',
+          grade: gradeMatch?.[1]?.trim() || 'Unknown Grade',
+          subject: subjectMatch?.[1]?.trim() || 'Unknown Subject',
+          profile: profile.length > 200 ? profile.substring(0, 200) + '...' : profile
+        });
+      }
+    }
+    
+    // If still no profiles found, try to extract any structured text as a single profile
+    if (profiles.length === 0 && text.trim().length > 20) {
       profiles.push({
-        name: nameMatch?.[1]?.trim() || 'Unknown',
-        grade: gradeMatch?.[1]?.trim() || 'Unknown',
-        subject: subjectMatch?.[1]?.trim() || 'Unknown',
-        profile: text.substring(0, 500) + (text.length > 500 ? '...' : '') // Use first 500 chars as profile
+        name: 'Student from PDF',
+        grade: 'Unknown Grade',
+        subject: 'Unknown Subject',
+        profile: text.trim().substring(0, 300) + (text.length > 300 ? '...' : '')
       });
     }
   }
