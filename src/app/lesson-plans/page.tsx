@@ -60,11 +60,17 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           // Handle PDF files
           try {
-            console.log('Processing PDF file:', file.name);
+            console.log('Processing PDF file:', file.name, 'Size:', file.size);
+            
+            // Check file size (Claude has limits)
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+              throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
+            }
             
             // Convert PDF to base64
             const arrayBuffer = await file.arrayBuffer();
             const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+            console.log('Base64 length:', base64.length);
             
             // Use LLM to parse student profiles directly from PDF
             const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
@@ -74,7 +80,9 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             });
 
             if (!response.ok) {
-              throw new Error(`API error: ${response.status}`);
+              const errorText = await response.text();
+              console.error('API error details:', response.status, errorText);
+              throw new Error(`API error: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
@@ -152,7 +160,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF files are automatically analyzed by AI to extract student profiles!
+            Upload PDF files to automatically extract student profiles using AI! Also supports CSV files with columns: Name, Grade, Subject, Profile.
           </p>
           <div className="text-center">
             <a
