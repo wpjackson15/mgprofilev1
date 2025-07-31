@@ -320,6 +320,13 @@ export default function LessonPlansPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [outputFormat, setOutputFormat] = useState<'pdf' | 'google-doc'>('pdf');
+  
+  // Lesson plan settings
+  const [lessonSettings, setLessonSettings] = useState({
+    grade: '',
+    subject: '',
+    state: ''
+  });
 
   const handleUploadFiles = () => {
     setIsUploadModalOpen(true);
@@ -342,27 +349,41 @@ export default function LessonPlansPage() {
   };
 
   const handleGenerateLessonPlan = async () => {
-    if (studentProfiles.length === 0) return;
+    if (studentProfiles.length === 0) {
+      setGenerationError('Please add at least one student profile.');
+      return;
+    }
+    
+    if (!lessonSettings.grade || !lessonSettings.subject || !lessonSettings.state) {
+      setGenerationError('Please select grade level, subject, and state before generating a lesson plan.');
+      return;
+    }
 
     setIsGenerating(true);
     setGenerationError(null);
 
     try {
-      // Create a prompt for the AI based on student profiles
+      // Create a prompt for the AI based on student profiles and lesson settings
       const profilesText = studentProfiles.map(p => 
         `Student: ${p.name} (Grade ${p.grade}, ${p.subject})\nProfile: ${p.profile}`
       ).join('\n\n');
 
-      const prompt = `Create a culturally responsive, differentiated lesson plan based on these student profiles:
+      const prompt = `Create a culturally responsive, differentiated lesson plan that aligns with ${lessonSettings.state} state standards for ${lessonSettings.grade} grade ${lessonSettings.subject}.
 
+Lesson Settings:
+- Grade Level: ${lessonSettings.grade}
+- Subject: ${lessonSettings.subject}
+- State: ${lessonSettings.state}
+
+Student Profiles:
 ${profilesText}
 
-Please provide a comprehensive lesson plan with:
+Please provide a comprehensive, standards-aligned lesson plan with:
 1. Title and subject
 2. Grade level
-3. Learning objectives
-4. Engaging activities that accommodate different learning styles
-5. Assessment methods
+3. Learning objectives that align with ${lessonSettings.state} state standards for ${lessonSettings.grade} grade ${lessonSettings.subject}
+4. Engaging activities that accommodate different learning styles and cultural backgrounds
+5. Assessment methods that measure standards mastery
 6. Required materials
 7. Estimated duration
 
@@ -382,7 +403,12 @@ Format the response as JSON with the following structure:
       const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, studentProfiles, outputFormat })
+        body: JSON.stringify({ 
+          prompt, 
+          studentProfiles, 
+          outputFormat,
+          lessonSettings 
+        })
       });
 
       if (!response.ok) {
@@ -446,6 +472,123 @@ Format the response as JSON with the following structure:
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Genius Lesson Plans</h1>
           <p className="text-gray-600">Create culturally responsive, differentiated lessons based on student profiles</p>
+        </div>
+
+        {/* Lesson Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Lesson Settings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Grade Level *
+              </label>
+              <select
+                value={lessonSettings.grade}
+                onChange={(e) => setLessonSettings({ ...lessonSettings, grade: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select Grade</option>
+                <option value="K">Kindergarten</option>
+                <option value="1">1st Grade</option>
+                <option value="2">2nd Grade</option>
+                <option value="3">3rd Grade</option>
+                <option value="4">4th Grade</option>
+                <option value="5">5th Grade</option>
+                <option value="6">6th Grade</option>
+                <option value="7">7th Grade</option>
+                <option value="8">8th Grade</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Subject *
+              </label>
+              <select
+                value={lessonSettings.subject}
+                onChange={(e) => setLessonSettings({ ...lessonSettings, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select Subject</option>
+                <option value="Math">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="ELA">English Language Arts</option>
+                <option value="Social Studies">Social Studies</option>
+                <option value="History">History</option>
+                <option value="Geography">Geography</option>
+                <option value="Art">Art</option>
+                <option value="Music">Music</option>
+                <option value="Physical Education">Physical Education</option>
+                <option value="Technology">Technology</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                State *
+              </label>
+              <select
+                value={lessonSettings.state}
+                onChange={(e) => setLessonSettings({ ...lessonSettings, state: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select State</option>
+                <option value="AL">Alabama</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Student Profiles Section */}
@@ -532,7 +675,7 @@ Format the response as JSON with the following structure:
               {studentProfiles.length > 0 && (
                 <button
                   onClick={handleGenerateLessonPlan}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !lessonSettings.grade || !lessonSettings.subject || !lessonSettings.state}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   {isGenerating ? 'Generating...' : 'Generate Lesson Plan'}
@@ -608,9 +751,10 @@ Format the response as JSON with the following structure:
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">{lessonPlan.title}</h3>
-                <div className="flex gap-4 text-sm text-gray-600">
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                   <span>Subject: {lessonPlan.subject}</span>
                   <span>Grade: {lessonPlan.grade}</span>
+                  <span>State: {lessonSettings.state}</span>
                   <span>Duration: {lessonPlan.duration}</span>
                 </div>
               </div>

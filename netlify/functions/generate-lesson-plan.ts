@@ -13,6 +13,11 @@ interface GenerateLessonPlanRequest {
   prompt: string;
   studentProfiles: StudentProfile[];
   outputFormat?: 'pdf' | 'google-doc';
+  lessonSettings?: {
+    grade: string;
+    subject: string;
+    state: string;
+  };
 }
 
 interface GenerateLessonPlanResponse {
@@ -37,7 +42,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { prompt, studentProfiles, outputFormat = 'pdf' }: GenerateLessonPlanRequest = JSON.parse(event.body || '{}');
+    const { prompt, studentProfiles, outputFormat = 'pdf', lessonSettings }: GenerateLessonPlanRequest = JSON.parse(event.body || '{}');
 
     if (!prompt || !studentProfiles || studentProfiles.length === 0) {
       return {
@@ -54,6 +59,23 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Fetch state standards if lesson settings are provided
+    let standardsText = '';
+    if (lessonSettings) {
+      try {
+        const standardsResponse = await fetch(`${process.env.URL || 'http://localhost:8888'}/.netlify/functions/get-state-standards?grade=${lessonSettings.grade}&subject=${lessonSettings.subject}&state=${lessonSettings.state}`);
+        if (standardsResponse.ok) {
+          const standardsData = await standardsResponse.json();
+          if (standardsData.standards && standardsData.standards.length > 0) {
+            standardsText = `\n\nState Standards for ${lessonSettings.state} ${lessonSettings.grade} Grade ${lessonSettings.subject}:\n${standardsData.standards.join('\n')}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching state standards:', error);
+        // Continue without standards if there's an error
+      }
+    }
+
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -68,7 +90,7 @@ export const handler: Handler = async (event) => {
         messages: [
           {
             role: 'user',
-            content: prompt,
+            content: prompt + standardsText,
           },
         ],
       }),
