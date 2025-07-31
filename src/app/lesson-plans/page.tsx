@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
-import { extractTextFromPDF, parseStudentProfilesFromText } from "@/lib/pdfUtils";
+
 
 interface StudentProfile {
   id: string;
@@ -58,24 +58,39 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         const file = files[i];
         
         if (file.type === 'application/pdf') {
-          // Handle PDF files with real text extraction
+          // Handle PDF files with direct LLM parsing
           try {
-            const text = await extractTextFromPDF(file);
-            const extractedProfiles = parseStudentProfilesFromText(text);
+            // Convert PDF to base64
+            const arrayBuffer = await file.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
             
-            extractedProfiles.forEach((profile, index) => {
+            // Use LLM to parse student profiles directly from PDF
+            const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pdfBase64: base64 })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to parse PDF with AI');
+            }
+
+            const data = await response.json();
+            const extractedProfiles = data.profiles || [];
+            
+            extractedProfiles.forEach((profile: any, index: number) => {
               profiles.push({
                 id: `upload-${Date.now()}-${i}-${index}`,
-                name: profile.name,
-                grade: profile.grade,
-                subject: profile.subject,
-                profile: profile.profile,
+                name: profile.name || 'Unknown Student',
+                grade: profile.grade || 'Unknown Grade',
+                subject: profile.subject || 'Unknown Subject',
+                profile: profile.profile || 'No profile provided',
                 createdAt: new Date().toISOString()
               });
             });
           } catch (pdfError) {
             console.error('PDF processing error:', pdfError);
-            setError('Failed to process PDF file. Please ensure it contains readable text and try again.');
+            setError('Failed to process PDF file. The AI will analyze the content and extract student profiles automatically.');
             setIsUploading(false);
             return;
           }
@@ -129,7 +144,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF files with readable text are also supported!
+            Upload CSV files with columns: Name, Grade, Subject, Profile. PDF files are automatically analyzed by AI to extract student profiles!
           </p>
           <div className="text-center">
             <a
@@ -152,14 +167,14 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             />
             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-600 mb-2">
-              {isUploading ? 'Processing files...' : 'Click to select files or drag and drop'}
+              {isUploading ? 'AI is analyzing your files...' : 'Click to select files or drag and drop'}
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             >
-              {isUploading ? 'Uploading...' : 'Select Files'}
+              {isUploading ? 'Analyzing...' : 'Select Files'}
             </button>
           </div>
 
