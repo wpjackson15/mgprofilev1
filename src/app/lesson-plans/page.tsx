@@ -57,9 +57,11 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        if (file.type === 'application/pdf') {
-          // Handle PDF files with direct LLM parsing
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          // Handle PDF files
           try {
+            console.log('Processing PDF file:', file.name);
+            
             // Convert PDF to base64
             const arrayBuffer = await file.arrayBuffer();
             const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -72,11 +74,15 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             });
 
             if (!response.ok) {
-              throw new Error('Failed to parse PDF with AI');
+              throw new Error(`API error: ${response.status}`);
             }
 
             const data = await response.json();
             const extractedProfiles = data.profiles || [];
+            
+            if (extractedProfiles.length === 0) {
+              throw new Error('No profiles found in PDF');
+            }
             
             extractedProfiles.forEach((profile: { name?: string; grade?: string; subject?: string; profile?: string }, index: number) => {
               profiles.push({
@@ -88,9 +94,11 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
                 createdAt: new Date().toISOString()
               });
             });
+            
+            console.log('Successfully processed PDF');
           } catch (pdfError) {
             console.error('PDF processing error:', pdfError);
-            setError('Failed to process PDF file. The AI will analyze the content and extract student profiles automatically.');
+            setError('Failed to process PDF file. Please try a different file or use manual entry.');
             setIsUploading(false);
             return;
           }
