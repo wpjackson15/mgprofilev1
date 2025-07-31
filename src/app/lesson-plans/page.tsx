@@ -67,16 +67,13 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
             }
             
-            // Convert PDF to base64
-            const arrayBuffer = await file.arrayBuffer();
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-            console.log('Base64 length:', base64.length);
+            // Send PDF file directly to Netlify function
+            const formData = new FormData();
+            formData.append('pdf', file);
             
-            // Use LLM to parse student profiles directly from PDF
             const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pdfBase64: base64 })
+              body: formData
             });
 
             if (!response.ok) {

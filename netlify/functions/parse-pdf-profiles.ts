@@ -10,18 +10,33 @@ export const handler: Handler = async (event) => {
 
   try {
     console.log('Received PDF parsing request');
-    const body = JSON.parse(event.body || '{}');
-    const { pdfBase64 } = body;
-
-    if (!pdfBase64) {
-      console.error('No PDF base64 data provided');
+    
+    // Parse multipart form data
+    const contentType = event.headers['content-type'] || '';
+    if (!contentType.includes('multipart/form-data')) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'No PDF provided' }),
+        body: JSON.stringify({ error: 'Expected multipart/form-data' }),
       };
     }
 
-    console.log('PDF base64 length:', pdfBase64.length);
+    // Extract the PDF file from the form data
+    const boundary = contentType.split('boundary=')[1];
+    const body = event.body || '';
+    
+    // Find the PDF file data in the multipart form
+    const pdfMatch = body.match(/Content-Disposition: form-data; name="pdf"; filename="[^"]*"\r?\nContent-Type: [^\r\n]*\r?\n\r?\n([\s\S]*?)(?=\r?\n--)/);
+    
+    if (!pdfMatch) {
+      console.error('No PDF file found in form data');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'No PDF file provided' }),
+      };
+    }
+
+    const pdfData = pdfMatch[1];
+    console.log('PDF data received, length:', pdfData.length);
 
     // Create a prompt for the LLM to parse student profiles from PDF
     const prompt = `Please analyze this PDF document and extract student profiles. Look for information about students including their names, grade levels, subjects, and learning profiles or characteristics.
@@ -41,6 +56,9 @@ If you can't find structured student information, try to identify any individual
 Return only the JSON array, no additional text.`;
 
     console.log('Calling Claude API...');
+    
+    // Convert PDF data to base64 for Claude API
+    const pdfBase64 = Buffer.from(pdfData, 'binary').toString('base64');
     
     // Call Claude API with the PDF directly
     const response = await fetch('https://api.anthropic.com/v1/messages', {
