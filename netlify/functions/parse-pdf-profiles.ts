@@ -9,7 +9,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    console.log('Received PDF parsing request');
+    console.log('=== PDF Parsing Request ===');
     console.log('Content-Type:', event.headers['content-type']);
     console.log('Body length:', event.body?.length || 0);
     
@@ -23,7 +23,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Extract the boundary from content type
+    // Extract boundary
     const boundaryMatch = contentType.match(/boundary=(.+)$/);
     if (!boundaryMatch) {
       console.error('No boundary found in content type');
@@ -37,23 +37,23 @@ export const handler: Handler = async (event) => {
     const body = event.body || '';
     
     console.log('Boundary:', boundary);
-    console.log('Body starts with:', body.substring(0, 200));
     
-    // Find the PDF file data in the multipart form
-    // Look for the boundary and PDF file content
+    // Simple approach: look for the PDF data between boundaries
     const boundaryStart = `--${boundary}`;
-    const boundaryEnd = `--${boundary}--`;
-    
-    // Split by boundary to find the PDF part
     const parts = body.split(boundaryStart);
     console.log('Found', parts.length, 'parts in multipart data');
     
     let pdfData = null;
     let pdfFileName = 'unknown.pdf';
     
-    for (const part of parts) {
+    // Look for the part that contains PDF data
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      console.log(`Part ${i} length:`, part.length);
+      console.log(`Part ${i} preview:`, part.substring(0, 200));
+      
       if (part.includes('Content-Disposition: form-data; name="pdf"')) {
-        console.log('Found PDF part');
+        console.log(`Found PDF part at index ${i}`);
         
         // Extract filename if present
         const filenameMatch = part.match(/filename="([^"]*)"/);
@@ -62,27 +62,31 @@ export const handler: Handler = async (event) => {
           console.log('PDF filename:', pdfFileName);
         }
         
-        // Extract the actual PDF data (everything after the headers)
+        // Find the end of headers (double newline)
         const headerEnd = part.indexOf('\r\n\r\n');
         if (headerEnd === -1) {
           console.error('No header end found in PDF part');
           continue;
         }
         
+        // Extract PDF data (everything after headers)
         pdfData = part.substring(headerEnd + 4);
         
         // Remove trailing boundary if present
+        const boundaryEnd = `--${boundary}--`;
         if (pdfData.endsWith(boundaryEnd)) {
           pdfData = pdfData.substring(0, pdfData.length - boundaryEnd.length - 2);
         }
         
         console.log('PDF data extracted, length:', pdfData.length);
+        console.log('PDF data starts with:', pdfData.substring(0, 100));
         break;
       }
     }
     
     if (!pdfData) {
       console.error('No PDF data found in multipart form');
+      console.log('All parts:', parts.map((p, i) => `Part ${i}: ${p.substring(0, 100)}...`));
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'No PDF file provided' }),
