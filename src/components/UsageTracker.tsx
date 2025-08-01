@@ -35,23 +35,6 @@ export function UsageTracker() {
     }
   }, []);
 
-  // Update usage stats
-  const updateUsage = (type: keyof UsageStats, increment: number = 1) => {
-    setUsageStats(prev => {
-      const updated = {
-        ...prev,
-        [type]: (prev[type] as number) + increment
-      };
-      
-      // Persist to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('mgprofile_usage_stats', JSON.stringify(updated));
-      }
-      
-      return updated;
-    });
-  };
-
   // Check if user is approaching limits
   const getLimitStatus = () => {
     const limits = {
@@ -142,12 +125,12 @@ export function UsageTracker() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">
-                You've reached your free tier limit!
+                You&apos;ve reached your free tier limit!
               </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  {limitStatus.lessonPlans.isAtLimit && "You've used all 3 free lesson plans this month. "}
-                  {limitStatus.pdfUploads.isAtLimit && "You've used your free PDF upload. "}
+                  {limitStatus.lessonPlans.isAtLimit && "You&apos;ve used all 3 free lesson plans this month. "}
+                  {limitStatus.pdfUploads.isAtLimit && "You&apos;ve used your free PDF upload. "}
                   Upgrade to premium for unlimited access!
                 </p>
               </div>

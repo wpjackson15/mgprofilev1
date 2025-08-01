@@ -1,8 +1,9 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 
+// Type definitions
 interface AnalyticsEvent {
   event: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, string | number | boolean>;
   timestamp: number;
 }
 
@@ -12,28 +13,76 @@ interface UserSession {
   events: AnalyticsEvent[];
 }
 
-class AnalyticsService {
-  private session: UserSession | null = null;
-  private isEnabled = true;
+interface UsageStats {
+  totalEvents: number;
+  sessionDuration: number;
+  eventCounts: Record<string, number>;
+  lastEvent: AnalyticsEvent | null;
+}
 
-  constructor() {
-    // Only enable analytics in production or when explicitly enabled
-    this.isEnabled = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === 'true';
-  }
+interface AnalyticsData {
+  session: UserSession | null;
+  lastUpdated: number;
+}
 
-  private getSessionId(): string {
-    if (!this.session) {
-      this.session = {
+// Custom hook for localStorage persistence
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error);
+      return initialValue;
+    }
+  });
+
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error);
+    }
+  }, [key, storedValue]);
+
+  return [storedValue, setValue] as const;
+}
+
+// Main analytics hook
+export function useAnalytics() {
+  const sessionRef = useRef<UserSession | null>(null);
+  const [analyticsData, setAnalyticsData] = useLocalStorage<AnalyticsData>('mgprofile_analytics', {
+    session: null,
+    lastUpdated: Date.now()
+  });
+
+  // Initialize session on mount
+  useEffect(() => {
+    if (!sessionRef.current) {
+      sessionRef.current = {
         sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         startTime: Date.now(),
         events: []
       };
+      
+      setAnalyticsData(prev => ({
+        ...prev,
+        session: sessionRef.current,
+        lastUpdated: Date.now()
+      }));
     }
-    return this.session.sessionId;
-  }
+  }, [setAnalyticsData]);
 
-  track(event: string, properties?: Record<string, any>) {
-    if (!this.isEnabled) return;
+  // Track event function
+  const track = useCallback((event: string, properties?: Record<string, string | number | boolean>) => {
+    if (!sessionRef.current) return;
 
     const analyticsEvent: AnalyticsEvent = {
       event,
@@ -41,40 +90,68 @@ class AnalyticsService {
       timestamp: Date.now()
     };
 
-    // Store locally for now (we'll implement server-side storage later)
-    this.session?.events.push(analyticsEvent);
+    sessionRef.current.events.push(analyticsEvent);
     
-    // Also log to console for development
+    // Update localStorage
+    setAnalyticsData(prev => ({
+      ...prev,
+      session: sessionRef.current,
+      lastUpdated: Date.now()
+    }));
+
+    // Log to console in development
     if (process.env.NODE_ENV === 'development') {
       console.log('📊 Analytics Event:', event, properties);
     }
+  }, [setAnalyticsData]);
 
-    // Store in localStorage for persistence across page reloads
-    this.persistToLocalStorage();
-  }
+  // Specific tracking functions
+  const trackFeatureUsage = useCallback((feature: string, action: string, properties?: Record<string, string | number | boolean>) => {
+    track('feature_used', {
+      feature,
+      action,
+      ...properties
+    });
+  }, [track]);
 
-  private persistToLocalStorage() {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const analyticsData = {
-        session: this.session,
-        lastUpdated: Date.now()
-      };
-      localStorage.setItem('mgprofile_analytics', JSON.stringify(analyticsData));
-    } catch (error) {
-      console.warn('Failed to persist analytics to localStorage:', error);
-    }
-  }
+  const trackLessonPlanCreation = useCallback((properties?: Record<string, string | number | boolean>) => {
+    track('lesson_plan_created', {
+      timestamp: Date.now(),
+      ...properties
+    });
+  }, [track]);
 
-  getUsageStats() {
-    if (!this.session) return null;
+  const trackPDFUpload = useCallback((properties?: Record<string, string | number | boolean>) => {
+    track('pdf_uploaded', {
+      timestamp: Date.now(),
+      ...properties
+    });
+  }, [track]);
 
-    const events = this.session.events;
-    const stats = {
+  const trackProfileCreation = useCallback((properties?: Record<string, string | number | boolean>) => {
+    track('profile_created', {
+      timestamp: Date.now(),
+      ...properties
+    });
+  }, [track]);
+
+  const trackPaywallTrigger = useCallback((trigger: string, properties?: Record<string, string | number | boolean>) => {
+    track('paywall_triggered', {
+      trigger,
+      timestamp: Date.now(),
+      ...properties
+    });
+  }, [track]);
+
+  // Get usage statistics
+  const getUsageStats = useCallback((): UsageStats | null => {
+    if (!sessionRef.current) return null;
+
+    const events = sessionRef.current.events;
+    const stats: UsageStats = {
       totalEvents: events.length,
-      sessionDuration: Date.now() - this.session.startTime,
-      eventCounts: {} as Record<string, number>,
+      sessionDuration: Date.now() - sessionRef.current.startTime,
+      eventCounts: {},
       lastEvent: events[events.length - 1] || null
     };
 
@@ -83,58 +160,12 @@ class AnalyticsService {
     });
 
     return stats;
-  }
-
-  // Export data for analysis
-  exportData() {
-    return this.session;
-  }
-}
-
-// Global analytics instance
-const analytics = new AnalyticsService();
-
-export function useAnalytics() {
-  const track = useCallback((event: string, properties?: Record<string, any>) => {
-    analytics.track(event, properties);
   }, []);
 
-  const trackFeatureUsage = useCallback((feature: string, action: string, properties?: Record<string, any>) => {
-    track('feature_used', {
-      feature,
-      action,
-      ...properties
-    });
-  }, [track]);
-
-  const trackLessonPlanCreation = useCallback((properties?: Record<string, any>) => {
-    track('lesson_plan_created', {
-      timestamp: Date.now(),
-      ...properties
-    });
-  }, [track]);
-
-  const trackPDFUpload = useCallback((properties?: Record<string, any>) => {
-    track('pdf_uploaded', {
-      timestamp: Date.now(),
-      ...properties
-    });
-  }, [track]);
-
-  const trackProfileCreation = useCallback((properties?: Record<string, any>) => {
-    track('profile_created', {
-      timestamp: Date.now(),
-      ...properties
-    });
-  }, [track]);
-
-  const trackPaywallTrigger = useCallback((trigger: string, properties?: Record<string, any>) => {
-    track('paywall_triggered', {
-      trigger,
-      timestamp: Date.now(),
-      ...properties
-    });
-  }, [track]);
+  // Export data for analysis
+  const exportData = useCallback(() => {
+    return sessionRef.current;
+  }, []);
 
   return {
     track,
@@ -143,7 +174,7 @@ export function useAnalytics() {
     trackPDFUpload,
     trackProfileCreation,
     trackPaywallTrigger,
-    getUsageStats: analytics.getUsageStats.bind(analytics),
-    exportData: analytics.exportData.bind(analytics)
+    getUsageStats,
+    exportData
   };
 } 

@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
+interface AnalyticsEvent {
+  event: string;
+  timestamp: number;
+  properties?: Record<string, string | number | boolean>;
+}
+
 interface AnalyticsData {
   totalSessions: number;
   totalLessonPlans: number;
@@ -10,11 +16,7 @@ interface AnalyticsData {
   totalProfiles: number;
   paywallTriggers: number;
   featureUsage: Record<string, number>;
-  recentEvents: Array<{
-    event: string;
-    timestamp: number;
-    properties?: Record<string, any>;
-  }>;
+  recentEvents: AnalyticsEvent[];
 }
 
 export function AnalyticsDashboard() {
@@ -36,27 +38,26 @@ export function AnalyticsDashboard() {
 
     try {
       const analyticsData = localStorage.getItem('mgprofile_analytics');
-      const usageData = localStorage.getItem('mgprofile_usage_stats');
       
       if (analyticsData) {
         const parsed = JSON.parse(analyticsData);
         const events = parsed.session?.events || [];
         
         // Calculate statistics
-        const stats = {
+        const stats: AnalyticsData = {
           totalSessions: 1, // For now, just count current session
-          totalLessonPlans: events.filter((e: any) => e.event === 'lesson_plan_created').length,
-          totalPDFUploads: events.filter((e: any) => e.event === 'pdf_uploaded').length,
-          totalProfiles: events.filter((e: any) => e.event === 'profile_created').length,
-          paywallTriggers: events.filter((e: any) => e.event === 'paywall_triggered').length,
+          totalLessonPlans: events.filter((e: AnalyticsEvent) => e.event === 'lesson_plan_created').length,
+          totalPDFUploads: events.filter((e: AnalyticsEvent) => e.event === 'pdf_uploaded').length,
+          totalProfiles: events.filter((e: AnalyticsEvent) => e.event === 'profile_created').length,
+          paywallTriggers: events.filter((e: AnalyticsEvent) => e.event === 'paywall_triggered').length,
           featureUsage: {} as Record<string, number>,
           recentEvents: events.slice(-10).reverse() // Last 10 events
         };
 
         // Count feature usage
-        events.forEach((event: any) => {
+        events.forEach((event: AnalyticsEvent) => {
           if (event.event === 'feature_used') {
-            const feature = event.properties?.feature || 'unknown';
+            const feature = event.properties?.feature as string || 'unknown';
             stats.featureUsage[feature] = (stats.featureUsage[feature] || 0) + 1;
           }
         });
