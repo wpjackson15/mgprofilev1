@@ -83,7 +83,14 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             if (!response.ok) {
               const errorText = await response.text();
               console.error('API error details:', response.status, errorText);
-              throw new Error(`API error: ${response.status} - ${errorText}`);
+              let errorMessage = `API error: ${response.status}`;
+              try {
+                const errorData = JSON.parse(errorText);
+                errorMessage += ` - ${errorData.error || errorData.details || errorText}`;
+              } catch {
+                errorMessage += ` - ${errorText}`;
+              }
+              throw new Error(errorMessage);
             }
 
             const data = await response.json();
@@ -193,6 +200,8 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             >
               {isUploading ? 'Analyzing...' : 'Select Files'}
             </button>
+            
+
           </div>
 
           {error && (
