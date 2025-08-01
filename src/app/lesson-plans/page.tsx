@@ -1,6 +1,10 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
+import { UsageTracker } from '@/components/UsageTracker';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { updateUsageStats } from '@/components/UsageTracker';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 
 
 interface StudentProfile {
@@ -341,6 +345,9 @@ export default function LessonPlansPage() {
     state: ''
   });
 
+  // Analytics integration
+  const { trackPDFUpload, trackLessonPlanCreation, trackProfileCreation } = useAnalytics();
+
   const handleUploadFiles = () => {
     setIsUploadModalOpen(true);
   };
@@ -351,10 +358,14 @@ export default function LessonPlansPage() {
 
   const handleAddProfile = (profile: StudentProfile) => {
     setStudentProfiles(prev => [...prev, profile]);
+    trackProfileCreation({ method: 'manual', profileCount: studentProfiles.length + 1 });
+    updateUsageStats.profileCreated();
   };
 
   const handleUploadProfiles = (profiles: StudentProfile[]) => {
     setStudentProfiles(prev => [...prev, ...profiles]);
+    trackPDFUpload({ profileCount: profiles.length, totalProfiles: studentProfiles.length + profiles.length });
+    updateUsageStats.pdfUploaded();
   };
 
   const handleRemoveProfile = (id: string) => {
@@ -438,6 +449,14 @@ Format the response as JSON with the following structure:
       };
 
       setLessonPlan(newLessonPlan);
+      trackLessonPlanCreation({ 
+        profileCount: studentProfiles.length, 
+        grade: lessonSettings.grade, 
+        subject: lessonSettings.subject,
+        state: lessonSettings.state,
+        outputFormat 
+      });
+      updateUsageStats.lessonPlanCreated();
     } catch (error) {
       setGenerationError('Failed to generate lesson plan. Please try again.');
       console.error('Lesson plan generation error:', error);
@@ -486,6 +505,12 @@ Format the response as JSON with the following structure:
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Genius Lesson Plans</h1>
           <p className="text-gray-600">Create culturally responsive, differentiated lessons based on student profiles</p>
         </div>
+
+        {/* Usage Tracker */}
+        <UsageTracker />
+
+        {/* Analytics Dashboard (Development Only) */}
+        {process.env.NODE_ENV === 'development' && <AnalyticsDashboard />}
 
         {/* Lesson Settings Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">

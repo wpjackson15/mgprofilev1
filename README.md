@@ -259,20 +259,24 @@ The project uses a custom `netlify.toml` configuration:
 #### Freemium Model (Planned)
 - **Free Tier**: 
   - 3 lesson plans per month
-  - Manual profile entry only
+  - Manual profile entry only (one profile per lesson plan)
+  - 1 PDF upload per month
   - Basic lesson plan generation
   - No profile library/saving
   
 - **Premium Tier** ($X/month):
   - Unlimited lesson plans
-  - PDF upload and AI profile extraction
+  - Unlimited PDF uploads
+  - Multiple profiles per lesson plan
   - Profile library with save/edit functionality
   - Advanced features (Google Docs export, etc.)
   - Priority support
 
 #### Alternative Models to Test
-- **Feature-Based**: Free manual entry, paid PDF upload
-- **Usage-Based**: Free 5 profiles, paid unlimited
+- **Feature-Based**: Free manual entry, paid multiple PDF uploads
+- **Usage-Based**: Free 5 lesson plans, paid unlimited
+- **Profile-Based**: Free single profile per lesson, paid multiple profiles
+- **PDF-Based**: Free 1 PDF upload, paid unlimited uploads
 - **Tiered Pricing**: Basic/Pro/Enterprise plans
 
 ### Development Phases
@@ -308,6 +312,8 @@ The project uses a custom `netlify.toml` configuration:
 
 #### A/B Testing Framework
 - **Free Tier Limits**: Test different usage limits (3 vs 5 lesson plans)
+- **PDF Upload Limits**: Test 1 vs 2 vs 3 PDF uploads for free tier
+- **Multiple Profile Limits**: Test single vs multiple profile lesson plans
 - **Feature Combinations**: Determine which features are most valuable
 - **Pricing Tiers**: Test different price points and structures
 - **Onboarding**: Optimize user experience for conversion
