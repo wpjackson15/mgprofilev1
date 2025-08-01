@@ -9,119 +9,20 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    console.log('=== PDF Parsing Request ===');
-    console.log('Content-Type:', event.headers['content-type']);
-    console.log('Body length:', event.body?.length || 0);
+    console.log('=== PDF Parsing Request (Base64) ===');
     
-    // Parse multipart form data
-    const contentType = event.headers['content-type'] || '';
-    if (!contentType.includes('multipart/form-data')) {
-      console.error('Invalid content type:', contentType);
+    const body = JSON.parse(event.body || '{}');
+    const { pdfBase64, fileName } = body;
+    
+    if (!pdfBase64) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Expected multipart/form-data' }),
+        body: JSON.stringify({ error: 'No PDF base64 data provided' }),
       };
     }
 
-    // Extract boundary
-    const boundaryMatch = contentType.match(/boundary=(.+)$/);
-    if (!boundaryMatch) {
-      console.error('No boundary found in content type');
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'No boundary found in content type' }),
-      };
-    }
-
-    const boundary = boundaryMatch[1];
-    const body = event.body || '';
-    
-    console.log('Boundary:', boundary);
-    
-    // Look for the PDF part using a more flexible approach
-    const boundaryStart = `--${boundary}`;
-    const parts = body.split(boundaryStart);
-    console.log('Found', parts.length, 'parts in multipart data');
-    
-    let pdfData = null;
-    let pdfFileName = 'unknown.pdf';
-    
-    // Look for any part that contains PDF data
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      console.log(`Part ${i} length:`, part.length);
-      
-      // Check if this part contains PDF data (more flexible search)
-      if (part.includes('Content-Disposition: form-data') && 
-          (part.includes('name="pdf"') || part.includes('filename='))) {
-        console.log(`Found potential PDF part at index ${i}`);
-        
-        // Extract filename if present
-        const filenameMatch = part.match(/filename="([^"]*)"/);
-        if (filenameMatch) {
-          pdfFileName = filenameMatch[1];
-          console.log('PDF filename:', pdfFileName);
-        }
-        
-        // Find the end of headers (try different line ending patterns)
-        let headerEnd = part.indexOf('\r\n\r\n');
-        if (headerEnd === -1) {
-          headerEnd = part.indexOf('\n\n');
-        }
-        if (headerEnd === -1) {
-          console.error('No header end found in PDF part');
-          continue;
-        }
-        
-        // Extract PDF data (everything after headers)
-        pdfData = part.substring(headerEnd + (part.includes('\r\n\r\n') ? 4 : 2));
-        
-        // Remove trailing boundary if present
-        const boundaryEnd = `--${boundary}--`;
-        if (pdfData.endsWith(boundaryEnd)) {
-          pdfData = pdfData.substring(0, pdfData.length - boundaryEnd.length - 2);
-        }
-        
-        console.log('PDF data extracted, length:', pdfData.length);
-        console.log('PDF data starts with:', pdfData.substring(0, 100));
-        break;
-      }
-    }
-    
-    if (!pdfData) {
-      console.error('No PDF data found in multipart form');
-      console.log('All parts:', parts.map((p, i) => `Part ${i}: ${p.substring(0, 100)}...`));
-      
-      // Try a fallback approach - look for any binary data
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        if (part.length > 1000) { // Large part might be PDF
-          console.log(`Trying fallback for part ${i} (length: ${part.length})`);
-          
-          // Look for header end
-          let headerEnd = part.indexOf('\r\n\r\n');
-          if (headerEnd === -1) {
-            headerEnd = part.indexOf('\n\n');
-          }
-          
-          if (headerEnd !== -1) {
-            const potentialData = part.substring(headerEnd + (part.includes('\r\n\r\n') ? 4 : 2));
-            if (potentialData.length > 100) {
-              pdfData = potentialData;
-              console.log('Using fallback PDF data, length:', pdfData.length);
-              break;
-            }
-          }
-        }
-      }
-      
-      if (!pdfData) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'No PDF file provided' }),
-        };
-      }
-    }
+    console.log('PDF base64 length:', pdfBase64.length);
+    console.log('File name:', fileName || 'unknown.pdf');
 
     // Create a prompt for the LLM to parse student profiles from PDF
     const prompt = `Please analyze this PDF document and extract student profiles. Look for information about students including their names, grade levels, subjects, and learning profiles or characteristics.
@@ -141,10 +42,6 @@ If you can't find structured student information, try to identify any individual
 Return only the JSON array, no additional text.`;
 
     console.log('Calling Claude API...');
-    
-    // Convert PDF data to base64 for Claude API
-    const pdfBase64 = Buffer.from(pdfData, 'binary').toString('base64');
-    console.log('PDF base64 length:', pdfBase64.length);
     
     // Call Claude API with the PDF directly
     const response = await fetch('https://api.anthropic.com/v1/messages', {

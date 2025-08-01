@@ -71,14 +71,32 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
             }
             
-            // Send PDF file directly to Netlify function
-            const formData = new FormData();
-            formData.append('pdf', file);
-            
-            const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
-              method: 'POST',
-              body: formData
-            });
+            // Try multipart form data first, then fallback to base64
+            let response;
+            try {
+              const formData = new FormData();
+              formData.append('pdf', file);
+              
+              response = await fetch('/.netlify/functions/parse-pdf-profiles', {
+                method: 'POST',
+                body: formData
+              });
+            } catch (multipartError) {
+              console.log('Multipart upload failed, trying base64 approach...');
+              
+              // Fallback to base64 approach
+              const arrayBuffer = await file.arrayBuffer();
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+              
+              response = await fetch('/.netlify/functions/parse-pdf-profiles-base64', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  pdfBase64: base64,
+                  fileName: file.name
+                })
+              });
+            }
 
             if (!response.ok) {
               const errorText = await response.text();
