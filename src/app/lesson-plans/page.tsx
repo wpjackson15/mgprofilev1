@@ -72,7 +72,9 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             }
             
             // Try multipart form data first, then fallback to base64
-            let response;
+            let response: Response;
+            
+            // First try multipart form data
             try {
               const formData = new FormData();
               formData.append('pdf', file);
@@ -81,8 +83,17 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
                 method: 'POST',
                 body: formData
               });
+              
+              // If multipart succeeds, use it
+              if (response.ok) {
+                console.log('Multipart upload succeeded');
+              } else {
+                // If multipart fails, try base64 fallback
+                console.log('Multipart upload failed with status:', response.status, 'trying base64 approach...');
+                throw new Error('Multipart failed');
+              }
             } catch (multipartError) {
-              console.log('Multipart upload failed, trying base64 approach...');
+              console.log('Multipart upload failed, using base64 fallback approach...');
               
               // Fallback to base64 approach
               const arrayBuffer = await file.arrayBuffer();
