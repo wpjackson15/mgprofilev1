@@ -902,7 +902,12 @@ Format the response as JSON with the following structure:
 
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Assessment</h4>
-                <p className="text-gray-700">{currentLessonPlan.assessment}</p>
+                <p className="text-gray-700">
+                  {typeof currentLessonPlan.assessment === 'string' 
+                    ? currentLessonPlan.assessment 
+                    : JSON.stringify(currentLessonPlan.assessment)
+                  }
+                </p>
               </div>
 
               <div>
