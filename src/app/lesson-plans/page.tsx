@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { Upload, Plus, Users, BookOpen, X, Download, FileText, File, ExternalLink, History } from "lucide-react";
+import { Upload, Plus, Users, BookOpen, X, Download, FileText, File, ExternalLink, History, CheckSquare, Square } from "lucide-react";
+import { CALESCriteria, CALES_FORM_FIELDS } from '@/lib/calesCriteria';
 import { UsageTracker } from '@/components/UsageTracker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { updateUsageStats } from '@/components/UsageTracker';
@@ -295,6 +296,24 @@ export default function LessonPlansPage() {
     state: ''
   });
 
+  // CALES criteria state
+  const [calesCriteria, setCalesCriteria] = useState<CALESCriteria>({
+    canDoAttitude: true,
+    interestAwareness: true,
+    multiculturalNavigation: true,
+    racialPride: true,
+    selectiveTrust: true,
+    socialJustice: true,
+    holisticWellBeing: true,
+    clarity: true,
+    accessibility: true,
+    credibility: true,
+    outcomes: true
+  });
+
+  // RAG settings
+  const [useRAG, setUseRAG] = useState(true);
+
   // Firebase integration
   const { 
     lessonPlans, 
@@ -431,15 +450,17 @@ Format the response as JSON with the following structure:
   "duration": "45 minutes"
 }`;
 
-      // Call the lesson plan generation service
-      const response = await fetch('/.netlify/functions/generate-lesson-plan', {
+      // Call the RAG-enhanced lesson plan generation service
+      const response = await fetch('/.netlify/functions/generate-lesson-plan-rag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt, 
           studentProfiles: selectedProfilesList, 
           outputFormat,
-          lessonSettings 
+          lessonSettings,
+          calesCriteria,
+          useRAG
         })
       });
 
@@ -461,7 +482,9 @@ Format the response as JSON with the following structure:
         studentProfiles: selectedProfilesList,
         lessonSettings,
         outputFormat,
-        googleDocUrl: data.googleDocUrl
+        googleDocUrl: data.googleDocUrl,
+        calesCriteria,
+        ragContext: data.ragContext
       };
 
       const lessonPlanId = await createLessonPlan(newLessonPlan);
@@ -595,6 +618,31 @@ Format the response as JSON with the following structure:
         {/* Lesson Settings Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Lesson Settings</h2>
+          
+          {/* RAG Toggle */}
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-blue-900">Enhanced AI Generation</h3>
+                <p className="text-xs text-blue-700 mt-1">
+                  Use RAG (Retrieval-Augmented Generation) to enhance lesson plans with relevant educational context and best practices
+                </p>
+              </div>
+              <button
+                onClick={() => setUseRAG(!useRAG)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  useRAG ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    useRAG ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -706,6 +754,77 @@ Format the response as JSON with the following structure:
                 <option value="WY">Wyoming</option>
               </select>
             </div>
+          </div>
+        </div>
+
+        {/* CALES Criteria Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">CALES Framework Criteria</h2>
+          <p className="text-gray-600 mb-4">
+            Select the CALES (Culturally Affirming Learning Environment) criteria to include in your lesson plan generation.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {CALES_FORM_FIELDS.map((field) => (
+              <div key={field.id} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <button
+                  onClick={() => setCalesCriteria(prev => ({
+                    ...prev,
+                    [field.id]: !prev[field.id as keyof CALESCriteria]
+                  }))}
+                  className="mt-1"
+                >
+                  {calesCriteria[field.id as keyof CALESCriteria] ? (
+                    <CheckSquare className="w-5 h-5 text-blue-600" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-gray-900 cursor-pointer">
+                    {field.label}
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">{field.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-between items-center">
+            <button
+              onClick={() => setCalesCriteria({
+                canDoAttitude: true,
+                interestAwareness: true,
+                multiculturalNavigation: true,
+                racialPride: true,
+                selectiveTrust: true,
+                socialJustice: true,
+                holisticWellBeing: true,
+                clarity: true,
+                accessibility: true,
+                credibility: true,
+                outcomes: true
+              })}
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Select All
+            </button>
+            <button
+              onClick={() => setCalesCriteria({
+                canDoAttitude: false,
+                interestAwareness: false,
+                multiculturalNavigation: false,
+                racialPride: false,
+                selectiveTrust: false,
+                socialJustice: false,
+                holisticWellBeing: false,
+                clarity: false,
+                accessibility: false,
+                credibility: false,
+                outcomes: false
+              })}
+              className="text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+              Clear All
+            </button>
           </div>
         </div>
 
@@ -975,6 +1094,26 @@ Format the response as JSON with the following structure:
                   ))}
                 </ul>
               </div>
+
+              {/* RAG Context Display */}
+              {currentLessonPlan.ragContext && currentLessonPlan.ragContext.length > 0 && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <span className="text-blue-600">🔍</span>
+                    AI-Enhanced Context Used
+                  </h4>
+                  <div className="space-y-3">
+                    {currentLessonPlan.ragContext.map((context, index) => (
+                      <div key={index} className="p-3 bg-white rounded border border-blue-100">
+                        <p className="text-sm text-blue-800 whitespace-pre-line">{context}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-600 mt-3">
+                    This context was retrieved and incorporated to enhance your lesson plan with relevant educational best practices.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

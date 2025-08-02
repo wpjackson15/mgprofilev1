@@ -38,6 +38,20 @@ export interface LessonPlan {
   };
   outputFormat?: 'pdf' | 'google-doc';
   googleDocUrl?: string;
+  calesCriteria?: {
+    canDoAttitude: boolean;
+    interestAwareness: boolean;
+    multiculturalNavigation: boolean;
+    racialPride: boolean;
+    selectiveTrust: boolean;
+    socialJustice: boolean;
+    holisticWellBeing: boolean;
+    clarity: boolean;
+    accessibility: boolean;
+    credibility: boolean;
+    outcomes: boolean;
+  };
+  ragContext?: string[];
 }
 
 export async function saveUserProgress(uid: string, progress: ProfileProgress) {
