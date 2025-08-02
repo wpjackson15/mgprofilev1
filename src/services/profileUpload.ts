@@ -1,4 +1,5 @@
 import { StudentProfile } from './firestore';
+import { FileUploadService, UploadedFile } from './fileUpload';
 
 export interface UploadedProfile {
   name?: string;
@@ -13,14 +14,16 @@ export interface UploadResult {
   error?: string;
   totalProcessed: number;
   totalValid: number;
+  uploadedFiles?: UploadedFile[];
 }
 
 export class ProfileUploadService {
   /**
    * Process uploaded files and extract student profiles
    */
-  static async processFiles(files: FileList): Promise<UploadResult> {
+  static async processFiles(files: FileList, userId?: string): Promise<UploadResult> {
     const profiles: StudentProfile[] = [];
+    const uploadedFiles: UploadedFile[] = [];
     let totalProcessed = 0;
     let totalValid = 0;
 
@@ -30,9 +33,12 @@ export class ProfileUploadService {
         totalProcessed++;
 
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          const result = await this.processPDFFile(file, i);
+          const result = await this.processPDFFile(file, i, userId);
           profiles.push(...result.profiles);
           totalValid += result.profiles.length;
+          if (result.uploadedFile) {
+            uploadedFiles.push(result.uploadedFile);
+          }
         } else if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
           const result = await this.processCSVFile(file, i);
           profiles.push(...result.profiles);
@@ -50,7 +56,8 @@ export class ProfileUploadService {
         success: true,
         profiles,
         totalProcessed,
-        totalValid
+        totalValid,
+        uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined
       };
     } catch (error) {
       return {
@@ -64,51 +71,83 @@ export class ProfileUploadService {
   }
 
   /**
-   * Process PDF files using AI extraction
+   * Process PDF files using Firebase Storage and AI extraction
    */
-  private static async processPDFFile(file: File, fileIndex: number): Promise<{ profiles: StudentProfile[] }> {
+  private static async processPDFFile(file: File, fileIndex: number, userId?: string): Promise<{ profiles: StudentProfile[], uploadedFile?: UploadedFile }> {
     // Check file size (10MB limit for API)
     if (file.size > 10 * 1024 * 1024) {
       throw new Error(`PDF file "${file.name}" is too large. Please use a file smaller than 10MB.`);
     }
 
-    const formData = new FormData();
-    formData.append('pdf', file);
+    if (!userId) {
+      throw new Error('User ID is required for PDF processing');
+    }
 
-    const response = await fetch('/.netlify/functions/parse-pdf-profiles-raw', {
-      method: 'POST',
-      body: formData
-    });
+    // Upload file to Firebase Storage first
+    const uploadResult = await FileUploadService.uploadFile(file, userId, 'pdf');
+    if (!uploadResult.success || !uploadResult.file) {
+      throw new Error(`Failed to upload PDF "${file.name}": ${uploadResult.error}`);
+    }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = `Failed to process PDF "${file.name}": ${response.status}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage += ` - ${errorData.error || errorData.details || errorText}`;
-      } catch {
-        errorMessage += ` - ${errorText}`;
+    // Update file status to processing
+    await FileUploadService.updateFileStatus(uploadResult.file.id, 'processing');
+
+    try {
+      // Process the PDF using the new storage-based function
+      const response = await fetch('/.netlify/functions/process-pdf-from-storage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileUrl: uploadResult.file.fileUrl,
+          fileId: uploadResult.file.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `Failed to process PDF "${file.name}": ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage += ` - ${errorData.error || errorData.details || errorText}`;
+        } catch {
+          errorMessage += ` - ${errorText}`;
+        }
+        
+        // Update file status to error
+        await FileUploadService.updateFileStatus(uploadResult.file.id, 'error', errorMessage);
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
+
+      const data = await response.json();
+      const extractedProfiles = data.profiles || [];
+
+      if (extractedProfiles.length === 0) {
+        // Update file status to processed (even if no profiles found)
+        await FileUploadService.updateFileStatus(uploadResult.file.id, 'processed');
+        throw new Error(`No student profiles found in PDF "${file.name}"`);
+      }
+
+      // Update file status to processed
+      await FileUploadService.updateFileStatus(uploadResult.file.id, 'processed');
+
+      // Convert to StudentProfile format
+      const profiles: StudentProfile[] = extractedProfiles.map((profile: UploadedProfile, index: number) => ({
+        id: `pdf-${Date.now()}-${fileIndex}-${index}`,
+        name: profile.name || 'Unknown Student',
+        grade: profile.grade || 'Unknown Grade',
+        subject: profile.subject || 'Unknown Subject',
+        profile: profile.profile || 'No profile provided',
+        createdAt: new Date().toISOString()
+      }));
+
+      return { profiles, uploadedFile: uploadResult.file };
+    } catch (error) {
+      // Update file status to error if not already set
+      await FileUploadService.updateFileStatus(uploadResult.file.id, 'error', error instanceof Error ? error.message : 'Unknown error');
+      throw error;
     }
-
-    const data = await response.json();
-    const extractedProfiles = data.profiles || [];
-
-    if (extractedProfiles.length === 0) {
-      throw new Error(`No student profiles found in PDF "${file.name}"`);
-    }
-
-    const profiles: StudentProfile[] = extractedProfiles.map((profile: UploadedProfile, index: number) => ({
-      id: `pdf-${Date.now()}-${fileIndex}-${index}`,
-      name: profile.name || 'Unknown Student',
-      grade: profile.grade || 'Unknown Grade',
-      subject: profile.subject || 'Unknown Subject',
-      profile: profile.profile || 'No profile provided',
-      createdAt: new Date().toISOString()
-    }));
-
-    return { profiles };
   }
 
   /**
