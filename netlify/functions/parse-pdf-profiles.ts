@@ -38,7 +38,7 @@ export const handler: Handler = async (event) => {
     
     console.log('Boundary:', boundary);
     
-    // Look for the PDF part using a more flexible approach
+    // Simplified approach: look for the largest part (likely the PDF)
     const boundaryStart = `--${boundary}`;
     const parts = body.split(boundaryStart);
     console.log('Found', parts.length, 'parts in multipart data');
@@ -46,35 +46,37 @@ export const handler: Handler = async (event) => {
     let pdfData = null;
     let pdfFileName = 'unknown.pdf';
     
-    // Look for any part that contains PDF data
+    // Find the largest part (most likely to be the PDF)
+    let largestPart = null;
+    let largestSize = 0;
+    
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      console.log(`Part ${i} length:`, part.length);
+      if (part.length > largestSize && part.length > 1000) { // Only consider parts larger than 1KB
+        largestSize = part.length;
+        largestPart = part;
+      }
+    }
+    
+    if (largestPart) {
+      console.log('Using largest part, size:', largestSize);
       
-      // Check if this part contains PDF data (more flexible search)
-      if (part.includes('Content-Disposition: form-data') && 
-          (part.includes('name="pdf"') || part.includes('filename='))) {
-        console.log(`Found potential PDF part at index ${i}`);
-        
-        // Extract filename if present
-        const filenameMatch = part.match(/filename="([^"]*)"/);
-        if (filenameMatch) {
-          pdfFileName = filenameMatch[1];
-          console.log('PDF filename:', pdfFileName);
-        }
-        
-        // Find the end of headers (try different line ending patterns)
-        let headerEnd = part.indexOf('\r\n\r\n');
-        if (headerEnd === -1) {
-          headerEnd = part.indexOf('\n\n');
-        }
-        if (headerEnd === -1) {
-          console.error('No header end found in PDF part');
-          continue;
-        }
-        
+      // Extract filename if present
+      const filenameMatch = largestPart.match(/filename="([^"]*)"/);
+      if (filenameMatch) {
+        pdfFileName = filenameMatch[1];
+        console.log('PDF filename:', pdfFileName);
+      }
+      
+      // Find the end of headers (try different line ending patterns)
+      let headerEnd = largestPart.indexOf('\r\n\r\n');
+      if (headerEnd === -1) {
+        headerEnd = largestPart.indexOf('\n\n');
+      }
+      
+      if (headerEnd !== -1) {
         // Extract PDF data (everything after headers)
-        pdfData = part.substring(headerEnd + (part.includes('\r\n\r\n') ? 4 : 2));
+        pdfData = largestPart.substring(headerEnd + (largestPart.includes('\r\n\r\n') ? 4 : 2));
         
         // Remove trailing boundary if present
         const boundaryEnd = `--${boundary}--`;
@@ -84,7 +86,6 @@ export const handler: Handler = async (event) => {
         
         console.log('PDF data extracted, length:', pdfData.length);
         console.log('PDF data starts with:', pdfData.substring(0, 100));
-        break;
       }
     }
     

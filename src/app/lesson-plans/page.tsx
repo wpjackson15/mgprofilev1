@@ -71,28 +71,15 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
             }
             
-            // Use Firebase Storage for PDF upload (much more efficient than base64)
-            console.log('Uploading PDF to Firebase Storage...');
+            // Use server-side processing with FormData (most reliable approach)
+            console.log('Uploading PDF to server for processing...');
             
-            // Import Firebase Storage functions
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
+            const formData = new FormData();
+            formData.append('pdf', file);
             
-            // Upload to Firebase Storage
-            const storageRef = ref(storage, `pdfs/${Date.now()}-${file.name}`);
-            const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-            
-            console.log('PDF uploaded to Firebase Storage:', downloadURL);
-            
-            // Send Firebase URL to Netlify function for processing
-            const response = await fetch('/.netlify/functions/parse-pdf-profiles-firebase', {
+            const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                pdfUrl: downloadURL,
-                fileName: file.name
-              })
+              body: formData
             });
 
             if (!response.ok) {
