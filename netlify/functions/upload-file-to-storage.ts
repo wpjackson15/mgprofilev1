@@ -68,8 +68,10 @@ export const handler: Handler = async (event) => {
       const part = parts[i];
       if (part.trim().length === 0) continue;
       
-      // Look for file part
-      if (part.includes('name="file"') || part.includes("name='file'")) {
+      console.log(`Part ${i} starts with:`, part.substring(0, 200));
+      
+      // Look for file part - check multiple patterns
+      if (part.includes('name="file"') || part.includes("name='file'") || part.includes('name=file')) {
         console.log(`Found file part at index ${i}`);
         
         // Extract filename
@@ -79,10 +81,13 @@ export const handler: Handler = async (event) => {
           console.log('File name:', fileName);
         }
         
-        // Find the end of headers
+        // Find the end of headers - try multiple patterns
         let headerEnd = part.indexOf('\r\n\r\n');
         if (headerEnd === -1) {
           headerEnd = part.indexOf('\n\n');
+        }
+        if (headerEnd === -1) {
+          headerEnd = part.indexOf('\r\n\r\n');
         }
         
         if (headerEnd !== -1) {
@@ -100,8 +105,8 @@ export const handler: Handler = async (event) => {
         }
       }
       
-      // Look for userId part
-      if (part.includes('name="userId"') || part.includes("name='userId'")) {
+      // Look for userId part - check multiple patterns
+      if (part.includes('name="userId"') || part.includes("name='userId'") || part.includes('name=userId')) {
         console.log(`Found userId part at index ${i}`);
         
         // Find the end of headers
@@ -121,6 +126,47 @@ export const handler: Handler = async (event) => {
           }
           
           console.log('User ID:', userId);
+        }
+      }
+    }
+    
+    // If we still haven't found the file part, try a more flexible approach
+    if (!fileData) {
+      console.log('Trying flexible file part detection...');
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part.trim().length === 0) continue;
+        
+        // Look for any part that contains file content indicators
+        if (part.includes('Content-Type:') && (part.includes('.pdf') || part.includes('PDF'))) {
+          console.log(`Found potential file part at index ${i} using flexible detection`);
+          
+          // Extract filename if present
+          const filenameMatch = part.match(/filename="([^"]*)"/);
+          if (filenameMatch) {
+            fileName = filenameMatch[1];
+            console.log('File name:', fileName);
+          }
+          
+          // Find the end of headers
+          let headerEnd = part.indexOf('\r\n\r\n');
+          if (headerEnd === -1) {
+            headerEnd = part.indexOf('\n\n');
+          }
+          
+          if (headerEnd !== -1) {
+            // Extract file data
+            fileData = part.substring(headerEnd + (part.includes('\r\n\r\n') ? 4 : 2));
+            
+            // Remove trailing boundary if present
+            const boundaryEnd = `--${boundary}--`;
+            if (fileData.endsWith(boundaryEnd)) {
+              fileData = fileData.substring(0, fileData.length - boundaryEnd.length - 2);
+            }
+            
+            console.log('File data extracted, length:', fileData.length);
+            break;
+          }
         }
       }
     }

@@ -30,39 +30,40 @@ export class FileUploadService {
     fileType: 'pdf' | 'csv' | 'txt' = 'pdf'
   ): Promise<FileUploadResult> {
     try {
-      // Create a unique file ID
-      const fileId = `${userId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      // Use server-side upload to avoid CORS issues
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', userId);
+
+      console.log('Uploading file via server:', file.name);
+      const response = await fetch('/.netlify/functions/upload-file-to-storage', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `Failed to upload file "${file.name}": ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage += ` - ${errorData.error || errorData.details || errorText}`;
+        } catch {
+          errorMessage += ` - ${errorText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
       
-      // Create storage reference
-      const storageRef = ref(storage, `uploads/${userId}/${fileId}`);
-      
-      // Upload file to Firebase Storage
-      console.log('Uploading file to Firebase Storage:', file.name);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      // Create file metadata
-      const fileData: UploadedFile = {
-        id: fileId,
-        fileName: file.name,
-        fileUrl: downloadURL,
-        fileType: file.type,
-        fileSize: file.size,
-        uploadedAt: new Date().toISOString(),
-        userId,
-        status: 'uploaded'
-      };
-      
-      // Save metadata to Firestore
-      console.log('Saving metadata to Firestore:', fileId);
-      const fileDocRef = doc(db, 'uploadedFiles', fileId);
-      await setDoc(fileDocRef, fileData);
-      
-      console.log('File uploaded successfully:', fileId);
+      if (!data.success || !data.file) {
+        throw new Error(`Upload failed: ${data.error || 'Unknown error'}`);
+      }
+
+      console.log('File uploaded successfully via server:', data.file.id);
       
       return {
         success: true,
-        file: fileData
+        file: data.file as UploadedFile
       };
     } catch (error) {
       console.error('Error uploading file:', error);
