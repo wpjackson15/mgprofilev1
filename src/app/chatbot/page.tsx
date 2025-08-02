@@ -7,7 +7,7 @@ import { ModuleSummariesProvider, useModuleSummaries } from "@/hooks/ModuleSumma
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { MessageCircle, User as UserIcon, RotateCcw } from "lucide-react";
-import { useResourceMatches } from "@/hooks/useResourceMatches";
+import { useResourceMatches, type Resource } from "@/hooks/useResourceMatches";
 
 interface ChatbotContentProps {
   answers: Record<string, string[]>;
@@ -18,7 +18,7 @@ interface ChatbotContentProps {
   clearChatSignal: number;
   showConfirm: boolean;
   chatbotRef: React.RefObject<{ clearChat: () => void } | null>;
-  resources: any[];
+  resources: Resource[];
   resourcesLoading: boolean;
   resourcesError: string | null;
   onStart: () => void;

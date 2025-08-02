@@ -60,7 +60,7 @@ export async function saveLessonPlan(lessonPlan: Omit<LessonPlan, 'id' | 'create
   
   // Filter out undefined values to avoid Firebase errors
   const cleanLessonPlan = Object.fromEntries(
-    Object.entries(lessonPlan).filter(([_, value]) => value !== undefined)
+    Object.entries(lessonPlan).filter(([, value]) => value !== undefined)
   );
   
   const lessonPlanData = {

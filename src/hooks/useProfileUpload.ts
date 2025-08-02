@@ -5,7 +5,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 
 export function useProfileUpload() {
-  const [user, loading] = useAuthState(auth);
+  const [user] = useAuthState(auth);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     current: number;
@@ -59,7 +59,7 @@ export function useProfileUpload() {
       // Clear progress after a delay
       setTimeout(() => setUploadProgress(null), 3000);
     }
-  }, []);
+  }, [user]);
 
   const validateProfile = useCallback((profile: Partial<StudentProfile>) => {
     return ProfileUploadService.validateProfile(profile);

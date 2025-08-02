@@ -26,8 +26,7 @@ export class FileUploadService {
    */
   static async uploadFile(
     file: File, 
-    userId: string, 
-    fileType: 'pdf' | 'csv' | 'txt' = 'pdf'
+    userId: string
   ): Promise<FileUploadResult> {
     try {
       // Create a unique file ID
