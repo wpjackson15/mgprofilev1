@@ -51,17 +51,32 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     clearChat: () => setMessages([])
   }));
 
-  // Clear chat when clearChatSignal changes
+  // Immediate clear chat function - optimized for speed
   useEffect(() => {
-    setMessages([]);
-    setLocalAnswers({});
-    setCurrentModule(0);
-    setCurrentStep(0);
-    // After clearing, show the first question if flow is loaded
-    if (flow.length > 0 && flow[0].steps.length > 0) {
-      setMessages([{ sender: "bot", text: flow[0].steps[0].text }]);
+    if (clearChatSignal && clearChatSignal > 0) {
+      // Immediate state reset - no complex logic
+      setMessages(flow.length > 0 && flow[0].steps.length > 0 ? 
+        [{ sender: "bot", text: flow[0].steps[0].text }] : []);
+      setLocalAnswers({});
+      setCurrentModule(0);
+      setCurrentStep(0);
+      setInput("");
+      
+      // Clear parent answers immediately
+      setAnswers({});
+      
+      // Reset progress in localStorage
+      try {
+        localStorage.removeItem('mgp_chat_progress');
+      } catch (e) {
+        console.warn('Could not clear localStorage:', e);
+      }
+      
+      // Reset summaries immediately
+      resetSummaries();
+      hasLoadedSummaries.current = false;
     }
-  }, [clearChatSignal, flow]);
+  }, [clearChatSignal, flow, setAnswers, resetSummaries]);
 
   // Load conversation flow
   useEffect(() => {
@@ -78,7 +93,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       });
   }, []);
 
-  // Improved chat history reconstruction
+  // Simplified and more reliable chat history reconstruction
   useEffect(() => {
     if (progress && flow.length > 0) {
       setLocalAnswers(progress.answers || {});
@@ -86,18 +101,25 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
       if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
 
-      // Rebuild chat history up to current module/step, including user answers
+      // Rebuild chat history more reliably
       const rebuiltMessages: Message[] = [];
-      for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
+      const currentModuleIndex = progress.currentModule ?? 0;
+      const currentStepIndex = progress.lastStep ?? 0;
+      
+      // Process all completed modules
+      for (let m = 0; m < currentModuleIndex; m++) {
         const moduleData = flow[m];
         if (!moduleData) continue;
-        const lastStepInModule = m === (progress.currentModule ?? 0) ? (progress.lastStep ?? 0) : moduleData.steps.length - 1;
-        for (let s = 0; s <= lastStepInModule; s++) {
+        
+        // Add all steps and responses for completed modules
+        for (let s = 0; s < moduleData.steps.length; s++) {
           const step = moduleData.steps[s];
           if (!step) continue;
-          // Add bot question/summary
+          
+          // Add bot message
           rebuiltMessages.push({ sender: "bot", text: step.text });
-          // Add user answer(s) if question
+          
+          // Add user responses for questions
           if (step.type === "question") {
             const key = `${moduleData.module}-${s}`;
             const answersArr = (progress.answers && progress.answers[key]) || [];
@@ -108,12 +130,32 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         }
       }
       
-      // Add the next bot message if we're not at the end of a module
-      const currentModuleData = flow[progress.currentModule ?? 0];
-      if (currentModuleData && (progress.lastStep ?? 0) < currentModuleData.steps.length - 1) {
-        const nextStep = currentModuleData.steps[(progress.lastStep ?? 0) + 1];
-        if (nextStep) {
-          rebuiltMessages.push({ sender: "bot", text: nextStep.text });
+      // Process current module up to current step
+      const currentModuleData = flow[currentModuleIndex];
+      if (currentModuleData) {
+        for (let s = 0; s <= currentStepIndex; s++) {
+          const step = currentModuleData.steps[s];
+          if (!step) continue;
+          
+          // Add bot message
+          rebuiltMessages.push({ sender: "bot", text: step.text });
+          
+          // Add user responses for questions
+          if (step.type === "question") {
+            const key = `${currentModuleData.module}-${s}`;
+            const answersArr = (progress.answers && progress.answers[key]) || [];
+            for (const ans of answersArr) {
+              rebuiltMessages.push({ sender: "user", text: ans });
+            }
+          }
+        }
+        
+        // Add next bot message if not at end of module
+        if (currentStepIndex < currentModuleData.steps.length - 1) {
+          const nextStep = currentModuleData.steps[currentStepIndex + 1];
+          if (nextStep) {
+            rebuiltMessages.push({ sender: "bot", text: nextStep.text });
+          }
         }
       }
       
@@ -153,11 +195,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     }
   }, [progress, flow, generateSummary, summaries]); // Added 'summaries' dependency
 
-  // Reset hasLoadedSummaries and summaries when chat is cleared
-  useEffect(() => {
-    hasLoadedSummaries.current = false;
-    resetSummaries(); // Reset all summaries when clearing chat
-  }, [clearChatSignal, resetSummaries]);
+  // Removed redundant useEffect - now handled in the main clear function
 
   // Save progress to Firestore/localStorage on every answer or step change
   useEffect(() => {

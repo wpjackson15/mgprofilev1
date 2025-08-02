@@ -45,9 +45,18 @@ export default function ChatbotPage() {
     setShowConfirm(true);
   };
 
-  const confirmClearChat = () => {
+  const handleQuickClear = () => {
+    // Immediate clear without confirmation
+    setAnswers({});
     setClearChatSignal((sig) => sig + 1);
+  };
+
+  const confirmClearChat = () => {
+    // Immediate state reset for better UX
+    setAnswers({});
     setShowConfirm(false);
+    // Trigger clear with minimal delay
+    setTimeout(() => setClearChatSignal((sig) => sig + 1), 0);
   };
 
   return (
@@ -138,13 +147,23 @@ export default function ChatbotPage() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm flex items-center justify-center gap-2"
-                        onClick={handleClearChat}
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Clear Chat and Start Over
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                          onClick={handleClearChat}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Clear Chat
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-blue-200 text-blue-800 rounded-lg hover:bg-blue-300 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                          onClick={handleQuickClear}
+                          title="Quick reset without confirmation"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Quick Reset
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
