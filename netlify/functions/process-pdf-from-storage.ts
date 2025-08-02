@@ -113,7 +113,7 @@ Return only the JSON array, no additional text.`;
                 text: prompt,
               },
               {
-                type: 'file',
+                type: 'document',
                 source: {
                   type: 'base64',
                   media_type: 'application/pdf',
