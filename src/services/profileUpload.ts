@@ -33,11 +33,10 @@ export class ProfileUploadService {
         totalProcessed++;
 
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          const result = await this.processPDFFile(file, i, userId);
-          profiles.push(...result.profiles);
-          totalValid += result.profiles.length;
-          if (result.uploadedFile) {
-            uploadedFiles.push(result.uploadedFile);
+          // Only upload, do not process
+          const uploadResult = await FileUploadService.uploadFile(file, userId!, 'pdf');
+          if (uploadResult.success && uploadResult.file) {
+            uploadedFiles.push(uploadResult.file);
           }
         } else if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
           const result = await this.processCSVFile(file, i);

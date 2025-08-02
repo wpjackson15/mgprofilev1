@@ -8,9 +8,12 @@ interface ProfilePreviewProps {
   onEdit?: (profile: StudentProfile) => void;
   onDelete?: (id: string) => void;
   showValidation?: boolean;
+  selectedProfiles?: Set<string>;
+  onProfileSelect?: (profileId: string) => void;
+  showSelection?: boolean;
 }
 
-export function ProfilePreview({ profiles, onEdit, onDelete, showValidation = true }: ProfilePreviewProps) {
+export function ProfilePreview({ profiles, onEdit, onDelete, showValidation = true, selectedProfiles, onProfileSelect, showSelection = false }: ProfilePreviewProps) {
   const getValidationStatus = (profile: StudentProfile) => {
     const validation = ProfileUploadService.validateProfile(profile);
     return {
@@ -46,6 +49,14 @@ export function ProfilePreview({ profiles, onEdit, onDelete, showValidation = tr
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
+                  {showSelection && onProfileSelect && (
+                    <input
+                      type="checkbox"
+                      checked={selectedProfiles?.has(profile.id) || false}
+                      onChange={() => onProfileSelect(profile.id)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                  )}
                   <User className="w-5 h-5 text-blue-600" />
                   <h3 className="font-semibold text-gray-800">{profile.name}</h3>
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">

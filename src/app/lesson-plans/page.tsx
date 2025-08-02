@@ -285,6 +285,9 @@ export default function LessonPlansPage() {
   const [outputFormat, setOutputFormat] = useState<'pdf' | 'google-doc'>('pdf');
   const [showSavedPlans, setShowSavedPlans] = useState(false);
   
+  // Profile selection state
+  const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(new Set());
+  
   // Lesson plan settings
   const [lessonSettings, setLessonSettings] = useState({
     grade: '',
@@ -352,9 +355,34 @@ export default function LessonPlansPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Profile selection handlers
+  const handleProfileSelect = (profileId: string) => {
+    const newSelected = new Set(selectedProfiles);
+    if (newSelected.has(profileId)) {
+      newSelected.delete(profileId);
+    } else {
+      newSelected.add(profileId);
+    }
+    setSelectedProfiles(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedProfiles(new Set(studentProfiles.map(p => p.id)));
+  };
+
+  const handleSelectNone = () => {
+    setSelectedProfiles(new Set());
+  };
+
+  const getSelectedProfiles = () => {
+    return studentProfiles.filter(p => selectedProfiles.has(p.id));
+  };
+
   const handleGenerateLessonPlan = async () => {
-    if (studentProfiles.length === 0) {
-      setGenerationError('Please add at least one student profile.');
+    const selectedProfilesList = getSelectedProfiles();
+    
+    if (selectedProfilesList.length === 0) {
+      setGenerationError('Please select at least one student profile.');
       return;
     }
     
@@ -367,8 +395,8 @@ export default function LessonPlansPage() {
     setGenerationError(null);
 
     try {
-      // Create a prompt for the AI based on student profiles and lesson settings
-      const profilesText = studentProfiles.map(p => 
+      // Create a prompt for the AI based on selected student profiles and lesson settings
+      const profilesText = selectedProfilesList.map(p => 
         `Student: ${p.name} (Grade ${p.grade}, ${p.subject})\nProfile: ${p.profile}`
       ).join('\n\n');
 
@@ -409,7 +437,7 @@ Format the response as JSON with the following structure:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt, 
-          studentProfiles, 
+          studentProfiles: selectedProfilesList, 
           outputFormat,
           lessonSettings 
         })
@@ -430,7 +458,7 @@ Format the response as JSON with the following structure:
         assessment: data.assessment,
         materials: data.materials,
         duration: data.duration,
-        studentProfiles,
+        studentProfiles: selectedProfilesList,
         lessonSettings,
         outputFormat,
         googleDocUrl: data.googleDocUrl
@@ -450,7 +478,7 @@ Format the response as JSON with the following structure:
       }
       
       trackLessonPlanCreation({ 
-        profileCount: studentProfiles.length, 
+        profileCount: selectedProfilesList.length, 
         grade: lessonSettings.grade, 
         subject: lessonSettings.subject,
         state: lessonSettings.state,
@@ -723,11 +751,37 @@ Format the response as JSON with the following structure:
 
           {/* Student Profiles List */}
           {studentProfiles.length > 0 && (
-            <ProfilePreview
-              profiles={studentProfiles}
-              onDelete={handleRemoveProfile}
-              showValidation={true}
-            />
+            <div>
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSelectAll}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={handleSelectNone}
+                    className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    Select None
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    {selectedProfiles.size} of {studentProfiles.length} profiles selected
+                  </span>
+                </div>
+              </div>
+              
+              <ProfilePreview
+                profiles={studentProfiles}
+                onDelete={handleRemoveProfile}
+                showValidation={true}
+                selectedProfiles={selectedProfiles}
+                onProfileSelect={handleProfileSelect}
+                showSelection={true}
+              />
+            </div>
           )}
         </div>
 
@@ -759,17 +813,17 @@ Format the response as JSON with the following structure:
               {studentProfiles.length > 0 && (
                 <button
                   onClick={handleGenerateLessonPlan}
-                  disabled={isGenerating || !lessonSettings.grade || !lessonSettings.subject || !lessonSettings.state}
+                  disabled={isGenerating || !lessonSettings.grade || !lessonSettings.subject || !lessonSettings.state || selectedProfiles.size === 0}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
-                  {isGenerating ? 'Generating...' : 'Generate Lesson Plan'}
+                  {isGenerating ? 'Generating...' : `Generate Lesson Plan (${selectedProfiles.size} profiles)`}
                 </button>
               )}
             </div>
           </div>
 
           {/* Output Format Selection */}
-          {studentProfiles.length > 0 && !currentLessonPlan && !isGenerating && (
+          {selectedProfiles.size > 0 && !currentLessonPlan && !isGenerating && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-3">Output Format</h4>
               <div className="flex gap-4">
