@@ -54,8 +54,8 @@ export const handler: Handler = async (event) => {
       // Skip empty parts
       if (part.trim().length === 0) continue;
       
-      // Look for the PDF part specifically
-      if (part.includes('name="pdf"')) {
+      // Look for the PDF part specifically - check for both "name=\"pdf\"" and "name='pdf'"
+      if (part.includes('name="pdf"') || part.includes("name='pdf'") || part.includes('name=pdf')) {
         console.log(`Found PDF part at index ${i}`);
         
         // Extract filename if present
@@ -65,10 +65,13 @@ export const handler: Handler = async (event) => {
           console.log('PDF filename:', pdfFileName);
         }
         
-        // Find the end of headers
+        // Find the end of headers - try different line ending patterns
         let headerEnd = part.indexOf('\r\n\r\n');
         if (headerEnd === -1) {
           headerEnd = part.indexOf('\n\n');
+        }
+        if (headerEnd === -1) {
+          headerEnd = part.indexOf('\r\n\r\n');
         }
         
         if (headerEnd !== -1) {
@@ -84,6 +87,51 @@ export const handler: Handler = async (event) => {
           console.log('PDF data extracted, length:', pdfData.length);
           console.log('PDF data starts with:', pdfData.substring(0, 100));
           break;
+        }
+      }
+    }
+    
+    // If we still haven't found the PDF part, try a more flexible approach
+    if (!pdfData) {
+      console.log('Trying flexible PDF part detection...');
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part.trim().length === 0) continue;
+        
+        // Look for any part that contains PDF content indicators
+        if (part.includes('Content-Type: application/pdf') || 
+            part.includes('Content-Type:application/pdf') ||
+            part.includes('.pdf') ||
+            part.includes('PDF')) {
+          console.log(`Found potential PDF part at index ${i} using flexible detection`);
+          
+          // Extract filename if present
+          const filenameMatch = part.match(/filename="([^"]*)"/);
+          if (filenameMatch) {
+            pdfFileName = filenameMatch[1];
+            console.log('PDF filename:', pdfFileName);
+          }
+          
+          // Find the end of headers
+          let headerEnd = part.indexOf('\r\n\r\n');
+          if (headerEnd === -1) {
+            headerEnd = part.indexOf('\n\n');
+          }
+          
+          if (headerEnd !== -1) {
+            // Extract PDF data (everything after headers)
+            pdfData = part.substring(headerEnd + (part.includes('\r\n\r\n') ? 4 : 2));
+            
+            // Remove trailing boundary if present
+            const boundaryEnd = `--${boundary}--`;
+            if (pdfData.endsWith(boundaryEnd)) {
+              pdfData = pdfData.substring(0, pdfData.length - boundaryEnd.length - 2);
+            }
+            
+            console.log('PDF data extracted, length:', pdfData.length);
+            console.log('PDF data starts with:', pdfData.substring(0, 100));
+            break;
+          }
         }
       }
     }
