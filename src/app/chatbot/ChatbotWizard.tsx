@@ -155,11 +155,20 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           }
         }
         
-        // Add next bot message if not at end of module
+        // Only add the next bot message if we've answered the current question
+        // This prevents showing multiple questions at once
         if (currentStepIndex < currentModuleData.steps.length - 1) {
-          const nextStep = currentModuleData.steps[currentStepIndex + 1];
-          if (nextStep) {
-            rebuiltMessages.push({ sender: "bot", text: nextStep.text });
+          const currentStep = currentModuleData.steps[currentStepIndex];
+          if (currentStep && currentStep.type === "question") {
+            const key = `${currentModuleData.module}-${currentStepIndex}`;
+            const answersArr = (progress.answers && progress.answers[key]) || [];
+            // Only show next question if current question has been answered
+            if (answersArr.length > 0) {
+              const nextStep = currentModuleData.steps[currentStepIndex + 1];
+              if (nextStep) {
+                rebuiltMessages.push({ sender: "bot", text: nextStep.text });
+              }
+            }
           }
         }
       }
