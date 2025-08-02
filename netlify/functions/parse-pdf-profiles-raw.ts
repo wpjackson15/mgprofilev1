@@ -125,7 +125,7 @@ Return only the JSON array, no additional text.`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.CLAUDE_API_KEY || '',
+        'x-api-key': process.env.CLAUDE_API_KEY_LESSON_PLANS || '',
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
