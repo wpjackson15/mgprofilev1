@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { Upload, Plus, Users, BookOpen, X, User, Download, FileText, File, ExternalLink, History } from "lucide-react";
+import { Upload, Plus, Users, BookOpen, X, Download, FileText, File, ExternalLink, History } from "lucide-react";
 import { UsageTracker } from '@/components/UsageTracker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { updateUsageStats } from '@/components/UsageTracker';
@@ -546,7 +546,7 @@ Format the response as JSON with the following structure:
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-red-800 font-medium">Error</h3>
-                <p className="text-red-600 text-sm mt-1">{typeof error === 'string' ? error : error?.message || 'An error occurred'}</p>
+                <p className="text-red-600 text-sm mt-1">{error || 'An error occurred'}</p>
               </div>
               <button
                 onClick={clearError}

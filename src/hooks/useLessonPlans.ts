@@ -152,7 +152,7 @@ export function useLessonPlans() {
     lessonPlans,
     studentProfiles,
     isLoading: isLoading || loading,
-    error: error || (authError as string),
+    error: error || (authError ? String(authError) : null),
     user,
     
     // Actions
