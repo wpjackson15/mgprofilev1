@@ -57,8 +57,14 @@ export async function loadUserProgress(uid: string): Promise<ProfileProgress | n
 // Lesson Plan Services
 export async function saveLessonPlan(lessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const lessonPlanRef = doc(collection(db, "lessonPlans"));
+  
+  // Filter out undefined values to avoid Firebase errors
+  const cleanLessonPlan = Object.fromEntries(
+    Object.entries(lessonPlan).filter(([_, value]) => value !== undefined)
+  );
+  
   const lessonPlanData = {
-    ...lessonPlan,
+    ...cleanLessonPlan,
     id: lessonPlanRef.id,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
