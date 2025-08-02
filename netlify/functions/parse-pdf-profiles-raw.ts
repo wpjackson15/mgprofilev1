@@ -116,6 +116,28 @@ Return only the JSON array, no additional text.`;
 
     console.log('Calling Claude API with raw PDF...');
     
+    // Check if API key is available
+    const apiKey = process.env.CLAUDE_API_KEY_LESSON_PLANS;
+    console.log('API key available:', !!apiKey);
+    console.log('API key length:', apiKey?.length || 0);
+    
+    if (!apiKey) {
+      console.error('CLAUDE_API_KEY_LESSON_PLANS environment variable not set');
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ 
+          error: 'API key not configured',
+          details: 'CLAUDE_API_KEY_LESSON_PLANS environment variable is not set'
+        }),
+      };
+    }
+    
     // Convert PDF data to base64 for Claude API (this is just for transmission, not text extraction)
     const pdfBase64 = Buffer.from(pdfData, 'binary').toString('base64');
     console.log('PDF base64 length:', pdfBase64.length);
@@ -125,7 +147,7 @@ Return only the JSON array, no additional text.`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.CLAUDE_API_KEY_LESSON_PLANS || '',
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
