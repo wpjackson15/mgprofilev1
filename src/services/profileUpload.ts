@@ -34,7 +34,7 @@ export class ProfileUploadService {
 
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           // Only upload, do not process
-          const uploadResult = await FileUploadService.uploadFile(file, userId!, 'pdf');
+          const uploadResult = await FileUploadService.uploadFile(file, userId!);
           if (uploadResult.success && uploadResult.file) {
             uploadedFiles.push(uploadResult.file);
           }
@@ -83,7 +83,7 @@ export class ProfileUploadService {
     }
 
     // Upload file to Firebase Storage first
-    const uploadResult = await FileUploadService.uploadFile(file, userId, 'pdf');
+    const uploadResult = await FileUploadService.uploadFile(file, userId);
     if (!uploadResult.success || !uploadResult.file) {
       throw new Error(`Failed to upload PDF "${file.name}": ${uploadResult.error}`);
     }
