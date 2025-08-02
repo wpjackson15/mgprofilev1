@@ -1,35 +1,17 @@
 "use client";
-import React, { useState, useRef } from "react";
-import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink, Save, History } from "lucide-react";
 import { UsageTracker } from '@/components/UsageTracker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { updateUsageStats } from '@/components/UsageTracker';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { useLessonPlans } from '@/hooks/useLessonPlans';
+import { useProfileUpload } from '@/hooks/useProfileUpload';
+import { StudentProfile, LessonPlan } from '@/services/firestore';
+import { ProfilePreview } from '@/components/ProfilePreview';
 
 
-interface StudentProfile {
-  id: string;
-  name: string;
-  grade: string;
-  subject: string;
-  profile: string;
-  createdAt: string;
-}
 
-interface LessonPlan {
-  id: string;
-  title: string;
-  subject: string;
-  grade: string;
-  objectives: string[];
-  activities: string[];
-  assessment: string;
-  materials: string[];
-  duration: string;
-  createdAt: string;
-  outputFormat?: 'pdf' | 'google-doc';
-  googleDocUrl?: string;
-}
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -44,116 +26,32 @@ interface ManualEntryModalProps {
 }
 
 function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadProfiles, isUploading, uploadProgress, error, clearError, generateTemplate } = useProfileUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    setIsUploading(true);
-    setError(null);
-
-    try {
-      const profiles: StudentProfile[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          // Handle PDF files
-          try {
-            console.log('Processing PDF file:', file.name, 'Size:', file.size);
-            
-            // Check file size (Claude has limits)
-            if (file.size > 10 * 1024 * 1024) { // 10MB limit
-              throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
-            }
-            
-            // Use FormData to send raw PDF file (best for LLM processing)
-            console.log('Uploading raw PDF file for processing...');
-            
-            const formData = new FormData();
-            formData.append('pdf', file);
-            
-            const response = await fetch('/.netlify/functions/parse-pdf-profiles-raw', {
-              method: 'POST',
-              body: formData
-            });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error('API error details:', response.status, errorText);
-              let errorMessage = `API error: ${response.status}`;
-              try {
-                const errorData = JSON.parse(errorText);
-                errorMessage += ` - ${errorData.error || errorData.details || errorText}`;
-              } catch {
-                errorMessage += ` - ${errorText}`;
-              }
-              throw new Error(errorMessage);
-            }
-
-            const data = await response.json();
-            const extractedProfiles = data.profiles || [];
-            
-            if (extractedProfiles.length === 0) {
-              throw new Error('No profiles found in PDF');
-            }
-            
-            extractedProfiles.forEach((profile: { name?: string; grade?: string; subject?: string; profile?: string }, index: number) => {
-              profiles.push({
-                id: `upload-${Date.now()}-${i}-${index}`,
-                name: profile.name || 'Unknown Student',
-                grade: profile.grade || 'Unknown Grade',
-                subject: profile.subject || 'Unknown Subject',
-                profile: profile.profile || 'No profile provided',
-                createdAt: new Date().toISOString()
-              });
-            });
-            
-            console.log('Successfully processed PDF');
-          } catch (pdfError) {
-            console.error('PDF processing error:', pdfError);
-            setError('Failed to process PDF file. Please try a different file or use manual entry.');
-            setIsUploading(false);
-            return;
-          }
-        } else {
-          // Handle CSV/TXT files
-          const text = await file.text();
-          
-          // Simple CSV parsing (you can enhance this)
-          const lines = text.split('\n').filter(line => line.trim());
-          
-          for (let j = 1; j < lines.length; j++) {
-            const values = lines[j].split(',').map(v => v.trim());
-            if (values.length >= 4) {
-              profiles.push({
-                id: `upload-${Date.now()}-${j}`,
-                name: values[0] || 'Unknown',
-                grade: values[1] || 'Unknown',
-                subject: values[2] || 'Unknown',
-                profile: values[3] || 'No profile provided',
-                createdAt: new Date().toISOString()
-              });
-            }
-          }
-        }
-      }
-
-      if (profiles.length > 0) {
-        onUpload(profiles);
-        onClose();
-      } else {
-        setError('No valid profiles found in uploaded files');
-      }
-    } catch {
-      setError('Error processing files. Please check the format.');
-    } finally {
-      setIsUploading(false);
+    const result = await uploadProfiles(files);
+    
+    if (result.success && result.profiles.length > 0) {
+      onUpload(result.profiles);
+      onClose();
     }
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = generateTemplate();
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'student-profiles-template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (!isOpen) return null;
@@ -170,15 +68,40 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Upload PDF files to automatically extract student profiles using AI! Also supports CSV files with columns: Name, Grade, Subject, Profile.
+            Upload PDF files to automatically extract student profiles using AI! Also supports CSV and TXT files with columns: Name, Grade, Subject, Profile.
           </p>
-          <div className="text-center">
+          
+          {/* Progress Display */}
+          {uploadProgress && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-900">Processing Files</span>
+                <span className="text-sm text-blue-700">{uploadProgress.current}/{uploadProgress.total}</span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-blue-700 mt-2">{uploadProgress.message}</p>
+            </div>
+          )}
+          
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={handleDownloadTemplate}
+              className="text-blue-600 hover:text-blue-800 text-sm underline"
+            >
+              Download CSV Template
+            </button>
+            <span className="text-gray-400">|</span>
             <a
               href="/sample-student-profiles.csv"
               download
               className="text-blue-600 hover:text-blue-800 text-sm underline"
             >
-              Download sample CSV file
+              Download Sample File
             </a>
           </div>
           
@@ -202,15 +125,26 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             >
               {isUploading ? 'Analyzing...' : 'Select Files'}
             </button>
-            
+          </div>
 
-            
-
+          {/* Supported Formats */}
+          <div className="text-xs text-gray-500 text-center">
+            <p className="font-medium mb-1">Supported Formats:</p>
+            <div className="flex justify-center gap-4">
+              <span>📄 PDF (AI extraction)</span>
+              <span>📊 CSV (comma-separated)</span>
+              <span>📝 TXT (tab/comma-separated)</span>
+            </div>
           </div>
 
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-3 rounded">
-              {error}
+              <div className="flex justify-between items-start">
+                <span>{error}</span>
+                <button onClick={clearError} className="text-red-400 hover:text-red-600 ml-2">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -343,13 +277,13 @@ function ManualEntryModal({ isOpen, onClose, onAdd }: ManualEntryModalProps) {
 }
 
 export default function LessonPlansPage() {
-  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
-  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+  const [currentLessonPlan, setCurrentLessonPlan] = useState<LessonPlan | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [outputFormat, setOutputFormat] = useState<'pdf' | 'google-doc'>('pdf');
+  const [showSavedPlans, setShowSavedPlans] = useState(false);
   
   // Lesson plan settings
   const [lessonSettings, setLessonSettings] = useState({
@@ -357,6 +291,21 @@ export default function LessonPlansPage() {
     subject: '',
     state: ''
   });
+
+  // Firebase integration
+  const { 
+    lessonPlans, 
+    studentProfiles, 
+    isLoading, 
+    error, 
+    user,
+    createLessonPlan, 
+    saveStudentProfiles,
+    deleteLessonPlan,
+    clearError 
+  } = useLessonPlans();
+
+  const { exportProfiles } = useProfileUpload();
 
   // Analytics integration
   const { trackPDFUpload, trackLessonPlanCreation, trackProfileCreation } = useAnalytics();
@@ -370,19 +319,37 @@ export default function LessonPlansPage() {
   };
 
   const handleAddProfile = (profile: StudentProfile) => {
-    setStudentProfiles(prev => [...prev, profile]);
-    trackProfileCreation({ method: 'manual', profileCount: studentProfiles.length + 1 });
+    const newProfiles = [...studentProfiles, profile];
+    saveStudentProfiles(newProfiles);
+    trackProfileCreation({ method: 'manual', profileCount: newProfiles.length });
     updateUsageStats.profileCreated();
   };
 
   const handleUploadProfiles = (profiles: StudentProfile[]) => {
-    setStudentProfiles(prev => [...prev, ...profiles]);
-    trackPDFUpload({ profileCount: profiles.length, totalProfiles: studentProfiles.length + profiles.length });
+    const newProfiles = [...studentProfiles, ...profiles];
+    saveStudentProfiles(newProfiles);
+    trackPDFUpload({ profileCount: profiles.length, totalProfiles: newProfiles.length });
     updateUsageStats.pdfUploaded();
   };
 
   const handleRemoveProfile = (id: string) => {
-    setStudentProfiles(prev => prev.filter(p => p.id !== id));
+    const newProfiles = studentProfiles.filter(p => p.id !== id);
+    saveStudentProfiles(newProfiles);
+  };
+
+  const handleExportProfiles = () => {
+    if (studentProfiles.length === 0) return;
+    
+    const csvContent = exportProfiles(studentProfiles);
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `student-profiles-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleGenerateLessonPlan = async () => {
@@ -454,14 +421,34 @@ Format the response as JSON with the following structure:
 
       const data = await response.json();
       
-      const newLessonPlan: LessonPlan = {
-        id: `lesson-${Date.now()}`,
-        ...data,
+      const newLessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
+        title: data.title,
+        subject: data.subject,
+        grade: data.grade,
+        objectives: data.objectives,
+        activities: data.activities,
+        assessment: data.assessment,
+        materials: data.materials,
+        duration: data.duration,
+        studentProfiles,
+        lessonSettings,
         outputFormat,
-        createdAt: new Date().toISOString()
+        googleDocUrl: data.googleDocUrl
       };
 
-      setLessonPlan(newLessonPlan);
+      const lessonPlanId = await createLessonPlan(newLessonPlan);
+      
+      if (lessonPlanId) {
+        const savedLessonPlan: LessonPlan = {
+          id: lessonPlanId,
+          ...newLessonPlan,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: user?.uid || ''
+        };
+        setCurrentLessonPlan(savedLessonPlan);
+      }
+      
       trackLessonPlanCreation({ 
         profileCount: studentProfiles.length, 
         grade: lessonSettings.grade, 
@@ -479,11 +466,11 @@ Format the response as JSON with the following structure:
   };
 
   const handleDownloadLessonPlan = async () => {
-    if (!lessonPlan) return;
+    if (!currentLessonPlan) return;
     
-    if (lessonPlan.outputFormat === 'google-doc' && lessonPlan.googleDocUrl) {
+    if (currentLessonPlan.outputFormat === 'google-doc' && currentLessonPlan.googleDocUrl) {
       // Open Google Doc in new tab
-      window.open(lessonPlan.googleDocUrl, '_blank');
+      window.open(currentLessonPlan.googleDocUrl, '_blank');
       return;
     }
     
@@ -492,23 +479,56 @@ Format the response as JSON with the following structure:
       const { downloadLessonPlanPDF } = await import('@/lib/pdfGenerator');
       
       const lessonPlanData = {
-        title: lessonPlan.title,
-        subject: lessonPlan.subject,
-        grade: lessonPlan.grade,
-        objectives: lessonPlan.objectives,
-        activities: lessonPlan.activities,
-        assessment: lessonPlan.assessment,
-        materials: lessonPlan.materials,
-        duration: lessonPlan.duration,
+        title: currentLessonPlan.title,
+        subject: currentLessonPlan.subject,
+        grade: currentLessonPlan.grade,
+        objectives: currentLessonPlan.objectives,
+        activities: currentLessonPlan.activities,
+        assessment: currentLessonPlan.assessment,
+        materials: currentLessonPlan.materials,
+        duration: currentLessonPlan.duration,
         studentProfiles: studentProfiles
       };
 
-      downloadLessonPlanPDF(lessonPlanData, `lesson-plan-${lessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      downloadLessonPlanPDF(lessonPlanData, `lesson-plan-${currentLessonPlan.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     }
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+        <div className="max-w-6xl mx-auto text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show authentication required message
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+        <div className="max-w-6xl mx-auto text-center py-12">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">My Genius Lesson Plans</h1>
+          <p className="text-gray-600 mb-8">Please sign in to access your lesson plans</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-md mx-auto">
+            <p className="text-gray-700 mb-4">You need to be signed in to create and manage lesson plans.</p>
+            <button
+              onClick={() => window.location.href = '/chatbot'}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Sign In
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
@@ -517,7 +537,26 @@ Format the response as JSON with the following structure:
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Genius Lesson Plans</h1>
           <p className="text-gray-600">Create culturally responsive, differentiated lessons based on student profiles</p>
+          <p className="text-sm text-gray-500 mt-2">Signed in as: {user.email}</p>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-red-800 font-medium">Error</h3>
+                <p className="text-red-600 text-sm mt-1">{typeof error === 'string' ? error : error?.message || 'An error occurred'}</p>
+              </div>
+              <button
+                onClick={clearError}
+                className="text-red-400 hover:text-red-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Usage Tracker */}
         <UsageTracker />
@@ -647,6 +686,15 @@ Format the response as JSON with the following structure:
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Student Profiles ({studentProfiles.length})</h2>
             <div className="flex gap-3">
+              {studentProfiles.length > 0 && (
+                <button
+                  onClick={handleExportProfiles}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </button>
+              )}
               <button
                 onClick={handleUploadFiles}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -675,33 +723,11 @@ Format the response as JSON with the following structure:
 
           {/* Student Profiles List */}
           {studentProfiles.length > 0 && (
-            <div className="space-y-4">
-              {studentProfiles.map((profile) => (
-                <div key={profile.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <User className="w-5 h-5 text-blue-600" />
-                        <h3 className="font-semibold text-gray-800">{profile.name}</h3>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">
-                          Grade {profile.grade}
-                        </span>
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded">
-                          {profile.subject}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm">{profile.profile}</p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveProfile(profile.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ProfilePreview
+              profiles={studentProfiles}
+              onDelete={handleRemoveProfile}
+              showValidation={true}
+            />
           )}
         </div>
 
@@ -710,17 +736,24 @@ Format the response as JSON with the following structure:
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Generated Lesson Plan</h2>
             <div className="flex gap-3">
-              {lessonPlan && (
+              <button
+                onClick={() => setShowSavedPlans(!showSavedPlans)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <History className="w-4 h-4" />
+                Saved Plans ({lessonPlans.length})
+              </button>
+              {currentLessonPlan && (
                 <button
                   onClick={handleDownloadLessonPlan}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  {lessonPlan.outputFormat === 'google-doc' ? (
+                  {currentLessonPlan.outputFormat === 'google-doc' ? (
                     <ExternalLink className="w-4 h-4" />
                   ) : (
                     <Download className="w-4 h-4" />
                   )}
-                  {lessonPlan.outputFormat === 'google-doc' ? 'Open Doc' : 'Download'}
+                  {currentLessonPlan.outputFormat === 'google-doc' ? 'Open Doc' : 'Download'}
                 </button>
               )}
               {studentProfiles.length > 0 && (
@@ -736,7 +769,7 @@ Format the response as JSON with the following structure:
           </div>
 
           {/* Output Format Selection */}
-          {studentProfiles.length > 0 && !lessonPlan && !isGenerating && (
+          {studentProfiles.length > 0 && !currentLessonPlan && !isGenerating && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-3">Output Format</h4>
               <div className="flex gap-4">
@@ -775,8 +808,41 @@ Format the response as JSON with the following structure:
             </div>
           )}
 
+          {/* Saved Plans Display */}
+          {showSavedPlans && lessonPlans.length > 0 && (
+            <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-3">Saved Lesson Plans</h4>
+              <div className="space-y-3">
+                {lessonPlans.map((plan) => (
+                  <div key={plan.id} className="flex justify-between items-center p-3 bg-white rounded border">
+                    <div>
+                      <h5 className="font-medium">{plan.title}</h5>
+                      <p className="text-sm text-gray-600">
+                        {plan.subject} • Grade {plan.grade} • {new Date(plan.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentLessonPlan(plan)}
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => deleteLessonPlan(plan.id)}
+                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Empty State */}
-          {!lessonPlan && !isGenerating && (
+          {!currentLessonPlan && !isGenerating && (
             <div className="text-center py-12">
               <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Ready to Generate</p>
@@ -798,22 +864,22 @@ Format the response as JSON with the following structure:
           )}
 
           {/* Lesson Plan Display */}
-          {lessonPlan && !isGenerating && (
+          {currentLessonPlan && !isGenerating && (
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">{lessonPlan.title}</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">{currentLessonPlan.title}</h3>
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                  <span>Subject: {lessonPlan.subject}</span>
-                  <span>Grade: {lessonPlan.grade}</span>
-                  <span>State: {lessonSettings.state}</span>
-                  <span>Duration: {lessonPlan.duration}</span>
+                  <span>Subject: {currentLessonPlan.subject}</span>
+                  <span>Grade: {currentLessonPlan.grade}</span>
+                  <span>State: {currentLessonPlan.lessonSettings.state}</span>
+                  <span>Duration: {currentLessonPlan.duration}</span>
                 </div>
               </div>
 
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Learning Objectives</h4>
                 <ul className="space-y-2">
-                  {lessonPlan.objectives.map((objective, index) => (
+                  {currentLessonPlan.objectives.map((objective: string, index: number) => (
                     <li key={index} className="flex items-start gap-2">
                       <span className="text-blue-600 mt-1">•</span>
                       <span className="text-gray-700">{objective}</span>
@@ -825,7 +891,7 @@ Format the response as JSON with the following structure:
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Activities</h4>
                 <ul className="space-y-2">
-                  {lessonPlan.activities.map((activity, index) => (
+                  {currentLessonPlan.activities.map((activity: string, index: number) => (
                     <li key={index} className="flex items-start gap-2">
                       <span className="text-green-600 mt-1">•</span>
                       <span className="text-gray-700">{activity}</span>
@@ -836,13 +902,13 @@ Format the response as JSON with the following structure:
 
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Assessment</h4>
-                <p className="text-gray-700">{lessonPlan.assessment}</p>
+                <p className="text-gray-700">{currentLessonPlan.assessment}</p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Materials Needed</h4>
                 <ul className="space-y-1">
-                  {lessonPlan.materials.map((material, index) => (
+                  {currentLessonPlan.materials.map((material: string, index: number) => (
                     <li key={index} className="flex items-center gap-2">
                       <span className="text-purple-600">•</span>
                       <span className="text-gray-700">{material}</span>
