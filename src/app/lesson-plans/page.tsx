@@ -77,7 +77,7 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
             const formData = new FormData();
             formData.append('pdf', file);
             
-            const response = await fetch('/.netlify/functions/parse-pdf-profiles', {
+            const response = await fetch('/.netlify/functions/parse-pdf-profiles-simple', {
               method: 'POST',
               body: formData
             });
