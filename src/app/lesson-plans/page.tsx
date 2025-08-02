@@ -71,13 +71,13 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
             }
             
-            // Use server-side processing with FormData (most reliable approach)
-            console.log('Uploading PDF to server for processing...');
+            // Use FormData to send raw PDF file (best for LLM processing)
+            console.log('Uploading raw PDF file for processing...');
             
             const formData = new FormData();
             formData.append('pdf', file);
             
-            const response = await fetch('/.netlify/functions/parse-pdf-profiles-simple', {
+            const response = await fetch('/.netlify/functions/parse-pdf-profiles-raw', {
               method: 'POST',
               body: formData
             });
