@@ -14,11 +14,11 @@ import {
 } from '@/services/firestore';
 
 export function useLessonPlans() {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, loading, authError] = useAuthState(auth);
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error: string | null, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Load user's lesson plans
   const loadUserLessonPlans = useCallback(async () => {
@@ -153,7 +153,7 @@ export function useLessonPlans() {
     lessonPlans,
     studentProfiles,
     isLoading: isLoading || loading,
-    error: error || (error as string),
+    error: error || (authError as string),
     user,
     
     // Actions
