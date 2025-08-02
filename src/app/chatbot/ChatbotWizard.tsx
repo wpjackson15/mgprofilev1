@@ -72,9 +72,14 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         console.warn('Could not clear localStorage:', e);
       }
       
-      // Reset summaries immediately
+      // Reset summaries immediately and ensure they stay cleared
       resetSummaries();
       hasLoadedSummaries.current = false;
+      
+      // Double-check summaries are cleared after a brief delay
+      setTimeout(() => {
+        resetSummaries();
+      }, 100);
     }
   }, [clearChatSignal, flow, setAnswers, resetSummaries]);
 
@@ -165,6 +170,9 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
 
   // Regenerate summaries for completed modules on load (only once)
   useEffect(() => {
+    // Don't regenerate summaries if chat is being cleared
+    if (clearChatSignal && clearChatSignal > 0) return;
+    
     if (
       !hasLoadedSummaries.current &&
       progress &&
@@ -193,7 +201,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       }
       hasLoadedSummaries.current = true;
     }
-  }, [progress, flow, generateSummary, summaries]); // Added 'summaries' dependency
+  }, [progress, flow, generateSummary, summaries, clearChatSignal]); // Added clearChatSignal dependency
 
   // Removed redundant useEffect - now handled in the main clear function
 

@@ -3,7 +3,7 @@ import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
 import AuthButton from "@/components/AuthButton";
 import React, { useState, useEffect, useRef } from "react";
-import { ModuleSummariesProvider } from "@/hooks/ModuleSummariesContext";
+import { ModuleSummariesProvider, useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { MessageCircle, User as UserIcon, RotateCcw } from "lucide-react";
@@ -18,6 +18,7 @@ export default function ChatbotPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const chatbotRef = useRef<{ clearChat: () => void } | null>(null);
   const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
+  const { resetSummaries } = useModuleSummaries();
 
   useEffect(() => {
     // Check localStorage for prior acceptance
@@ -48,12 +49,14 @@ export default function ChatbotPage() {
   const handleQuickClear = () => {
     // Immediate clear without confirmation
     setAnswers({});
+    resetSummaries(); // Clear summaries immediately
     setClearChatSignal((sig) => sig + 1);
   };
 
   const confirmClearChat = () => {
     // Immediate state reset for better UX
     setAnswers({});
+    resetSummaries(); // Clear summaries immediately
     setShowConfirm(false);
     // Trigger clear with minimal delay
     setTimeout(() => setClearChatSignal((sig) => sig + 1), 0);
