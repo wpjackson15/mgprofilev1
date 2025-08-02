@@ -5,7 +5,6 @@ import {
   LessonPlan, 
   StudentProfile, 
   saveLessonPlan, 
-  loadLessonPlan, 
   getUserLessonPlans, 
   updateLessonPlan, 
   deleteLessonPlan,

@@ -58,7 +58,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 // Main analytics hook
 export function useAnalytics() {
   const sessionRef = useRef<UserSession | null>(null);
-  const [analyticsData, setAnalyticsData] = useLocalStorage<AnalyticsData>('mgprofile_analytics', {
+  const [, setAnalyticsData] = useLocalStorage<AnalyticsData>('mgprofile_analytics', {
     session: null,
     lastUpdated: Date.now()
   });

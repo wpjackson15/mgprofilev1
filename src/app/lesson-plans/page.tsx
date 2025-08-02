@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import { Upload, Plus, Users, BookOpen, X, User, Trash2, Download, FileText, File, ExternalLink, Save, History } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Upload, Plus, Users, BookOpen, X, User, Download, FileText, File, ExternalLink, History } from "lucide-react";
 import { UsageTracker } from '@/components/UsageTracker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { updateUsageStats } from '@/components/UsageTracker';

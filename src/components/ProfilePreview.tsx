@@ -90,19 +90,19 @@ export function ProfilePreview({ profiles, onEdit, onDelete, showValidation = tr
                       {profile.name === 'Unknown' && (
                         <li className="flex items-center gap-1">
                           <span className="w-1 h-1 bg-yellow-600 rounded-full"></span>
-                          Student name is set to "Unknown"
+                          Student name is set to &quot;Unknown&quot;
                         </li>
                       )}
                       {profile.grade === 'Unknown' && (
                         <li className="flex items-center gap-1">
                           <span className="w-1 h-1 bg-yellow-600 rounded-full"></span>
-                          Grade level is set to "Unknown"
+                          Grade level is set to &quot;Unknown&quot;
                         </li>
                       )}
                       {profile.subject === 'Unknown' && (
                         <li className="flex items-center gap-1">
                           <span className="w-1 h-1 bg-yellow-600 rounded-full"></span>
-                          Subject is set to "Unknown"
+                          Subject is set to &quot;Unknown&quot;
                         </li>
                       )}
                     </ul>
