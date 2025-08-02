@@ -71,52 +71,29 @@ function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
               throw new Error('PDF file is too large. Please use a file smaller than 10MB.');
             }
             
-            // Try multipart form data first, then fallback to base64
-            let response: Response;
+            // Use Firebase Storage for PDF upload (much more efficient than base64)
+            console.log('Uploading PDF to Firebase Storage...');
             
-            // First try multipart form data
-            try {
-              const formData = new FormData();
-              formData.append('pdf', file);
-              
-              response = await fetch('/.netlify/functions/parse-pdf-profiles', {
-                method: 'POST',
-                body: formData
-              });
-              
-              // If multipart succeeds, use it
-              if (response.ok) {
-                console.log('Multipart upload succeeded');
-              } else {
-                // If multipart fails, try base64 fallback
-                console.log('Multipart upload failed with status:', response.status, 'trying base64 approach...');
-                throw new Error('Multipart failed');
-              }
-            } catch (multipartError) {
-              console.log('Multipart upload failed, using base64 fallback approach...');
-              
-              // Fallback to base64 approach - use more efficient method for large files
-              const arrayBuffer = await file.arrayBuffer();
-              const uint8Array = new Uint8Array(arrayBuffer);
-              
-              // Convert to base64 in chunks to avoid stack overflow
-              let binary = '';
-              const chunkSize = 8192; // Process in 8KB chunks
-              for (let i = 0; i < uint8Array.length; i += chunkSize) {
-                const chunk = uint8Array.slice(i, i + chunkSize);
-                binary += String.fromCharCode.apply(null, Array.from(chunk));
-              }
-              const base64 = btoa(binary);
-              
-              response = await fetch('/.netlify/functions/parse-pdf-profiles-base64', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  pdfBase64: base64,
-                  fileName: file.name
-                })
-              });
-            }
+            // Import Firebase Storage functions
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const { storage } = await import('@/lib/firebase');
+            
+            // Upload to Firebase Storage
+            const storageRef = ref(storage, `pdfs/${Date.now()}-${file.name}`);
+            const uploadResult = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
+            
+            console.log('PDF uploaded to Firebase Storage:', downloadURL);
+            
+            // Send Firebase URL to Netlify function for processing
+            const response = await fetch('/.netlify/functions/parse-pdf-profiles-firebase', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                pdfUrl: downloadURL,
+                fileName: file.name
+              })
+            });
 
             if (!response.ok) {
               const errorText = await response.text();
