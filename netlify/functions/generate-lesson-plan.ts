@@ -51,10 +51,16 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const claudeApiKey = process.env.CLAUDE_API_KEY;
+    const claudeApiKey = process.env.CLAUDE_API_KEY_LESSON_PLANS;
     if (!claudeApiKey) {
       return {
         statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
         body: JSON.stringify({ error: 'Claude API key not configured' }),
       };
     }
@@ -85,7 +91,7 @@ export const handler: Handler = async (event) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4000,
         messages: [
           {
@@ -188,6 +194,9 @@ ${studentProfiles.map(profile =>
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
       body: JSON.stringify(lessonPlan),
     };
@@ -195,6 +204,12 @@ ${studentProfiles.map(profile =>
     console.error('Lesson plan generation error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
       body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
