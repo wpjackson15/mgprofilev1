@@ -59,8 +59,8 @@ Assessment should be:
 
 export function generateCALESPrompt(criteria: CALESCriteria): string {
   const selectedCriteria = Object.entries(criteria)
-    .filter(([_, isSelected]) => isSelected)
-    .map(([key, _]) => `• ${CALES_CRITERIA_DESCRIPTIONS[key as keyof CALESCriteria]}`)
+    .filter(([, isSelected]) => isSelected)
+    .map(([key]) => `• ${CALES_CRITERIA_DESCRIPTIONS[key as keyof CALESCriteria]}`)
     .join('\n');
 
   return CALES_PROMPT_TEMPLATE.replace('{CRITERIA_LIST}', selectedCriteria || '• All CALES criteria should be considered');
