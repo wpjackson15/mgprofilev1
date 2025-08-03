@@ -24,7 +24,7 @@ export interface LessonPlan {
   grade: string;
   objectives: string[];
   activities: string[];
-  assessment: string;
+  assessment: string | string[] | Record<string, unknown>;
   materials: string[];
   duration: string;
   createdAt: string;

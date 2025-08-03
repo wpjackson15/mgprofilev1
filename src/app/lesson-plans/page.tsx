@@ -1075,12 +1075,40 @@ Format the response as JSON with the following structure:
 
               <div>
                 <h4 className="font-semibold text-gray-800 mb-3">Assessment</h4>
-                <p className="text-gray-700">
-                  {typeof currentLessonPlan.assessment === 'string' 
-                    ? currentLessonPlan.assessment 
-                    : JSON.stringify(currentLessonPlan.assessment)
-                  }
-                </p>
+                <div className="text-gray-700">
+                  {(() => {
+                    const assessment = currentLessonPlan.assessment;
+                    if (typeof assessment === 'string') {
+                      return <p>{assessment}</p>;
+                                         } else if (Array.isArray(assessment)) {
+                       return (
+                         <ul className="space-y-1">
+                           {assessment.map((item: unknown, index: number) => (
+                             <li key={index} className="flex items-start gap-2">
+                               <span className="text-purple-600 mt-1">•</span>
+                               <span>{typeof item === 'string' ? item : JSON.stringify(item)}</span>
+                             </li>
+                           ))}
+                         </ul>
+                       );
+                    } else if (assessment && typeof assessment === 'object') {
+                      return (
+                        <div className="space-y-2">
+                          {Object.entries(assessment).map(([key, value]) => (
+                            <div key={key}>
+                              <strong className="capitalize">{key.replace(/_/g, ' ')}:</strong>
+                              <span className="ml-2">
+                                {typeof value === 'string' ? value : JSON.stringify(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } else {
+                      return <p>Assessment information not available</p>;
+                    }
+                  })()}
+                </div>
               </div>
 
               <div>

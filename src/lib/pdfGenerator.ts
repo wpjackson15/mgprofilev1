@@ -14,7 +14,7 @@ export interface LessonPlanData {
   grade: string;
   objectives: string[];
   activities: string[];
-  assessment: string;
+  assessment: string | string[] | Record<string, unknown>;
   materials: string[];
   duration: string;
   studentProfiles: Array<{
@@ -125,7 +125,22 @@ export function generateLessonPlanPDF(data: LessonPlanData): import('jspdf').def
   yPosition = addWrappedText('Assessment:', margin, yPosition, pageWidth - 2 * margin);
   doc.setFont('helvetica', 'normal');
   yPosition += 5;
-  yPosition = addWrappedText(data.assessment, margin + 10, yPosition, pageWidth - 2 * margin - 10);
+  
+  // Handle different assessment types
+  let assessmentText = '';
+  if (typeof data.assessment === 'string') {
+    assessmentText = data.assessment;
+  } else if (Array.isArray(data.assessment)) {
+    assessmentText = data.assessment.map((item, index) => `${index + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}`).join('\n');
+  } else if (data.assessment && typeof data.assessment === 'object') {
+    assessmentText = Object.entries(data.assessment)
+      .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+      .join('\n');
+  } else {
+    assessmentText = 'Assessment information not available';
+  }
+  
+  yPosition = addWrappedText(assessmentText, margin + 10, yPosition, pageWidth - 2 * margin - 10);
   yPosition += 10;
 
   // Student Profiles (if any)
