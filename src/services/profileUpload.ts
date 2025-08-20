@@ -1,4 +1,4 @@
-import { StudentProfile } from './firestore';
+import { StudentProfile } from './mongodb';
 import { FileUploadService, UploadedFile } from './fileUpload';
 
 export interface UploadedProfile {

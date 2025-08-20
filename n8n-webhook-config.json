@@ -1,0 +1,106 @@
+{
+  "webhook": {
+    "name": "Lesson Plan Generation Webhook",
+    "httpMethod": "POST",
+    "path": "lesson-plan-generate",
+    "description": "Receives lesson plan generation requests from the frontend"
+  },
+  "expectedPayload": {
+    "studentProfiles": [
+      {
+        "id": "string",
+        "name": "string",
+        "grade": "string",
+        "subject": "string",
+        "profile": "string",
+        "createdAt": "string"
+      }
+    ],
+    "lessonSettings": {
+      "grade": "string",
+      "subject": "string",
+      "state": "string"
+    },
+    "calesCriteria": {
+      "canDoAttitude": "boolean",
+      "interestAwareness": "boolean",
+      "multiculturalNavigation": "boolean",
+      "racialPride": "boolean",
+      "selectiveTrust": "boolean",
+      "socialJustice": "boolean",
+      "holisticWellBeing": "boolean",
+      "clarity": "boolean",
+      "accessibility": "boolean",
+      "credibility": "boolean",
+      "outcomes": "boolean"
+    },
+    "outputFormat": "pdf | google-doc",
+    "useRAG": "boolean",
+    "userId": "string"
+  },
+  "responseFormat": {
+    "success": "boolean",
+    "lessonPlan": {
+      "title": "string",
+      "subject": "string",
+      "grade": "string",
+      "objectives": ["string"],
+      "activities": ["string"],
+      "assessment": "string | string[] | object",
+      "materials": ["string"],
+      "duration": "string",
+      "ragContext": ["string"],
+      "outputFormat": "string",
+      "googleDocUrl": "string (optional)"
+    },
+    "error": "string (if success is false)"
+  },
+  "workflowSteps": [
+    {
+      "step": 1,
+      "name": "Webhook Trigger",
+      "description": "Receives POST request from frontend"
+    },
+    {
+      "step": 2,
+      "name": "Validate Input",
+      "description": "Check required fields and data types"
+    },
+    {
+      "step": 3,
+      "name": "Fetch Student Profiles",
+      "description": "Get full profile data from Firebase if needed"
+    },
+    {
+      "step": 4,
+      "name": "Retrieve CALES Context",
+      "description": "Get relevant educational context based on criteria"
+    },
+    {
+      "step": 5,
+      "name": "Generate Lesson Plan",
+      "description": "Call AI service with enhanced prompt"
+    },
+    {
+      "step": 6,
+      "name": "Validate Output",
+      "description": "Check lesson plan structure and content"
+    },
+    {
+      "step": 7,
+      "name": "Save to Firebase",
+      "description": "Store generated lesson plan in database"
+    },
+    {
+      "step": 8,
+      "name": "Return Response",
+      "description": "Send results back to frontend"
+    }
+  ],
+  "environmentVariables": {
+    "CLAUDE_API_KEY": "Your Claude API key",
+    "FIREBASE_PROJECT_ID": "Your Firebase project ID",
+    "FIREBASE_PRIVATE_KEY": "Your Firebase private key",
+    "FIREBASE_CLIENT_EMAIL": "Your Firebase client email"
+  }
+} 

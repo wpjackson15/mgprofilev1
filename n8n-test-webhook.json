@@ -1,0 +1,67 @@
+{
+  "name": "Test Lesson Plan Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test-lesson-plan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate incoming data\nconst { studentProfiles, lessonSettings, calesCriteria } = $input.first().json;\n\n// Basic validation\nif (!studentProfiles || studentProfiles.length === 0) {\n  throw new Error('No student profiles provided');\n}\n\nif (!lessonSettings || !lessonSettings.grade || !lessonSettings.subject || !lessonSettings.state) {\n  throw new Error('Missing lesson settings');\n}\n\n// Log the received data\nconsole.log('Received lesson plan request:', {\n  profileCount: studentProfiles.length,\n  settings: lessonSettings,\n  calesCriteria: calesCriteria\n});\n\n// Return validated data\nreturn {\n  json: {\n    success: true,\n    message: 'Data validated successfully',\n    data: {\n      studentProfiles,\n      lessonSettings,\n      calesCriteria\n    }\n  }\n};"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 

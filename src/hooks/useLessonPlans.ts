@@ -10,7 +10,7 @@ import {
   deleteLessonPlan,
   saveStudentProfiles,
   loadStudentProfiles
-} from '@/services/firestore';
+} from '@/services/mongodb';
 
 export function useLessonPlans() {
   const [user, loading, authError] = useAuthState(auth);

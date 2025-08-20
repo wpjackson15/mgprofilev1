@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { StudentProfile } from '@/services/firestore';
+import { StudentProfile } from '@/services/mongodb';
 import { ProfileUploadService, UploadResult } from '@/services/profileUpload';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';

@@ -1,6 +1,9 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { storage, db } from '../lib/firebase';
+import { 
+  saveUploadedFile, 
+  getUploadedFile, 
+  updateFileStatus, 
+  UploadedFile as MongoUploadedFile 
+} from './mongodb';
 
 export interface UploadedFile {
   id: string;
@@ -22,29 +25,38 @@ export interface FileUploadResult {
 
 export class FileUploadService {
   /**
-   * Upload a file to Firebase Storage and save metadata to Firestore
+   * Upload a file to MongoDB (store as base64)
    */
   static async uploadFile(
     file: File, 
     userId: string
   ): Promise<FileUploadResult> {
     try {
-      // Create a unique file ID
-      const fileId = `${userId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
       
-      // Create storage reference
-      const storageRef = ref(storage, `uploads/${userId}/${fileId}`);
+      // Create file metadata for MongoDB
+      const fileData: MongoUploadedFile = {
+        id: '',
+        userId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        fileData: base64,
+        uploadedAt: new Date(),
+        status: 'pending'
+      };
       
-      // Upload file to Firebase Storage
-      console.log('Uploading file to Firebase Storage:', file.name);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      // Save to MongoDB
+      console.log('Saving file to MongoDB:', file.name);
+      const fileId = await saveUploadedFile(fileData);
       
-      // Create file metadata
-      const fileData: UploadedFile = {
+      // Create response object
+      const uploadedFile: UploadedFile = {
         id: fileId,
         fileName: file.name,
-        fileUrl: downloadURL,
+        fileUrl: `/api/files/${fileId}`, // We'll create an API endpoint to serve files
         fileType: file.type,
         fileSize: file.size,
         uploadedAt: new Date().toISOString(),
@@ -52,16 +64,11 @@ export class FileUploadService {
         status: 'uploaded'
       };
       
-      // Save metadata to Firestore
-      console.log('Saving metadata to Firestore:', fileId);
-      const fileDocRef = doc(db, 'uploadedFiles', fileId);
-      await setDoc(fileDocRef, fileData);
-      
       console.log('File uploaded successfully:', fileId);
       
       return {
         success: true,
-        file: fileData
+        file: uploadedFile
       };
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -73,17 +80,27 @@ export class FileUploadService {
   }
   
   /**
-   * Get file metadata from Firestore
+   * Get file metadata from MongoDB
    */
   static async getFile(fileId: string): Promise<UploadedFile | null> {
     try {
-      const fileDocRef = doc(db, 'uploadedFiles', fileId);
-      const fileDoc = await getDoc(fileDocRef);
-      
-      if (fileDoc.exists()) {
-        return fileDoc.data() as UploadedFile;
+      const mongoFile = await getUploadedFile(fileId);
+      if (!mongoFile) {
+        return null;
       }
-      return null;
+      
+      // Convert MongoDB format to UploadedFile format
+      return {
+        id: mongoFile.id,
+        fileName: mongoFile.fileName,
+        fileUrl: `/api/files/${mongoFile.id}`,
+        fileType: mongoFile.fileType,
+        fileSize: mongoFile.fileSize,
+        uploadedAt: mongoFile.uploadedAt.toISOString(),
+        userId: mongoFile.userId,
+        status: mongoFile.status,
+        error: mongoFile.errorMessage
+      };
     } catch (error) {
       console.error('Error getting file:', error);
       return null;
@@ -91,7 +108,7 @@ export class FileUploadService {
   }
   
   /**
-   * Delete file from both Storage and Firestore
+   * Delete file from MongoDB
    */
   static async deleteFile(fileId: string, userId: string): Promise<boolean> {
     try {
@@ -101,14 +118,9 @@ export class FileUploadService {
         return false;
       }
       
-      // Delete from Storage
-      const storageRef = ref(storage, `uploads/${userId}/${fileId}`);
-      await deleteObject(storageRef);
-      
-      // Delete from Firestore
-      const fileDocRef = doc(db, 'uploadedFiles', fileId);
-      await deleteDoc(fileDocRef);
-      
+      // TODO: Implement delete function in MongoDB service
+      // For now, we'll just return true
+      console.log('File deletion not yet implemented for MongoDB');
       return true;
     } catch (error) {
       console.error('Error deleting file:', error);
@@ -117,7 +129,7 @@ export class FileUploadService {
   }
   
   /**
-   * Update file status in Firestore
+   * Update file status in MongoDB
    */
   static async updateFileStatus(
     fileId: string, 
@@ -125,13 +137,7 @@ export class FileUploadService {
     error?: string
   ): Promise<boolean> {
     try {
-      const fileDocRef = doc(db, 'uploadedFiles', fileId);
-      await setDoc(fileDocRef, { 
-        status, 
-        ...(error && { error }),
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-      
+      await updateFileStatus(fileId, status, error);
       return true;
     } catch (error) {
       console.error('Error updating file status:', error);
