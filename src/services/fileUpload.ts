@@ -98,7 +98,7 @@ export class FileUploadService {
         fileSize: mongoFile.fileSize,
         uploadedAt: mongoFile.uploadedAt.toISOString(),
         userId: mongoFile.userId,
-        status: mongoFile.status,
+        status: mongoFile.status === 'pending' ? 'uploaded' : mongoFile.status,
         error: mongoFile.errorMessage
       };
     } catch (error) {
@@ -137,7 +137,9 @@ export class FileUploadService {
     error?: string
   ): Promise<boolean> {
     try {
-      await updateFileStatus(fileId, status, error);
+      // Map the status to MongoDB format
+      const mongoStatus = status === 'uploaded' || status === 'processing' ? 'pending' : status;
+      await updateFileStatus(fileId, mongoStatus, error);
       return true;
     } catch (error) {
       console.error('Error updating file status:', error);

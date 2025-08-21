@@ -8,7 +8,7 @@ import { updateUsageStats } from '@/components/UsageTracker';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { useLessonPlans } from '@/hooks/useLessonPlans';
 import { useProfileUpload } from '@/hooks/useProfileUpload';
-import { StudentProfile, LessonPlan } from '@/services/firestore';
+import { StudentProfile, LessonPlan } from '@/services/mongodb';
 import { ProfilePreview } from '@/components/ProfilePreview';
 
 
@@ -171,7 +171,7 @@ function ManualEntryModal({ isOpen, onClose, onAdd }: ManualEntryModalProps) {
     const newProfile: StudentProfile = {
       id: `manual-${Date.now()}`,
       ...formData,
-      createdAt: new Date().toISOString()
+      createdAt: new Date()
     };
 
     onAdd(newProfile);

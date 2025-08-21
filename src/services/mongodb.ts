@@ -5,7 +5,7 @@ export interface UserProgress {
   userId: string;
   moduleId: string;
   completed: boolean;
-  answers: Record<string, any>;
+  answers: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -129,7 +129,7 @@ export async function saveLessonPlan(lessonPlan: LessonPlan): Promise<void> {
   
   // Filter out undefined values to prevent MongoDB errors
   const cleanLessonPlan = Object.fromEntries(
-    Object.entries(lessonPlan).filter(([_, value]) => value !== undefined)
+    Object.entries(lessonPlan).filter(([, value]) => value !== undefined)
   ) as LessonPlan;
   
   if (lessonPlan.id) {
