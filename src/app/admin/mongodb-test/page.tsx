@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Home, Database, CheckCircle, XCircle } from 'lucide-react';
 
 export default function MongoDBTest() {
-  const [testResults, setTestResults] = React.useState<any>(null);
+  const [testResults, setTestResults] = React.useState<Record<string, unknown>>(null);
   const [loading, setLoading] = React.useState(false);
 
   const runTests = async () => {

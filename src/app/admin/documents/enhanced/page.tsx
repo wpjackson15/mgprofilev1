@@ -196,7 +196,7 @@ export default function EnhancedDocumentsAdmin() {
 
     // Sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: Record<string, unknown>, bValue: Record<string, unknown>;
       
       switch (sortBy) {
         case 'title':
@@ -278,7 +278,7 @@ export default function EnhancedDocumentsAdmin() {
     }
   };
 
-  const getPriorityDisplay = (doc: any) => {
+  const getPriorityDisplay = (doc: Record<string, unknown>) => {
     // Handle new priority object format
     if (doc.priority && typeof doc.priority === 'object') {
       const lessonPlanPriority = doc.priority.lessonPlans || 0;
