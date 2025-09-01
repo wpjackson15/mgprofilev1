@@ -73,7 +73,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   // Get module display names and question counts
   const moduleDisplayNames: Record<string, string> = {};
   const moduleQuestionCounts: Record<string, number> = {};
-  flow.forEach((moduleData) => {
+  flow && flow.length > 0 && flow.forEach((moduleData) => {
     moduleDisplayNames[moduleData.module] = moduleData.module.replace(/-/g, " ");
     moduleQuestionCounts[moduleData.module] = moduleData.steps.filter((step) => step.type === "question").length;
   });
