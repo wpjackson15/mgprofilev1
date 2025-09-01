@@ -1,6 +1,7 @@
 "use client";
 import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { Shield, FileText, Filter, TestTube, BookOpen, Database, Users, LogOut } from 'lucide-react';
 import { onAdminAuthStateChanged, signOutAdmin, getCurrentAdminUser } from '@/lib/adminAuth';
 import UserRoleBadge from '@/components/UserRoleBadge';
 

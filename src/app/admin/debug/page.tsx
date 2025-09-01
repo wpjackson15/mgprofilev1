@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getCurrentAdminUser } from '@/lib/adminAuth';
@@ -230,19 +231,19 @@ export default function AdminDebug() {
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-center"
           >
             Go to Main App
-          </a>
+          </Link>
           <a
             href="/admin/login"
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-center"
           >
             Try Admin Login
-          </a>
+          </Link>
           <a
             href="/admin/test"
             className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-center"
           >
             Admin Test Page
-          </a>
+          </Link>
           <button
             onClick={() => window.location.reload()}
             className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"

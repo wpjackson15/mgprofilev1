@@ -109,7 +109,7 @@ export default function AdminTest() {
         <div className="space-y-2 text-sm text-blue-700">
           <p>If admin access is working:</p>
           <ul className="space-y-1 ml-4">
-            <li>• Go to <a href="/admin" className="underline">Admin Dashboard</Link></li>
+            <li>• Go to <Link href="/admin" className="underline">Admin Dashboard</Link></li>
             <li>• Upload reference documents</li>
             <li>• Manage user roles</li>
           </ul>
