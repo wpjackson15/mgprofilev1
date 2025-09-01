@@ -226,19 +226,19 @@ export default function AdminDebug() {
         <h2 className="text-gray-800 font-medium mb-4">⚡ Quick Actions</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a
+          <Link
             href="/"
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-center"
           >
             Go to Main App
           </Link>
-          <a
+          <Link
             href="/admin/login"
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-center"
           >
             Try Admin Login
           </Link>
-          <a
+          <Link
             href="/admin/test"
             className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-center"
           >
