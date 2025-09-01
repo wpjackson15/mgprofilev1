@@ -273,6 +273,10 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const sendMessage = (text: string) => {
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
+    if (!currentModuleData) {
+      console.error("No module data found for current module:", currentModule);
+      return;
+    }
     const step = currentModuleData.steps[currentStep];
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     setInput("");
@@ -306,6 +310,10 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const handleSummaryConsent = async (text: string) => {
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     const currentModuleData = flow[currentModule];
+    if (!currentModuleData) {
+      console.error("No module data found for current module:", currentModule);
+      return;
+    }
     const moduleAnswers: string[] = [];
     for (let i = 0; i <= currentStep; i++) {
       const step = currentModuleData.steps[i];
@@ -348,6 +356,10 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const nextStep = (skipAutoSummary = false) => {
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
+    if (!currentModuleData) {
+      console.error("No module data found for current module:", currentModule);
+      return;
+    }
     if (currentStep + 1 < currentModuleData.steps.length) {
       const nextStepObj = currentModuleData.steps[currentStep + 1];
       if (nextStepObj.type === "auto_summary" && skipAutoSummary) {
