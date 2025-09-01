@@ -4,7 +4,7 @@ import { getUserRoleSync } from './userRoles';
 
 // Admin authentication state
 let currentAdminUser: User | null = null;
-let authStateListeners: ((user: User | null) => void)[] = [];
+const authStateListeners: ((user: User | null) => void)[] = [];
 
 // This function is now imported from userRoles.ts
 

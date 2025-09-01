@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signInAsAdmin, getCurrentAdminUser } from '@/lib/adminAuth';
 import { Shield, Lock, Eye, EyeOff } from 'lucide-react';
@@ -125,12 +126,11 @@ export default function AdminLogin() {
 
           {/* Back to Home */}
           <div className="mt-6 text-center">
-            <a 
-              href="/" 
+            <Link href="/" 
               className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
             >
               ← Back to Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>

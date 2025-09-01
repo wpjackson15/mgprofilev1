@@ -10,7 +10,7 @@ export interface LessonPlanRAGContext {
 }
 
 export class LessonPlanRAGService {
-  private getLessonPlanPriority(doc: any): number {
+  private getLessonPlanPriority(doc: Record<string, unknown>): number {
     // Use the document's lesson plan priority if available, otherwise fall back to category-based priority
     if (doc.priority && typeof doc.priority.lessonPlans === 'number') {
       return doc.priority.lessonPlans;
@@ -86,7 +86,7 @@ export class LessonPlanRAGService {
     return [...new Set(relevantCategories)]; // Remove duplicates
   }
 
-  private prioritizeDocumentsForLessonPlans(documents: any[], relevantCategories: string[]): any[] {
+  private prioritizeDocumentsForLessonPlans(documents: Record<string, unknown>[], relevantCategories: string[]): Record<string, unknown>[] {
     return documents.map(doc => {
       const documentPriority = this.getLessonPlanPriority(doc);
       const relevanceScore = relevantCategories.includes(doc.category) ? 5 : 0;
@@ -100,7 +100,7 @@ export class LessonPlanRAGService {
     }).sort((a, b) => b.priorityScore - a.priorityScore);
   }
 
-  private selectLessonPlanDocuments(prioritizedDocs: any[], context: LessonPlanRAGContext): any[] {
+  private selectLessonPlanDocuments(prioritizedDocs: Record<string, unknown>[], context: LessonPlanRAGContext): Record<string, unknown>[] {
     // For lesson plans, we want a mix of:
     // 1. High-priority lesson planning documents
     // 2. Cultural and student-centered content

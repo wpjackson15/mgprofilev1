@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import Link from 'next/link';
 import { getCurrentAdminUser } from '@/lib/adminAuth';
 import { getUserRole } from '@/lib/userRoles';
 import UserRoleBadge from '@/components/UserRoleBadge';
@@ -108,7 +109,7 @@ export default function AdminTest() {
         <div className="space-y-2 text-sm text-blue-700">
           <p>If admin access is working:</p>
           <ul className="space-y-1 ml-4">
-            <li>• Go to <a href="/admin" className="underline">Admin Dashboard</a></li>
+            <li>• Go to <a href="/admin" className="underline">Admin Dashboard</Link></li>
             <li>• Upload reference documents</li>
             <li>• Manage user roles</li>
           </ul>

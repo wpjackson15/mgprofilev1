@@ -1,6 +1,5 @@
 "use client";
 import React, { useRef } from "react";
-import { Upload, X, Download } from "lucide-react";
 import { useProfileUpload } from '@/hooks/useProfileUpload';
 import { StudentProfile } from '@/services/mongodb';
 

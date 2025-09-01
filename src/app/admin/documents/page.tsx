@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import Link from 'next/link';
 import { Home } from 'lucide-react';
 
 interface Document {
@@ -93,13 +94,12 @@ export default function DocumentsAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Reference Documents Admin</h1>
-        <a 
-          href="/" 
+        <Link href="/" 
           className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors font-medium"
         >
           <Home className="w-4 h-4" />
           Back to Home
-        </a>
+        </Link>
       </div>
         
       <div className="bg-white rounded-lg shadow p-6 mb-8">

@@ -2,7 +2,6 @@
 import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { onAdminAuthStateChanged, signOutAdmin, getCurrentAdminUser } from '@/lib/adminAuth';
-import { Shield, LogOut, Settings, FileText, Home, Users, Filter, TestTube, Database, BookOpen } from 'lucide-react';
 import UserRoleBadge from '@/components/UserRoleBadge';
 
 export default function AdminLayout({

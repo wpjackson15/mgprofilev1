@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import Link from 'next/link';
 import { Home, TestTube, FileText, Filter, Search } from 'lucide-react';
 
 export default function TestRAGSystem() {
@@ -73,13 +74,12 @@ export default function TestRAGSystem() {
           <h1 className="text-3xl font-bold text-gray-900">RAG System Test</h1>
           <p className="text-gray-600 mt-1">Test the enhanced document prioritization system</p>
         </div>
-        <a 
-          href="/" 
+        <Link href="/" 
           className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors font-medium"
         >
           <Home className="w-4 h-4" />
           Back to Home
-        </a>
+        </Link>
       </div>
 
       {/* Test Scenarios */}

@@ -99,7 +99,7 @@ export class ClaudeSummarizerV2 {
   /**
    * Get category priority score
    */
-  private getProfilePriority(doc: any): number {
+  private getProfilePriority(doc: Record<string, unknown>): number {
     // Use the document's profile priority if available, otherwise fall back to category-based priority
     if (doc.priority && typeof doc.priority.profiles === 'number') {
       return doc.priority.profiles;
@@ -134,7 +134,7 @@ export class ClaudeSummarizerV2 {
   /**
    * Prioritize documents by category importance for summary generation
    */
-  private prioritizeDocumentsByCategory(documents: any[]): any[] {
+  private prioritizeDocumentsByCategory(documents: Record<string, unknown>[]): Record<string, unknown>[] {
     return documents.sort((a, b) => {
       const priorityA = this.getProfilePriority(a);
       const priorityB = this.getProfilePriority(b);
@@ -179,7 +179,7 @@ export class ClaudeSummarizerV2 {
   /**
    * Prioritize documents based on relevance and category importance
    */
-  private prioritizeDocumentsByRelevance(documents: any[], relevantCategories: string[]): any[] {
+  private prioritizeDocumentsByRelevance(documents: Record<string, unknown>[], relevantCategories: string[]): Record<string, unknown>[] {
     return documents.map(doc => {
       const documentPriority = this.getProfilePriority(doc);
       const relevanceScore = relevantCategories.includes(doc.category) ? 10 : 0;
@@ -197,9 +197,9 @@ export class ClaudeSummarizerV2 {
   /**
    * Select a balanced set of documents across relevant categories
    */
-  private selectBalancedDocuments(prioritizedDocs: any[], relevantCategories: string[]): any[] {
+  private selectBalancedDocuments(prioritizedDocs: Record<string, unknown>[], relevantCategories: string[]): Record<string, unknown>[] {
     const maxDocs = 5; // Increased for better coverage
-    const selectedDocs: any[] = [];
+    const selectedDocs: Record<string, unknown>[] = [];
     const categoryCount: Record<string, number> = {};
 
     // First pass: select highest priority documents from each relevant category

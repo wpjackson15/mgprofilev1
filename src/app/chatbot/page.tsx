@@ -2,7 +2,8 @@
 import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
 import AuthButton from "@/components/AuthButton";
-import * as React from "react";
+import * as React from 'react';
+import Link from 'next/link';
 import { ModuleSummariesProvider, useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -73,15 +74,14 @@ function ChatbotContent({
 
         {/* Navigation and Auth */}
         <div className="flex justify-between items-center">
-          <a 
-            href="/" 
+          <Link href="/" 
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors font-medium"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Home
-          </a>
+          </Link>
           <AuthButton />
         </div>
 
@@ -223,7 +223,7 @@ function ChatbotContent({
                         className="inline-block text-green-700 underline text-xs hover:text-green-800"
                       >
                         Visit Website
-                      </a>
+                      </Link>
                     </div>
                   ))}
                 </div>

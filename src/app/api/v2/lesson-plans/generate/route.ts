@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Handle studentProfiles as either string or array
     const studentProfilesArray = Array.isArray(studentProfiles) 
-      ? studentProfiles.map((profile: any) => profile.profile || profile)
+      ? studentProfiles.map((profile: Record<string, unknown>) => profile.profile || profile)
       : [studentProfiles];
 
     // Create RAG context for lesson planning
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 You are an expert educator creating culturally affirming lesson plans. Use the following context to generate a comprehensive lesson plan.
 
 STUDENT CONTEXT:
-${studentProfilesArray.map((profile: any, index: number) => 
+${studentProfilesArray.map((profile: Record<string, unknown>, index: number) => 
   `Student ${index + 1}: ${profile.profile || profile}`
 ).join('\n')}
 

@@ -9,7 +9,7 @@ export default function AdminDebug() {
   const [firebaseUser, setFirebaseUser] = React.useState<User | null>(null);
   const [adminUser, setAdminUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [debugInfo, setDebugInfo] = React.useState<any>({});
+  const [debugInfo, setDebugInfo] = React.useState<Record<string, unknown>>({});
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
