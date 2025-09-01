@@ -126,7 +126,13 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           
           // Add user responses for questions
           if (step.type === "question") {
+            totalQuestions++;
             const key = `${moduleData.module}-${s}`;
+            const stepAnswers = (progress.answers && progress.answers[key]) || [];
+            if (stepAnswers.length > 0) {
+              answeredQuestions++;
+              moduleAnswers.push(...stepAnswers);
+            }            const key = `${moduleData.module}-${s}`;
             const answersArr = (progress.answers && progress.answers[key]) || [];
             for (const ans of answersArr) {
               rebuiltMessages.push({ sender: "user", text: ans });
@@ -147,7 +153,13 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           
           // Add user responses for questions
           if (step.type === "question") {
-            const key = `${currentModuleData.module}-${s}`;
+            totalQuestions++;
+            const key = `${moduleData.module}-${s}`;
+            const stepAnswers = (progress.answers && progress.answers[key]) || [];
+            if (stepAnswers.length > 0) {
+              answeredQuestions++;
+              moduleAnswers.push(...stepAnswers);
+            }            const key = `${currentModuleData.module}-${s}`;
             const answersArr = (progress.answers && progress.answers[key]) || [];
             for (const ans of answersArr) {
               rebuiltMessages.push({ sender: "user", text: ans });
@@ -194,17 +206,24 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         if (!moduleData) continue;
         // Collect all answers for this module
         const moduleAnswers: string[] = [];
-        for (let s = 0; s < moduleData.steps.length; s++) {
+        let answeredQuestions = 0;
+        let totalQuestions = 0;        for (let s = 0; s < moduleData.steps.length; s++) {
           const step = moduleData.steps[s];
           if (step.type === "question") {
+            totalQuestions++;
             const key = `${moduleData.module}-${s}`;
+            const stepAnswers = (progress.answers && progress.answers[key]) || [];
+            if (stepAnswers.length > 0) {
+              answeredQuestions++;
+              moduleAnswers.push(...stepAnswers);
+            }            const key = `${moduleData.module}-${s}`;
             const stepAnswers = (progress.answers && progress.answers[key]) || [];
             moduleAnswers.push(...stepAnswers);
           }
         }
         // Only generate summary if not already completed
         const existingSummary = summaries.find((s: { module: string; status: string }) => s.module === moduleData.module && s.status === "completed");
-        if (moduleAnswers.length > 0 && !existingSummary) {
+        if (totalQuestions > 0 && answeredQuestions === totalQuestions && !existingSummary) {
           generateSummary(moduleData.module, moduleAnswers);
         }
       }
@@ -296,7 +315,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         moduleAnswers.push(...stepAnswers);
       }
     }
-    if (moduleAnswers.length > 0) {
+    if (moduleAnswers.length > 0 && currentStep === currentModuleData.steps.length - 1) {
       setIsGeneratingSummary(true);
       setMessages((msgs) => [
         ...msgs,
