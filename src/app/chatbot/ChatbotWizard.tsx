@@ -307,7 +307,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     const currentModuleData = flow[currentModule];
     const moduleAnswers: string[] = [];
-    for (let i = 0; i < currentStep; i++) {
+    for (let i = 0; i <= currentStep; i++) {
       const step = currentModuleData.steps[i];
       if (step.type === "question") {
         const key = `${currentModuleData.module}-${i}`;
