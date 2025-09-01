@@ -219,8 +219,6 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
               answeredQuestions++;
               moduleAnswers.push(...stepAnswers);
             }
-            const stepAnswers = (progress.answers && progress.answers[key]) || [];
-            moduleAnswers.push(...stepAnswers);
           }
         }
         // Only generate summary if not already completed
