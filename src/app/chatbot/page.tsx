@@ -2,7 +2,7 @@
 import ChatbotWizard from "./ChatbotWizard";
 import ProfilePreview from "../profile-preview/ProfilePreview";
 import AuthButton from "@/components/AuthButton";
-import React, { useState, useEffect, useRef } from "react";
+import * as React from "react";
 import { ModuleSummariesProvider, useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -71,8 +71,17 @@ function ChatbotContent({
           <p className="text-gray-600">Discover your unique learning profile through guided conversations</p>
         </div>
 
-        {/* Auth Button */}
-        <div className="flex justify-end">
+        {/* Navigation and Auth */}
+        <div className="flex justify-between items-center">
+          <a 
+            href="/" 
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Home
+          </a>
           <AuthButton />
         </div>
 
@@ -228,16 +237,16 @@ function ChatbotContent({
 }
 
 export default function ChatbotPage() {
-  const [answers, setAnswers] = useState<Record<string, string[]>>({});
-  const [accepted, setAccepted] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [clearChatSignal, setClearChatSignal] = useState(0);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const chatbotRef = useRef<{ clearChat: () => void } | null>(null);
+  const [answers, setAnswers] = React.useState<Record<string, string[]>>({});
+  const [accepted, setAccepted] = React.useState(false);
+  const [checked, setChecked] = React.useState(false);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [clearChatSignal, setClearChatSignal] = React.useState(0);
+  const [showConfirm, setShowConfirm] = React.useState(false);
+  const chatbotRef = React.useRef<{ clearChat: () => void } | null>(null);
   const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Check localStorage for prior acceptance
     try {
       const val = localStorage.getItem("mgp_terms_accepted");
@@ -245,7 +254,7 @@ export default function ChatbotPage() {
     } catch {}
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
     });

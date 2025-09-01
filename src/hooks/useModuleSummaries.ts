@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { ClaudeSummarizerV2 } from "../services/ClaudeSummarizerV2";
 
 interface ModuleSummary {
   module: string;
@@ -37,40 +38,70 @@ export function useModuleSummaries() {
     });
 
     try {
-      // Call the Claude API via Netlify function
-      const response = await fetch("/.netlify/functions/generate-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          answers, 
-          context: `${module} Module` 
-        }),
+      // Generate unique IDs for V2 system
+      const profileId = `profile-${module}-${Date.now()}`;
+      const runId = `${profileId}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log("Generating V2 summary for module:", module);
+      
+      // Use V2 summarizer directly
+      const summarizer = new ClaudeSummarizerV2({
+        runId,
+        profileId,
+        includeDocuments: true, // Enable document reference
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate summary: ${response.statusText}`);
+      // Generate structured summary
+      const v2Summary = await summarizer.generateSummary(answers);
+      
+      if (v2Summary) {
+        // Update summary with proper metadata
+        v2Summary.studentId = profileId;
+        v2Summary.meta.runId = runId;
+        v2Summary.meta.model = 'claude-3-5-sonnet-20240620';
+        v2Summary.meta.createdAt = new Date().toISOString();
+
+        // Store in database
+        const success = await summarizer.finalizeSummary(v2Summary);
+        
+        if (success) {
+          console.log("V2 summary generated and stored successfully");
+          
+          // Convert V2 summary to readable text for display
+          const summaryText = v2Summary.sections 
+            ? Object.entries(v2Summary.sections)
+                .map(([element, section]) => {
+                  const elementName = element.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  return `${elementName}:\n${section.text}`;
+                })
+                .join('\n\n')
+            : 'No sections available';
+
+          // Update with completed status
+          setSummaries(prev => {
+            const newSummaries = [...prev];
+            const index = newSummaries.findIndex(s => s.module === module);
+            if (index >= 0) {
+              newSummaries[index] = {
+                module,
+                summary: summaryText,
+                status: "completed"
+              };
+            }
+            return newSummaries;
+          });
+
+          return summaryText;
+        } else {
+          throw new Error("Failed to store V2 summary");
+        }
+      } else {
+        throw new Error("Failed to generate V2 summary");
       }
 
-      const data = await response.json();
-      const summary = data.summary || "";
-
-      // Update with completed status
-      setSummaries(prev => {
-        const newSummaries = [...prev];
-        const index = newSummaries.findIndex(s => s.module === module);
-        if (index >= 0) {
-          newSummaries[index] = {
-            module,
-            summary,
-            status: "completed"
-          };
-        }
-        return newSummaries;
-      });
-
-      return summary;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("V2 summary generation error:", error);
       
       // Update with error status
       setSummaries(prev => {

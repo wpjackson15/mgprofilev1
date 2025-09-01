@@ -65,8 +65,40 @@ export const ClaudeSummaryResponse = z.object({
   })
 });
 
+// V2 Black Genius Framework Schemas
+export const BlackGeniusKey = z.enum([
+  "interest_awareness",
+  "can_do_attitude", 
+  "racial_identity",
+  "multicultural_navigation",
+  "selective_trust",
+  "social_justice"
+]);
+
+export const ElementSection = z.object({
+  text: z.string().min(1), // Removed max length and min length requirements
+  evidence: z.array(z.string()).optional().default([]), // Made optional with default
+  confidence: z.number().min(0).max(1).optional().default(0.8) // Made optional with default
+});
+
+export const ChildSummaryV1 = z.object({
+  schemaVersion: z.string().optional().default("1.0.0"), // Made optional with default
+  studentId: z.string().optional().default("unknown"), // Made optional with default
+  sections: z.record(z.string(), ElementSection).optional().default({}), // Made more flexible
+  meta: z.object({
+    runId: z.string().min(1),
+    model: z.string().optional().default("claude-3-5-sonnet-20240620"),
+    createdAt: z.string().optional().default(() => new Date().toISOString())
+  }).optional().default({}) // Made optional with default
+});
+
 // Type exports
 export type StepInput = z.infer<typeof StepInput>;
 export type ProfileReadyEvent = z.infer<typeof ProfileReadyEvent>;
 export type ClaudeSummaryRequest = z.infer<typeof ClaudeSummaryRequest>;
 export type ClaudeSummaryResponse = z.infer<typeof ClaudeSummaryResponse>;
+
+// V2 Type exports
+export type BlackGeniusKey = z.infer<typeof BlackGeniusKey>;
+export type ElementSection = z.infer<typeof ElementSection>;
+export type ChildSummaryV1 = z.infer<typeof ChildSummaryV1>;

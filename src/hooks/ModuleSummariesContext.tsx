@@ -37,35 +37,60 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
       console.log("[ModuleSummariesContext] set to generating:", newSummaries);
       return newSummaries;
     });
+
     try {
-      const response = await fetch("/.netlify/functions/generate-summary", {
+      // Generate unique IDs for V2 system
+      const profileId = `profile-${module}-${Date.now()}`;
+      const runId = `${profileId}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log("Generating V2 summary for module:", module);
+      
+      // Call server-side V2 API
+      const response = await fetch("/api/v2/summary/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, context: `${module} Module` }),
+        body: JSON.stringify({ 
+          answers, 
+          runId, 
+          profileId, 
+          includeDocuments: true 
+        }),
       });
+
       if (!response.ok) {
-        throw new Error(`Failed to generate summary: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`V2 API error: ${errorData.error || response.statusText}`);
       }
+
       const data = await response.json();
-      const summary = data.summary || "";
-      setSummaries(prev => {
-        const newSummaries = [...prev];
-        const index = newSummaries.findIndex(s => s.module === module);
-        if (index >= 0) {
-          newSummaries[index] = {
-            module,
-            summary,
-            status: "completed"
-          };
-        } else {
-          newSummaries.push({ module, summary, status: "completed" });
-        }
-        console.log("[ModuleSummariesContext] set to completed:", newSummaries);
-        return newSummaries;
-      });
-      return summary;
+      
+      if (data.success) {
+        console.log("V2 summary generated and stored successfully");
+        
+        setSummaries(prev => {
+          const newSummaries = [...prev];
+          const index = newSummaries.findIndex(s => s.module === module);
+          if (index >= 0) {
+            newSummaries[index] = {
+              module,
+              summary: data.summary,
+              status: "completed"
+            };
+          } else {
+            newSummaries.push({ module, summary: data.summary, status: "completed" });
+          }
+          console.log("[ModuleSummariesContext] set to completed:", newSummaries);
+          return newSummaries;
+        });
+        return data.summary;
+      } else {
+        throw new Error("V2 summary generation failed");
+      }
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("V2 summary generation error:", error);
+      
       setSummaries(prev => {
         const newSummaries = [...prev];
         const index = newSummaries.findIndex(s => s.module === module);

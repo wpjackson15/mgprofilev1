@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface AnalyticsEvent {
@@ -30,9 +30,9 @@ export function AnalyticsDashboard() {
     featureUsage: {},
     recentEvents: []
   });
-  const [showRawData, setShowRawData] = useState(false);
+  const [showRawData, setShowRawData] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Load analytics data from localStorage
     if (typeof window === 'undefined') return;
 

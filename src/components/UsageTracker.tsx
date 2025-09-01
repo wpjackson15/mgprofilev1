@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface UsageStats {
@@ -12,16 +12,16 @@ interface UsageStats {
 
 export function UsageTracker() {
   const { getUsageStats, exportData } = useAnalytics();
-  const [usageStats, setUsageStats] = useState<UsageStats>({
+  const [usageStats, setUsageStats] = React.useState<UsageStats>({
     lessonPlansCreated: 0,
     pdfUploads: 0,
     profilesCreated: 0,
     sessionStart: Date.now()
   });
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = React.useState(false);
 
   // Load usage from localStorage on mount
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof window === 'undefined') return;
 
     try {
