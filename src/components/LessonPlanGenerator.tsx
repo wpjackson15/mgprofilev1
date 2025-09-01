@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { BookOpen, Loader2, Download, FileText } from "lucide-react";
-import { CALESCriteria, CALES_FORM_FIELDS } from '@/lib/calesCriteria';
+import { CALES_CRITERIA_DESCRIPTIONS } from '@/lib/calesCriteria';
 import { StudentProfile, LessonPlan } from '@/services/mongodb';
 
 interface LessonPlanGeneratorProps {
@@ -113,7 +113,7 @@ export function LessonPlanGenerator({
             onChange={(e) => setFormData({ ...formData, calesCriteria: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {Object.entries(CALESCriteria).map(([key, value]) => (
+            {Object.entries(CALES_CRITERIA_DESCRIPTIONS).map(([key, value]) => (
               <option key={key} value={key}>
                 {value}
               </option>
