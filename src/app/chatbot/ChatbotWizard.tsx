@@ -110,7 +110,9 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       const rebuiltMessages: Message[] = [];
       const currentModuleIndex = progress.currentModule ?? 0;
       const currentStepIndex = progress.lastStep ?? 0;
-      
+      let totalQuestions = 0;
+      let answeredQuestions = 0;
+      const moduleAnswers: string[] = [];      
       // Process all completed modules
       for (let m = 0; m < currentModuleIndex; m++) {
         const moduleData = flow[m];
@@ -132,7 +134,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
             if (stepAnswers.length > 0) {
               answeredQuestions++;
               moduleAnswers.push(...stepAnswers);
-            }            const key = `${moduleData.module}-${s}`;
+            }
             const answersArr = (progress.answers && progress.answers[key]) || [];
             for (const ans of answersArr) {
               rebuiltMessages.push({ sender: "user", text: ans });
@@ -159,7 +161,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
             if (stepAnswers.length > 0) {
               answeredQuestions++;
               moduleAnswers.push(...stepAnswers);
-            }            const key = `${currentModuleData.module}-${s}`;
+            }
             const answersArr = (progress.answers && progress.answers[key]) || [];
             for (const ans of answersArr) {
               rebuiltMessages.push({ sender: "user", text: ans });
@@ -216,7 +218,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
             if (stepAnswers.length > 0) {
               answeredQuestions++;
               moduleAnswers.push(...stepAnswers);
-            }            const key = `${moduleData.module}-${s}`;
+            }
             const stepAnswers = (progress.answers && progress.answers[key]) || [];
             moduleAnswers.push(...stepAnswers);
           }
