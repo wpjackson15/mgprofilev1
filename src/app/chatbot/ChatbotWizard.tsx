@@ -369,7 +369,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
           setCurrentStep(0);
           setMessages((msgs) => [
             ...msgs,
-            { sender: "bot", text: flow[currentModule + 1].steps[0].text },
+            { sender: "bot", text: flow[currentModule + 1]?.steps?.[0]?.text || "Welcome to the next module!" },
           ]);
         } else {
           setMessages((msgs) => [
@@ -390,7 +390,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       setCurrentStep(0);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: flow[currentModule + 1].steps[0].text },
+        { sender: "bot", text: flow[currentModule + 1]?.steps?.[0]?.text || "Welcome to the next module!" },
       ]);
     } else {
       setMessages((msgs) => [
