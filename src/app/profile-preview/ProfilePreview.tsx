@@ -73,10 +73,12 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   // Get module display names and question counts
   const moduleDisplayNames: Record<string, string> = {};
   const moduleQuestionCounts: Record<string, number> = {};
-  flow && flow.length > 0 && flow.forEach((moduleData) => {
-    moduleDisplayNames[moduleData.module] = moduleData.module.replace(/-/g, " ");
-    moduleQuestionCounts[moduleData.module] = moduleData.steps.filter((step) => step.type === "question").length;
-  });
+  if (flow && flow.length > 0) {
+    flow.forEach((moduleData) => {
+      moduleDisplayNames[moduleData.module] = moduleData.module.replace(/-/g, " ");
+      moduleQuestionCounts[moduleData.module] = moduleData.steps.filter((step) => step.type === "question").length;
+    });
+  }
 
   const modules = Object.keys(grouped).sort((a, b) => {
     const aIndex = flow.findIndex((m) => m.module === a);
