@@ -5,7 +5,7 @@ import { saveUserProgress, loadUserProgress, UserProgress } from "@/services/mon
 
 const LOCAL_KEY = "mgp_profile_progress";
 
-export function useUserProgress() {
+export function useProfileProgress() {
   const [user, setUser] = useState<User | null>(null);
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
