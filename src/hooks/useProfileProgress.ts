@@ -27,7 +27,7 @@ export function useProfileProgress() {
       try {
         if (user && user.email) {
           // Logged in: load from Firestore
-          const data = await loadUserProgress(user.uid);
+          const data = await loadUserProgress(user.uid).catch(err => { console.warn("Failed to load user progress:", err); return null; });
           if (data) {
             setProgress(data);
           } else {
@@ -61,7 +61,7 @@ export function useProfileProgress() {
     setProgress(data);
     if (user && user.email) {
       try {
-        await saveUserProgress(user.uid, data);
+        await saveUserProgress(user.uid, data).catch(err => { console.warn("Failed to save user progress:", err); });
       } catch (err) {
         setError((err as Error).message);
       }
@@ -78,7 +78,7 @@ export function useProfileProgress() {
   const reset = useCallback(async () => {
     setProgress(null);
     if (user && user.email) {
-      await saveUserProgress(user.uid, { answers: {}, lastStep: 0, updatedAt: new Date().toISOString() });
+      await saveUserProgress(user.uid, { answers: {}, lastStep: 0, updatedAt: new Date().toISOString() }).catch(err => { console.warn("Failed to reset user progress:", err); });
     } else {
       localStorage.removeItem(LOCAL_KEY);
     }
