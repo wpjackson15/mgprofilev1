@@ -209,7 +209,8 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
         // Collect all answers for this module
         const moduleAnswers: string[] = [];
         let answeredQuestions = 0;
-        let totalQuestions = 0;        for (let s = 0; s < moduleData.steps.length; s++) {
+        let totalQuestions = 0;
+        for (let s = 0; s < moduleData.steps.length; s++) {
           const step = moduleData.steps[s];
           if (step.type === "question") {
             totalQuestions++;
