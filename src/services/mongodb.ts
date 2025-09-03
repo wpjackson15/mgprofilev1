@@ -83,6 +83,13 @@ export async function connectToMongoDB(): Promise<void> {
   }
 }
 
+export function getDb(): Db {
+  if (!db) {
+    throw new Error('MongoDB not connected. Call connectToMongoDB() first.');
+  }
+  return db;
+}
+
 export async function disconnectFromMongoDB(): Promise<void> {
   if (client) {
     await client.close();

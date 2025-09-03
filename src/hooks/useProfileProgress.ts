@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { saveUserProgress, loadUserProgress, UserProgress } from "@/services/mongodb";
+import { UserProgress } from "@/services/mongodb";
 
 const LOCAL_KEY = "mgp_profile_progress";
 
@@ -26,16 +26,21 @@ export function useProfileProgress() {
     async function load() {
       try {
         if (user && user.email) {
-          // Logged in: try MongoDB first, fallback to localStorage
+          // Logged in: try MongoDB API first, fallback to localStorage
           try {
-            const data = await loadUserProgress(user.uid, "default");
-            if (data) {
-              setProgress(data);
+            const response = await fetch(`/api/user-progress?userId=${user.uid}&moduleId=default`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data) {
+                setProgress(data);
+              } else {
+                setProgress(null);
+              }
             } else {
-              setProgress(null);
+              throw new Error('Failed to load from API');
             }
-          } catch (mongodbErr) {
-            console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
+          } catch (apiErr) {
+            console.warn("MongoDB API not available, falling back to localStorage:", apiErr);
             // Fallback to localStorage for now
             try {
               const raw = localStorage.getItem(LOCAL_KEY);
@@ -76,9 +81,16 @@ export function useProfileProgress() {
     setProgress(data);
     if (user && user.email) {
       try {
-        await saveUserProgress({ userId: user.uid, moduleId: "default", ...data });
-      } catch (mongodbErr) {
-        console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
+        const response = await fetch('/api/user-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, userId: user.uid, moduleId: "default" })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to save to API');
+        }
+      } catch (apiErr) {
+        console.warn("MongoDB API not available, falling back to localStorage:", apiErr);
         // Fallback to localStorage for now
         try {
           localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
@@ -100,9 +112,20 @@ export function useProfileProgress() {
     setProgress(null);
     if (user && user.email) {
       try {
-        await saveUserProgress({ userId: user.uid, moduleId: "default", answers: {}, lastStep: 0, updatedAt: new Date().toISOString() });
-      } catch (mongodbErr) {
-        console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
+        const response = await fetch('/api/user-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            answers: {}, 
+            lastStep: 0, 
+            updatedAt: new Date().toISOString() 
+          })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to reset via API');
+        }
+      } catch (apiErr) {
+        console.warn("MongoDB API not available, falling back to localStorage:", apiErr);
         // Fallback to localStorage for now
         try {
           localStorage.removeItem(LOCAL_KEY);
