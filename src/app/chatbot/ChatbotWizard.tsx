@@ -230,6 +230,15 @@ export default function ChatbotWizard({ user }: { user: any }) {
           </div>
         ))}
       </div>
+      {isGeneratingSummary && (
+        <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-blue-700">Generating summary...</span>
+          </div>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
@@ -238,12 +247,12 @@ export default function ChatbotWizard({ user }: { user: any }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={awaitingSummaryConsent ? "Yes or No" : "Type your answer..."}
-          disabled={!flow.length}
+          disabled={!flow.length || isGeneratingSummary}
         />
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          disabled={!input.trim() || !flow.length}
+          disabled={!input.trim() || !flow.length || isGeneratingSummary}
         >
           Send
         </button>
