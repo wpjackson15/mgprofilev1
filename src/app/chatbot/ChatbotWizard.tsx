@@ -115,6 +115,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       const moduleAnswers: string[] = [];      
       // Process all completed modules
       for (let m = 0; m < currentModuleIndex; m++) {
+        if (m >= flow.length) break; // Safety check for array bounds
         const moduleData = flow[m];
         if (!moduleData) continue;
         
@@ -204,6 +205,7 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       Object.keys(progress.answers || {}).length > 0
     ) {
       for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
+        if (m >= flow.length) break; // Safety check for array bounds
         const moduleData = flow[m];
         if (!moduleData) continue;
         // Collect all answers for this module
