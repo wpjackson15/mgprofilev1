@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const summarizer = new ClaudeSummarizerV2({
       runId: body.runId,
       profileId: body.profileId,
-      includeDocuments: body.includeDocuments || true,
+      includeDocuments: false, // Temporarily disabled RAG to test performance
     });
 
     // Generate summary
