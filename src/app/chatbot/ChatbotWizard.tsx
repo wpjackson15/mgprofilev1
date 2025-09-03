@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
+import { saveUserProgress, loadUserProgress } from "@/services/firestore";
 
 interface Step {
   type: "question" | "offer_summary";
@@ -16,7 +18,8 @@ interface Message {
   text: string;
 }
 
-export default function ChatbotWizard() {
+export default function ChatbotWizard({ user }: { user: any }) {
+  const { generateSummary } = useModuleSummaries();
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -24,9 +27,10 @@ export default function ChatbotWizard() {
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load conversation flow
+  // Load conversation flow and user progress
   useEffect(() => {
     fetch("/conversationFlow.json")
       .then((res) => res.json())
@@ -39,7 +43,21 @@ export default function ChatbotWizard() {
           ]);
         }
       });
-  }, []);
+
+    // Load user progress if logged in
+    if (user) {
+      loadUserProgress(user.uid)
+        .then((progress) => {
+          if (progress) {
+            setAnswers(progress.answers || {});
+            setCurrentModule(progress.lastStep || 0);
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to load user progress:", err);
+        });
+    }
+  }, [user]);
 
   // Handle sending a message
   const sendMessage = (text: string) => {
@@ -52,7 +70,7 @@ export default function ChatbotWizard() {
     if (step.type === "question") {
       // Save answer
       setAnswers((prev) => {
-        const key = `${module.module}-${currentStep}`;
+        const key = `${currentModuleData.module}-${currentStep}`;
         return {
           ...prev,
           [key]: prev[key] ? [...prev[key], text] : [text],
@@ -94,6 +112,22 @@ export default function ChatbotWizard() {
         { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
       ]);
     } else if (currentModule + 1 < flow.length) {
+      // Generate summary for completed module
+      if (user && generateSummary) {
+        const moduleAnswers = answers[`${currentModuleData.module}-${currentStep}`] || [];
+        if (moduleAnswers.length > 0) {
+          setIsGeneratingSummary(true);
+          generateSummary(currentModuleData.module, moduleAnswers)
+            .then(() => {
+              setIsGeneratingSummary(false);
+            })
+            .catch((err) => {
+              console.warn("Failed to generate summary:", err);
+              setIsGeneratingSummary(false);
+            });
+        }
+      }
+
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
       setMessages((msgs) => [
