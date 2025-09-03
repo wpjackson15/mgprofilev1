@@ -54,7 +54,18 @@ export default function ChatbotWizard({ user }: { user: any }) {
           }
         })
         .catch((err) => {
-          console.warn("Failed to load user progress:", err);
+          console.warn("Failed to load user progress from Firebase, trying localStorage:", err);
+          // Fallback to localStorage
+          try {
+            const localProgress = localStorage.getItem(`mgp_profile_progress_${user.uid}`);
+            if (localProgress) {
+              const parsed = JSON.parse(localProgress);
+              setAnswers(parsed.answers || {});
+              setCurrentModule(parsed.lastStep || 0);
+            }
+          } catch (localErr) {
+            console.warn("LocalStorage fallback also failed:", localErr);
+          }
         });
     }
   }, [user]);
@@ -115,17 +126,28 @@ export default function ChatbotWizard({ user }: { user: any }) {
       // Generate summary for completed module
       if (user && generateSummary) {
         const moduleAnswers = answers[`${currentModuleData.module}-${currentStep}`] || [];
+        console.log("Attempting to generate summary:", {
+          module: currentModuleData.module,
+          step: currentStep,
+          answers: moduleAnswers,
+          generateSummary: !!generateSummary
+        });
         if (moduleAnswers.length > 0) {
           setIsGeneratingSummary(true);
           generateSummary(currentModuleData.module, moduleAnswers)
             .then(() => {
+              console.log("Summary generated successfully");
               setIsGeneratingSummary(false);
             })
             .catch((err) => {
-              console.warn("Failed to generate summary:", err);
+              console.error("Failed to generate summary:", err);
               setIsGeneratingSummary(false);
             });
+        } else {
+          console.log("No answers to generate summary from");
         }
+      } else {
+        console.log("Cannot generate summary:", { user: !!user, generateSummary: !!generateSummary });
       }
 
       setCurrentModule(currentModule + 1);
