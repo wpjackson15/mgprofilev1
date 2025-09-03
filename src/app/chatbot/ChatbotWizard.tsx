@@ -18,7 +18,7 @@ interface Message {
   text: string;
 }
 
-export default function ChatbotWizard({ user }: { user: any }) {
+export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>> }) {
   const { generateSummary } = useModuleSummaries();
   
   // Debug: Check if generateSummary is available (only once on mount)
@@ -30,7 +30,7 @@ export default function ChatbotWizard({ user }: { user: any }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<Record<string, string[]>>({});
+  const [answers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,14 +86,14 @@ export default function ChatbotWizard({ user }: { user: any }) {
     if (step.type === "question") {
       console.log("User answered question:", { step: currentStep, text, module: currentModuleData.module });
       
-      // Save answer
-      setAnswers((prev) => {
-        const key = `${currentModuleData.module}-${currentStep}`;
-        return {
-          ...prev,
-          [key]: prev[key] ? [...prev[key], text] : [text],
-        };
-      });
+      // Save answer to both local state and parent
+      const key = `${currentModuleData.module}-${currentStep}`;
+      const newAnswers = {
+        ...answers,
+        [key]: answers[key] ? [...answers[key], text] : [text],
+      };
+      setLocalAnswers(newAnswers);
+      setAnswers(newAnswers);
       // Move to next step
       setTimeout(() => nextStep(), 500);
     } else if (step.type === "auto_summary") {
