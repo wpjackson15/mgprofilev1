@@ -221,28 +221,6 @@ export default function ChatbotWizard({ user }: { user: any }) {
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
-      {/* Progress Indicator */}
-      {flow.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              {flow[currentModule]?.module.replace(/-/g, " ")}
-            </span>
-            <span className="text-xs text-gray-500">
-              {currentStep + 1} of {flow[currentModule]?.steps.filter(step => step.type === "question").length}
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ 
-                width: `${((currentStep + 1) / (flow[currentModule]?.steps.filter(step => step.type === "question").length || 1)) * 100}%` 
-              }}
-            />
-          </div>
-        </div>
-      )}
-      
       <div className="flex-1 overflow-y-auto mb-2">
         {messages.map((msg, i) => (
           <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
@@ -250,9 +228,20 @@ export default function ChatbotWizard({ user }: { user: any }) {
               {msg.text}
             </div>
           </div>
-        ))}
-      </div>
-      <form onSubmit={handleSubmit} className="flex gap-2">
+                          ))}
+                </div>
+                
+                {/* Summary Generation Popup */}
+                {isGeneratingSummary && (
+                  <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-blue-700">Generating summary...</span>
+                    </div>
+                  </div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
           type="text"
@@ -260,12 +249,12 @@ export default function ChatbotWizard({ user }: { user: any }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={awaitingSummaryConsent ? "Yes or No" : "Type your answer..."}
-          disabled={!flow.length}
+          disabled={!flow.length || isGeneratingSummary}
         />
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          disabled={!input.trim() || !flow.length}
+          disabled={!input.trim() || !flow.length || isGeneratingSummary}
         >
           Send
         </button>
