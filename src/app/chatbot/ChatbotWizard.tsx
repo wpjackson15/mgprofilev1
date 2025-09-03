@@ -168,7 +168,14 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     } else if (currentModule + 1 < flow.length) {
       // Generate summary for completed module
       if (user && generateSummary) {
-        const moduleAnswers = answers[`${currentModuleData.module}-${currentStep}`] || [];
+        // Collect ALL answers from this module
+        const moduleAnswers = [];
+        for (let i = 0; i < currentStep; i++) {
+          const key = `${currentModuleData.module}-${i}`;
+          if (answers[key]) {
+            moduleAnswers.push(...answers[key]);
+          }
+        }
         console.log("Attempting to generate summary:", {
           module: currentModuleData.module,
           step: currentStep,
