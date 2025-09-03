@@ -1,11 +1,8 @@
 "use client";
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
-import { CheckCircle } from "lucide-react";
-import { useProfileProgress } from "@/hooks/useProfileProgress";
+import React, { useState, useEffect, useRef } from "react";
 
 interface Step {
-  type: "question" | "auto_summary";
+  type: "question" | "offer_summary";
   text: string;
 }
 
@@ -19,69 +16,15 @@ interface Message {
   text: string;
 }
 
-interface ChatbotWizardProps {
-  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
-  onModuleComplete?: (module: string, answers: string[]) => void;
-  user: import("firebase/auth").User | null;
-  clearChatSignal?: number; // increment this prop to trigger chat clear
-}
-
-const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleComplete, clearChatSignal }: ChatbotWizardProps, ref) {
+export default function ChatbotWizard() {
   const [flow, setFlow] = useState<Module[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { summaries, generateSummary, resetSummaries } = useModuleSummaries();
-  const [showSaved, setShowSaved] = useState(false);
-  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-  const hasLoadedSummaries = useRef(false);
-
-  // Use the custom hook for progress
-  const { progress, save, user, loading } = useProfileProgress();
-
-  // Local state mirrors progress for editing before save
-  const [localAnswers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
-
-  // Expose clearChat to parent if needed
-  useImperativeHandle(ref, () => ({
-    clearChat: () => setMessages([])
-  }));
-
-  // Immediate clear chat function - optimized for speed
-  useEffect(() => {
-    if (clearChatSignal && clearChatSignal > 0) {
-      // Immediate state reset - no complex logic
-      setMessages(flow.length > 0 && flow[0].steps.length > 0 ? 
-        [{ sender: "bot", text: flow[0].steps[0].text }] : []);
-      setLocalAnswers({});
-      setCurrentModule(0);
-      setCurrentStep(0);
-      setInput("");
-      
-      // Clear parent answers immediately
-      setAnswers({});
-      
-      // Reset progress in localStorage
-      try {
-        localStorage.removeItem('mgp_chat_progress');
-      } catch (e) {
-        console.warn('Could not clear localStorage:', e);
-      }
-      
-      // Reset summaries immediately and ensure they stay cleared
-      resetSummaries();
-      hasLoadedSummaries.current = false;
-      
-      // Double-check summaries are cleared after a brief delay
-      setTimeout(() => {
-        resetSummaries();
-      }, 100);
-    }
-  }, [clearChatSignal, flow, setAnswers, resetSummaries]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
+  const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load conversation flow
   useEffect(() => {
@@ -98,311 +41,64 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
       });
   }, []);
 
-  // Simplified and more reliable chat history reconstruction
-  useEffect(() => {
-    if (progress && flow.length > 0) {
-      setLocalAnswers(progress.answers || {});
-      setAnswers(progress.answers || {});
-      if (typeof progress.currentModule === 'number') setCurrentModule(progress.currentModule);
-      if (typeof progress.lastStep === 'number') setCurrentStep(progress.lastStep);
-
-      // Rebuild chat history more reliably
-      const rebuiltMessages: Message[] = [];
-      const currentModuleIndex = progress.currentModule ?? 0;
-      const currentStepIndex = progress.lastStep ?? 0;
-      let totalQuestions = 0;
-      let answeredQuestions = 0;
-      const moduleAnswers: string[] = [];      
-      // Process all completed modules
-      for (let m = 0; m < currentModuleIndex; m++) {
-        if (m >= flow.length) break; // Safety check for array bounds
-        const moduleData = flow[m];
-        if (!moduleData) continue;
-        
-        // Add all steps and responses for completed modules
-        for (let s = 0; s < moduleData.steps.length; s++) {
-          const step = moduleData.steps[s];
-          if (!step) continue;
-          
-          // Add bot message
-          rebuiltMessages.push({ sender: "bot", text: step.text });
-          
-          // Add user responses for questions
-          if (step.type === "question") {
-            totalQuestions++;
-            const key = `${moduleData.module}-${s}`;
-            const stepAnswers = (progress.answers && progress.answers[key]) || [];
-            if (stepAnswers.length > 0) {
-              answeredQuestions++;
-              moduleAnswers.push(...stepAnswers);
-            }
-            const answersArr = (progress.answers && progress.answers[key]) || [];
-            for (const ans of answersArr) {
-              rebuiltMessages.push({ sender: "user", text: ans });
-            }
-          }
-        }
-      }
-      
-      // Process current module up to current step
-      const currentModuleData = flow[currentModuleIndex];
-      if (currentModuleData) {
-        for (let s = 0; s <= currentStepIndex; s++) {
-          const step = currentModuleData.steps[s];
-          if (!step) continue;
-          
-          // Add bot message
-          rebuiltMessages.push({ sender: "bot", text: step.text });
-          
-          // Add user responses for questions
-          if (step.type === "question") {
-            totalQuestions++;
-            const key = `${moduleData.module}-${s}`;
-            const stepAnswers = (progress.answers && progress.answers[key]) || [];
-            if (stepAnswers.length > 0) {
-              answeredQuestions++;
-              moduleAnswers.push(...stepAnswers);
-            }
-            const answersArr = (progress.answers && progress.answers[key]) || [];
-            for (const ans of answersArr) {
-              rebuiltMessages.push({ sender: "user", text: ans });
-            }
-          }
-        }
-        
-        // Only add the next bot message if we've answered the current question
-        // This prevents showing multiple questions at once
-        if (currentStepIndex < currentModuleData.steps.length - 1) {
-          const currentStep = currentModuleData.steps[currentStepIndex];
-          if (currentStep && currentStep.type === "question") {
-            const key = `${currentModuleData.module}-${currentStepIndex}`;
-            const answersArr = (progress.answers && progress.answers[key]) || [];
-            // Only show next question if current question has been answered
-            if (answersArr.length > 0) {
-              const nextStep = currentModuleData.steps[currentStepIndex + 1];
-              if (nextStep) {
-                rebuiltMessages.push({ sender: "bot", text: nextStep.text });
-              }
-            }
-          }
-        }
-      }
-      
-      setMessages(rebuiltMessages);
-    }
-  }, [progress, flow, setAnswers]);
-
-  // Regenerate summaries for completed modules on load (only once)
-  useEffect(() => {
-    // Don't regenerate summaries if chat is being cleared
-    if (clearChatSignal && clearChatSignal > 0) return;
-    
-    if (
-      !hasLoadedSummaries.current &&
-      progress &&
-      flow.length > 0 &&
-      generateSummary &&
-      Object.keys(progress.answers || {}).length > 0
-    ) {
-      for (let m = 0; m <= (progress.currentModule ?? 0); m++) {
-        if (m >= flow.length) break; // Safety check for array bounds
-        const moduleData = flow[m];
-        if (!moduleData) continue;
-        // Collect all answers for this module
-        const moduleAnswers: string[] = [];
-        let answeredQuestions = 0;
-        let totalQuestions = 0;
-        for (let s = 0; s < moduleData.steps.length; s++) {
-          const step = moduleData.steps[s];
-          if (step.type === "question") {
-            totalQuestions++;
-            const key = `${moduleData.module}-${s}`;
-            const stepAnswers = (progress.answers && progress.answers[key]) || [];
-            if (stepAnswers.length > 0) {
-              answeredQuestions++;
-              moduleAnswers.push(...stepAnswers);
-            }
-          }
-        }
-        // Only generate summary if not already completed
-        const existingSummary = summaries.find((s: { module: string; status: string }) => s.module === moduleData.module && s.status === "completed");
-        if (totalQuestions > 0 && answeredQuestions === totalQuestions && !existingSummary) {
-          generateSummary(moduleData.module, moduleAnswers);
-        }
-      }
-      hasLoadedSummaries.current = true;
-    }
-  }, [progress, flow, generateSummary, summaries, clearChatSignal]); // Added clearChatSignal dependency
-
-  // Removed redundant useEffect - now handled in the main clear function
-
-  // Save progress to Firestore/localStorage on every answer or step change
-  useEffect(() => {
-    if (!user) return;
-    if (isGeneratingSummary) return; // Prevent autosave during summary generation
-    if (Object.keys(localAnswers).length === 0 && currentStep === 0 && currentModule === 0) return;
-    save({
-      answers: localAnswers,
-      currentModule,
-      lastStep: currentStep,
-      updatedAt: new Date().toISOString(),
-    }).then(() => {
-      setShowSaved(true);
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      saveTimeout.current = setTimeout(() => setShowSaved(false), 2000);
-    });
-  }, [localAnswers, currentStep, currentModule, user, save, isGeneratingSummary]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    };
-  }, []);
-
-  // Autoscroll to bottom when messages change
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-      }
-    };
-    scrollToBottom();
-    const timeoutId = setTimeout(scrollToBottom, 100);
-    return () => clearTimeout(timeoutId);
-  }, [messages]);
-
   // Handle sending a message
   const sendMessage = (text: string) => {
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
-    if (!currentModuleData) {
-      console.error("No module data found for current module:", currentModule);
-      return;
-    }
     const step = currentModuleData.steps[currentStep];
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     setInput("");
 
     if (step.type === "question") {
       // Save answer
-      const key = `${currentModuleData.module}-${currentStep}`;
-      const newAnswers = {
-        ...localAnswers,
-        [key]: localAnswers[key] ? [...localAnswers[key], text] : [text],
-      };
-      setLocalAnswers(newAnswers);
-      setAnswers(newAnswers);
-      // Check if next step is auto_summary (i.e., last question in module)
-      if (
-        currentStep + 1 < currentModuleData.steps.length &&
-        currentModuleData.steps[currentStep + 1].type === "auto_summary"
-      ) {
-        setTimeout(() => nextStep(), 500); // Advance to summary step
-        setTimeout(() => handleSummaryConsent("yes"), 600); // Trigger summary after advancing
-      } else {
-        // Move to next step
-        setTimeout(() => nextStep(), 500);
-      }
-    } else if (step.type === "auto_summary") {
-      // Do not trigger summary here; it is handled after last question
+      setAnswers((prev) => {
+        const key = `${module.module}-${currentStep}`;
+        return {
+          ...prev,
+          [key]: prev[key] ? [...prev[key], text] : [text],
+        };
+      });
+      // Move to next step
+      setTimeout(() => nextStep(), 500);
+    } else if (step.type === "offer_summary") {
+      // Expect yes/no
+      setAwaitingSummaryConsent(true);
     }
   };
 
-  // Handle summary generation - now automatically triggered
-  const handleSummaryConsent = async (text: string) => {
+  // Handle summary consent
+  const handleSummaryConsent = (text: string) => {
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
-    const currentModuleData = flow[currentModule];
-    // Safety check: ensure flow is loaded and currentModule is valid
-    if (!flow || flow.length === 0) {
-      console.error("Flow not loaded yet");
-      return;
-    }
-
-    if (currentModule < 0 || currentModule >= flow.length) {
-      console.error("Current module index out of bounds:", currentModule, "flow length:", flow.length);
-      return;
-    }
-    if (!currentModuleData) {
-      console.error("No module data found for current module:", currentModule);
-      return;
-    }
-    const moduleAnswers: string[] = [];
-    for (let i = 0; i <= currentStep; i++) {
-      const step = currentModuleData.steps[i];
-      if (step.type === "question") {
-        const key = `${currentModuleData.module}-${i}`;
-        const stepAnswers = localAnswers[key] || [];
-        moduleAnswers.push(...stepAnswers);
-      }
-    }
-    if (moduleAnswers.length > 0 && currentStep === currentModuleData.steps.length - 1) {
-      setIsGeneratingSummary(true);
+    setAwaitingSummaryConsent(false);
+    if (text.trim().toLowerCase().startsWith("y")) {
+      // Placeholder summary
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: "Generating a summary of your responses..." },
+        { sender: "bot", text: "[Summary placeholder: This is where a brief, affirming summary for the teacher will appear.]" },
       ]);
-      try {
-        await generateSummary(currentModuleData.module, moduleAnswers);
-        if (onModuleComplete) {
-          onModuleComplete(currentModuleData.module, moduleAnswers);
-        }
-      } catch {
-        setMessages((msgs) => [
-          ...msgs,
-          { sender: "bot", text: "Sorry, I couldn't generate a summary right now. You can continue and we'll try again later." },
-        ]);
-      } finally {
-        setIsGeneratingSummary(false);
-      }
+      setTimeout(() => nextStep(), 1000);
     } else {
-      setMessages((msgs) => [
-        ...msgs,
-        { sender: "bot", text: "I don't have enough information to generate a summary yet. Let's continue with the questions." },
-      ]);
+      setTimeout(() => nextStep(), 500);
     }
-    setTimeout(() => nextStep(true), 2000);
     setInput("");
   };
 
   // Move to next step or module
-  const nextStep = (skipAutoSummary = false) => {
+  const nextStep = () => {
     if (!flow.length) return;
     const currentModuleData = flow[currentModule];
-    if (!currentModuleData) {
-      console.error("No module data found for current module:", currentModule);
-      return;
-    }
     if (currentStep + 1 < currentModuleData.steps.length) {
-      const nextStepObj = currentModuleData.steps[currentStep + 1];
-      if (nextStepObj.type === "auto_summary" && skipAutoSummary) {
-        if (currentModule + 1 < flow.length) {
-          setCurrentModule(currentModule + 1);
-          setCurrentStep(0);
-          setMessages((msgs) => [
-            ...msgs,
-            { sender: "bot", text: flow[currentModule + 1]?.steps?.[0]?.text || "Welcome to the next module!" },
-          ]);
-        } else {
-          setMessages((msgs) => [
-            ...msgs,
-            { sender: "bot", text: "Thank you! You’ve completed the conversation. You can now view or share your child’s Genius Profile." },
-          ]);
-        }
-        return;
-      }
       setCurrentStep(currentStep + 1);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: nextStepObj.text },
+        { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
       ]);
-      // Removed summary trigger from here
     } else if (currentModule + 1 < flow.length) {
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: flow[currentModule + 1]?.steps?.[0]?.text || "Welcome to the next module!" },
+        { sender: "bot", text: flow[currentModule + 1].steps[0].text },
       ]);
     } else {
       setMessages((msgs) => [
@@ -415,8 +111,8 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   // Handle input submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isGeneratingSummary) return;
-    if (input.trim().toLowerCase() === "yes") {
+    if (!input.trim()) return;
+    if (awaitingSummaryConsent) {
       handleSummaryConsent(input);
     } else {
       sendMessage(input);
@@ -424,61 +120,35 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
     inputRef.current?.focus();
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-[600px] items-center justify-center text-gray-600">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-lg">Loading your progress...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-[600px]">
-      {/* Chat Messages */}
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-4">
+    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4 flex flex-col h-[70vh]">
+      <div className="flex-1 overflow-y-auto mb-2">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`px-4 py-3 rounded-lg max-w-[85%] shadow-sm ${
-              msg.sender === "user" 
-                ? "bg-blue-600 text-white" 
-                : "bg-gray-100 text-gray-800 border border-gray-200"
-            }`}>
-              <p className="text-sm leading-relaxed">{msg.text}</p>
+          <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`px-4 py-2 rounded-lg max-w-[80%] ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}>
+              {msg.text}
             </div>
           </div>
         ))}
       </div>
-
-      {/* Save Status */}
-      {user && showSaved && (
-        <div className="flex items-center justify-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
-          <CheckCircle className="w-5 h-5 text-green-600" />
-          <span className="font-medium text-sm">Progress saved!</span>
-        </div>
-      )}
-
-      {/* Input Form */}
-      <form onSubmit={handleSubmit} className="flex gap-3">
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+          className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isGeneratingSummary ? "Yes or No" : "Type your answer..."}
+          placeholder={awaitingSummaryConsent ? "Yes or No" : "Type your answer..."}
           disabled={!flow.length}
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          disabled={!input.trim() || !flow.length || isGeneratingSummary}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          disabled={!input.trim() || !flow.length}
         >
-          {isGeneratingSummary ? "Generating..." : "Send"}
+          Send
         </button>
       </form>
     </div>
   );
-});
-
-export default ChatbotWizard; 
+} 
