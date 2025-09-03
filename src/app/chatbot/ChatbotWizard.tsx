@@ -100,7 +100,15 @@ export default function ChatbotWizard({ user }: { user: any }) {
       // Auto-generate summary for completed module
       console.log("Auto-generating summary for module:", currentModuleData.module);
       if (user && generateSummary) {
-        const moduleAnswers = answers[`${currentModuleData.module}-${currentStep}`] || [];
+        // Collect ALL answers from this module
+        const moduleAnswers = [];
+        for (let i = 0; i < currentStep; i++) {
+          const key = `${currentModuleData.module}-${i}`;
+          if (answers[key]) {
+            moduleAnswers.push(...answers[key]);
+          }
+        }
+        console.log("Collected module answers:", moduleAnswers);
         if (moduleAnswers.length > 0) {
           setIsGeneratingSummary(true);
           generateSummary(currentModuleData.module, moduleAnswers)
