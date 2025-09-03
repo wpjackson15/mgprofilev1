@@ -313,6 +313,16 @@ const ChatbotWizard = forwardRef(function ChatbotWizard({ setAnswers, onModuleCo
   const handleSummaryConsent = async (text: string) => {
     setMessages((msgs) => [...msgs, { sender: "user", text }]);
     const currentModuleData = flow[currentModule];
+    // Safety check: ensure flow is loaded and currentModule is valid
+    if (!flow || flow.length === 0) {
+      console.error("Flow not loaded yet");
+      return;
+    }
+
+    if (currentModule < 0 || currentModule >= flow.length) {
+      console.error("Current module index out of bounds:", currentModule, "flow length:", flow.length);
+      return;
+    }
     if (!currentModuleData) {
       console.error("No module data found for current module:", currentModule);
       return;
