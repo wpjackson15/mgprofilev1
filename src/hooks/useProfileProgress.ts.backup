@@ -26,27 +26,12 @@ export function useProfileProgress() {
     async function load() {
       try {
         if (user && user.email) {
-          // Logged in: try MongoDB first, fallback to localStorage
-          try {
-            const data = await loadUserProgress(user.uid, "default");
-            if (data) {
-              setProgress(data);
-            } else {
-              setProgress(null);
-            }
-          } catch (mongodbErr) {
-            console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
-            // Fallback to localStorage for now
-            try {
-              const raw = localStorage.getItem(LOCAL_KEY);
-              if (raw) {
-                setProgress(JSON.parse(raw));
-              } else {
-                setProgress(null);
-              }
-            } catch {
-              setProgress(null);
-            }
+          // Logged in: load from Firestore
+          const data = await loadUserProgress(user.uid, "default").catch(err => { console.warn("Failed to load user progress:", err); return null; });
+          if (data) {
+            setProgress(data);
+          } else {
+            setProgress(null);
           }
         } else {
           // Anonymous: load from localStorage
@@ -76,15 +61,9 @@ export function useProfileProgress() {
     setProgress(data);
     if (user && user.email) {
       try {
-        await saveUserProgress({ userId: user.uid, moduleId: "default", ...data });
-      } catch (mongodbErr) {
-        console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
-        // Fallback to localStorage for now
-        try {
-          localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
-        } catch {
-          // Ignore localStorage errors
-        }
+        await saveUserProgress({ userId: user.uid, moduleId: "default", ...data }).catch(err => { console.warn("Failed to save user progress:", err); });
+      } catch (err) {
+        setError((err as Error).message);
       }
     } else {
       try {
@@ -99,17 +78,7 @@ export function useProfileProgress() {
   const reset = useCallback(async () => {
     setProgress(null);
     if (user && user.email) {
-      try {
-        await saveUserProgress({ userId: user.uid, moduleId: "default", answers: {}, lastStep: 0, updatedAt: new Date().toISOString() });
-      } catch (mongodbErr) {
-        console.warn("MongoDB not available, falling back to localStorage:", mongodbErr);
-        // Fallback to localStorage for now
-        try {
-          localStorage.removeItem(LOCAL_KEY);
-        } catch {
-          // Ignore localStorage errors
-        }
-      }
+      await saveUserProgress({ userId: user.uid, moduleId: "default", answers: {}, lastStep: 0, updatedAt: new Date().toISOString() }).catch(err => { console.warn("Failed to reset user progress:", err); });
     } else {
       localStorage.removeItem(LOCAL_KEY);
     }

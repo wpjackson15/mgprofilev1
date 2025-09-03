@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AdminAuthInitializer from "@/components/AdminAuthInitializer";
-import MongoDBInitializer from "@/components/MongoDBInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +29,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AdminAuthInitializer />
-        <MongoDBInitializer />
         {children}
         <footer className="w-full text-center py-4 text-xs text-gray-500 border-t mt-8">
           <a href="/terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Terms & Conditions (PDF)</a>
