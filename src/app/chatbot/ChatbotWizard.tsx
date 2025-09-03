@@ -20,6 +20,9 @@ interface Message {
 
 export default function ChatbotWizard({ user }: { user: any }) {
   const { generateSummary } = useModuleSummaries();
+  
+  // Debug: Check if generateSummary is available
+  console.log("ChatbotWizard mounted - generateSummary available:", !!generateSummary);
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -79,6 +82,8 @@ export default function ChatbotWizard({ user }: { user: any }) {
     setInput("");
 
     if (step.type === "question") {
+      console.log("User answered question:", { step: currentStep, text, module: currentModuleData.module });
+      
       // Save answer
       setAnswers((prev) => {
         const key = `${currentModuleData.module}-${currentStep}`;
