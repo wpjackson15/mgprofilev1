@@ -2,9 +2,9 @@
   {
     "module": "Interest Awareness",
     "steps": [
-      {"type": "question", "text": "What are 2 or 3 things your child loves doing all the time, even when no one tells them to?"},
-      {"type": "question", "text": "What are 2 or 3 careers your child has said they want to do one day?"},
-      {"type": "question", "text": "Has your child started liking any new hobbies or activities recently?"},
+      {"type": "question", "text": "What are 2 or 3 things your child loves doing all the time, please ask them to double check..."},
+      {"type": "question", "text": "Ask your child, what are 2 or 3 careers they'd like to pursue..."},
+      {"type": "question", "text": "Ask your child about any new hobbies they have or would like to get into..."},
       {"type": "auto_summary", "text": "Great! I'm generating a summary of your child's interests to share with teachers."}
     ]
   },

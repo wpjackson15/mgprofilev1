@@ -96,6 +96,34 @@ export default function ChatbotWizard({ user }: { user: any }) {
       });
       // Move to next step
       setTimeout(() => nextStep(), 500);
+    } else if (step.type === "auto_summary") {
+      // Auto-generate summary for completed module
+      console.log("Auto-generating summary for module:", currentModuleData.module);
+      if (user && generateSummary) {
+        const moduleAnswers = answers[`${currentModuleData.module}-${currentStep}`] || [];
+        if (moduleAnswers.length > 0) {
+          setIsGeneratingSummary(true);
+          generateSummary(currentModuleData.module, moduleAnswers)
+            .then(() => {
+              console.log("Summary generated successfully");
+              setIsGeneratingSummary(false);
+              // Move to next step after summary
+              setTimeout(() => nextStep(), 1000);
+            })
+            .catch((err) => {
+              console.error("Failed to generate summary:", err);
+              setIsGeneratingSummary(false);
+              // Move to next step even if summary fails
+              setTimeout(() => nextStep(), 1000);
+            });
+        } else {
+          console.log("No answers to generate summary from, moving to next step");
+          setTimeout(() => nextStep(), 1000);
+        }
+      } else {
+        console.log("Cannot generate summary, moving to next step");
+        setTimeout(() => nextStep(), 1000);
+      }
     } else if (step.type === "offer_summary") {
       // Expect yes/no
       setAwaitingSummaryConsent(true);
