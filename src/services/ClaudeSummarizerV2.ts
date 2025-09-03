@@ -238,40 +238,25 @@ export class ClaudeSummarizerV2 {
     const evidenceByElement = this.buildEvidenceByElement(answers);
     const documentContext = await this.getRelevantDocuments(answers);
 
-    const systemPrompt = `You are generating a concise, strengths-forward portrait of a child for caregivers and educators.
+    const systemPrompt = `Generate a brief, strengths-focused summary of a child for teachers. Focus only on what the child shows through their answers. Keep each section short (2-3 sentences max). Return JSON with this structure:
 
-SCOPE: Describe the child only (interests, motivations, identity signals, persistence/help-seeking, trusted adults, cultural navigation). Do NOT recommend strategies, activities, or next steps.
-
-FRAMEWORK: Organize insights under Black Genius elements:
-  - Interest Awareness, Can-Do Attitude, Racial Identity, Multicultural Navigation, Selective Trust.
-  - Include Social Justice only if evidence exists. The elements are integrative—do not force content.
-
-VOICE: Clear, affirming, 7–9th grade readability. Focus on the child's strengths and characteristics.
-
-OUTPUT: Return strict JSON matching this schema:
 {
-  "schemaVersion": "1.0.0",
-  "studentId": "string",
   "sections": {
-    "interest_awareness": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0},
-    "can_do_attitude": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0},
-    "racial_identity": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0},
-    "multicultural_navigation": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0},
-    "selective_trust": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0},
-    "social_justice": {"text": "80-220 words", "evidence": [], "confidence": 0.0-1.0}
-  },
-  "meta": {"runId": "string", "model": "string", "createdAt": "ISO datetime"}
+    "interest_awareness": {"text": "Brief summary of interests"},
+    "can_do_attitude": {"text": "Brief summary of persistence/help-seeking"},
+    "racial_identity": {"text": "Brief summary of cultural connections"},
+    "multicultural_navigation": {"text": "Brief summary of adaptability"},
+    "selective_trust": {"text": "Brief summary of trust building"}
+  }
 }
 
-Only include sections where you have clear evidence. Do not include social_justice unless explicitly supported.`;
+Only include sections with clear evidence. Keep it simple and fast.`;
 
-    const userPrompt = `Generate a child-only summary based on these parent responses, organized by Black Genius elements:
+    const userPrompt = `Based on these answers, create a brief summary:
 
-${Object.entries(evidenceByElement)
-  .map(([element, evidence]) => `${element}:\n${evidence?.map(e => `- ${e}`).join('\n')}`)
-  .join('\n\n')}${documentContext}
+${answers.map((answer, i) => `Answer ${i + 1}: ${answer}`).join('\n')}
 
-Return valid JSON only.`;
+Return simple JSON with brief text for each relevant section.`;
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -283,7 +268,7 @@ Return valid JSON only.`;
         },
         body: JSON.stringify({
           model: this.model,
-          max_tokens: 2048,
+          max_tokens: 500,
           system: systemPrompt,
           messages: [
             { role: 'user', content: userPrompt }
