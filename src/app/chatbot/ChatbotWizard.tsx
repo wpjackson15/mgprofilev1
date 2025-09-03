@@ -21,8 +21,10 @@ interface Message {
 export default function ChatbotWizard({ user }: { user: any }) {
   const { generateSummary } = useModuleSummaries();
   
-  // Debug: Check if generateSummary is available
-  console.log("ChatbotWizard mounted - generateSummary available:", !!generateSummary);
+  // Debug: Check if generateSummary is available (only once on mount)
+  useEffect(() => {
+    console.log("ChatbotWizard mounted - generateSummary available:", !!generateSummary);
+  }, []);
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
