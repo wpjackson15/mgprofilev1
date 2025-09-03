@@ -279,7 +279,7 @@ Return valid JSON only.`;
         headers: {
           'x-api-key': CLAUDE_API_KEY,
           'content-type': 'application/json',
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': '2024-01-01',
         },
         body: JSON.stringify({
           model: this.model,
@@ -354,7 +354,7 @@ Return valid JSON only.`;
         headers: {
           'x-api-key': CLAUDE_API_KEY,
           'content-type': 'application/json',
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': '2024-01-01',
         },
         body: JSON.stringify({
           model: this.model,
