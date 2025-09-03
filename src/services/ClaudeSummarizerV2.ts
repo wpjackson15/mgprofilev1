@@ -25,7 +25,7 @@ export class ClaudeSummarizerV2 {
   constructor(options: SummarizerV2Options) {
     this.runId = options.runId;
     this.profileId = options.profileId;
-    this.model = options.model || 'claude-3-5-sonnet-20240620';
+    this.model = options.model || 'claude-sonnet-4-20250514';
     this.includeDocuments = options.includeDocuments || false;
   }
 
