@@ -76,6 +76,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   if (flow && flow.length > 0) {
     flow.forEach((moduleData) => {
       moduleDisplayNames[moduleData.module] = moduleData.module.replace(/-/g, " ");
+      // Count only question steps (exclude auto_summary and offer_summary)
       moduleQuestionCounts[moduleData.module] = moduleData.steps.filter((step) => step.type === "question").length;
     });
   }
