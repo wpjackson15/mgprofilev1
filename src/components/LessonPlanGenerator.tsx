@@ -40,7 +40,7 @@ export function LessonPlanGenerator({
       credibility: true,
       outcomes: true
     },
-    useRAG: true,
+    useRAG: false,
     outputFormat: 'pdf'
   });
 
@@ -277,26 +277,17 @@ Format the response as JSON with the following structure:
       </div>
 
       {/* RAG Toggle */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-blue-900">Enhanced AI Generation</h3>
-            <p className="text-xs text-blue-700 mt-1">
+            <h3 className="text-sm font-medium text-gray-700">Enhanced AI Generation (Coming Soon)</h3>
+            <p className="text-xs text-gray-600 mt-1">
               Use RAG (Retrieval-Augmented Generation) to enhance lesson plans with relevant educational context and best practices
             </p>
           </div>
-          <button
-            onClick={() => setFormData(prev => ({ ...prev, useRAG: !prev.useRAG }))}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              formData.useRAG ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                formData.useRAG ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 cursor-not-allowed">
+            <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+          </div>
         </div>
       </div>
 
