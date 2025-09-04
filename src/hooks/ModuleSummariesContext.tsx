@@ -50,6 +50,7 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
+          module,
           answers, 
           runId, 
           profileId, 
