@@ -59,36 +59,19 @@ export class ClaudeSummarizerV2 {
   }
 
   /**
-   * Generate element-specific prompt based on module
+   * Generate ultra-simple prompt based on module
    */
   private getElementSpecificPrompt(module: string): string {
     const prompts: Record<string, string> = {
-      'Interest Awareness': `Generate a brief summary of this child's interests and passions for teachers. Focus on what they love doing, what careers they're drawn to, and what new hobbies they're exploring. Keep it to 2-3 sentences that highlight their curiosity and enthusiasm.
-
-Return: {"text": "Brief summary here"}`,
-
-      'Can Do Attitude': `Generate a brief summary of this child's persistence and problem-solving approach for teachers. Focus on how they define success, their ideal learning environment, when they seek help, and how they push through challenges. Keep it to 2-3 sentences that highlight their resilience and determination.
-
-Return: {"text": "Brief summary here"}`,
-
-      'Multicultural Navigation': `Generate a brief summary of this child's adaptability across different environments for teachers. Focus on how their behavior differs between home and school, and how they handle new or unfamiliar situations. Keep it to 2-3 sentences that highlight their flexibility and cultural awareness.
-
-Return: {"text": "Brief summary here"}`,
-
-      'Selective Trust': `Generate a brief summary of this child's trust-building approach for teachers. Focus on what they've been taught to notice about people, and how teachers or mentors can earn their trust. Keep it to 2-3 sentences that highlight their discernment and relationship-building skills.
-
-Return: {"text": "Brief summary here"}`,
-
-      'Social Justice / Fairness': `Generate a brief summary of this child's community-mindedness for teachers. Focus on how they want to help their community and make the world better. Keep it to 2-3 sentences that highlight their empathy and desire to contribute.
-
-Return: {"text": "Brief summary here"}`,
-
-      'Racial Identity': `Generate a brief summary of this child's cultural connections for teachers. Focus on their feelings about being Black, traditions they connect with, and Black role models they look up to. Keep it to 2-3 sentences that highlight their cultural pride and identity.
-
-Return: {"text": "Brief summary here"}`
+      'Interest Awareness': `Summarize this child's interests in 2-3 sentences for teachers. Return: {"text": "summary here"}`,
+      'Can Do Attitude': `Summarize this child's persistence in 2-3 sentences for teachers. Return: {"text": "summary here"}`,
+      'Multicultural Navigation': `Summarize this child's adaptability in 2-3 sentences for teachers. Return: {"text": "summary here"}`,
+      'Selective Trust': `Summarize this child's trust-building in 2-3 sentences for teachers. Return: {"text": "summary here"}`,
+      'Social Justice / Fairness': `Summarize this child's community focus in 2-3 sentences for teachers. Return: {"text": "summary here"}`,
+      'Racial Identity': `Summarize this child's cultural connections in 2-3 sentences for teachers. Return: {"text": "summary here"}`
     };
 
-    return prompts[module] || prompts['Interest Awareness']; // Default fallback
+    return prompts[module] || prompts['Interest Awareness'];
   }
 
   /**
@@ -274,11 +257,7 @@ Return: {"text": "Brief summary here"}`
     // Generate element-specific prompt based on module
     const systemPrompt = this.getElementSpecificPrompt(module);
 
-    const userPrompt = `Based on these answers about ${module}, create a brief summary:
-
-${answers.map((answer, i) => `Answer ${i + 1}: ${answer}`).join('\n')}
-
-Return the JSON as specified in the system prompt.`;
+    const userPrompt = `Answers: ${answers.join(' | ')}`;
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
