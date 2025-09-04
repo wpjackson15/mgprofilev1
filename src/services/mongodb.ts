@@ -73,7 +73,14 @@ export async function connectToMongoDB(): Promise<void> {
   }
 
   try {
-    client = new MongoClient(process.env.MONGODB_URI);
+    client = new MongoClient(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+      maxPoolSize: 1,
+      retryWrites: true,
+      w: "majority"
+    });
     await Promise.race([
       client.connect(),
       new Promise((_, reject) => setTimeout(() => reject(new Error("MongoDB connection timeout")), 5000))
