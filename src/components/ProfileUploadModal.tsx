@@ -26,7 +26,18 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
     goals: '',
     culturalBackground: '',
     languageNeeds: '',
-    specialNeeds: ''
+    specialNeeds: '',
+    canDoAttitude: '',
+    interestAwareness: '',
+    multiculturalNavigation: '',
+    racialPride: '',
+    selectiveTrust: '',
+    socialJustice: '',
+    holisticWellBeing: '',
+    clarity: '',
+    accessibility: '',
+    credibility: '',
+    outcomes: ''
   });
 
   // File upload state
@@ -46,14 +57,33 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
       grade: manualForm.grade,
       age: parseInt(manualForm.age),
       learningStyle: manualForm.learningStyle || 'Not specified',
-      interests: manualForm.interests ? manualForm.interests.split(',').map(s => s.trim()) : [],
-      strengths: manualForm.strengths ? manualForm.strengths.split(',').map(s => s.trim()) : [],
-      challenges: manualForm.challenges ? manualForm.challenges.split(',').map(s => s.trim()) : [],
-      goals: manualForm.goals ? manualForm.goals.split(',').map(s => s.trim()) : [],
-      culturalBackground: manualForm.culturalBackground || undefined,
-      languageNeeds: manualForm.languageNeeds || undefined,
-      specialNeeds: manualForm.specialNeeds || undefined
+      interests: [],
+      strengths: [],
+      challenges: [],
+      goals: [],
+      culturalBackground: undefined,
+      languageNeeds: undefined,
+      specialNeeds: undefined
     };
+
+    // Store Black Genius Framework components in the strengths field
+    const blackGeniusComponents = [
+      manualForm.canDoAttitude && `Can-Do Attitude: ${manualForm.canDoAttitude}`,
+      manualForm.interestAwareness && `Interest Awareness: ${manualForm.interestAwareness}`,
+      manualForm.multiculturalNavigation && `Multicultural Navigation: ${manualForm.multiculturalNavigation}`,
+      manualForm.racialPride && `Racial Pride: ${manualForm.racialPride}`,
+      manualForm.selectiveTrust && `Selective Trust: ${manualForm.selectiveTrust}`,
+      manualForm.socialJustice && `Social Justice: ${manualForm.socialJustice}`,
+      manualForm.holisticWellBeing && `Holistic Well-Being: ${manualForm.holisticWellBeing}`,
+      manualForm.clarity && `Clarity: ${manualForm.clarity}`,
+      manualForm.accessibility && `Accessibility: ${manualForm.accessibility}`,
+      manualForm.credibility && `Credibility: ${manualForm.credibility}`,
+      manualForm.outcomes && `Outcomes: ${manualForm.outcomes}`
+    ].filter(Boolean);
+
+    if (blackGeniusComponents.length > 0) {
+      newProfile.strengths = blackGeniusComponents;
+    }
 
     onAddProfile(newProfile);
     onClose();
@@ -119,7 +149,18 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
       goals: '',
       culturalBackground: '',
       languageNeeds: '',
-      specialNeeds: ''
+      specialNeeds: '',
+      canDoAttitude: '',
+      interestAwareness: '',
+      multiculturalNavigation: '',
+      racialPride: '',
+      selectiveTrust: '',
+      socialJustice: '',
+      holisticWellBeing: '',
+      clarity: '',
+      accessibility: '',
+      credibility: '',
+      outcomes: ''
     });
     setUploadedFile(null);
     setError(null);
@@ -398,6 +439,159 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
                     placeholder="e.g., ADHD, Dyslexia, None"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+              </div>
+
+              {/* Black Genius Framework Components */}
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Black Genius Framework Components</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Describe how this student demonstrates each component of the Black Genius Framework.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Can-Do Attitude
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.canDoAttitude}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, canDoAttitude: e.target.value }))}
+                      placeholder="e.g., Positive, Resilient, Empowered"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Interest Awareness
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.interestAwareness}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, interestAwareness: e.target.value }))}
+                      placeholder="e.g., Curious, Passionate, Engaged"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Multicultural Navigation
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.multiculturalNavigation}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, multiculturalNavigation: e.target.value }))}
+                      placeholder="e.g., Understanding, Appreciating, Engaging"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Racial Pride
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.racialPride}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, racialPride: e.target.value }))}
+                      placeholder="e.g., Proud, Respected, Valued"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Selective Trust
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.selectiveTrust}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, selectiveTrust: e.target.value }))}
+                      placeholder="e.g., Confident, Secure, Protected"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Social Justice
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.socialJustice}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, socialJustice: e.target.value }))}
+                      placeholder="e.g., Inclusive, Equitable, Fair"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Holistic Well-Being
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.holisticWellBeing}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, holisticWellBeing: e.target.value }))}
+                      placeholder="e.g., Healthy, Balanced, Whole"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Clarity
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.clarity}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, clarity: e.target.value }))}
+                      placeholder="e.g., Clear, Concise, Precise"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Accessibility
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.accessibility}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, accessibility: e.target.value }))}
+                      placeholder="e.g., Accessible, Inclusive, Available"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Credibility
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.credibility}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, credibility: e.target.value }))}
+                      placeholder="e.g., Reliable, Trustworthy, Proven"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Outcomes
+                    </label>
+                    <input
+                      type="text"
+                      value={manualForm.outcomes}
+                      onChange={(e) => setManualForm(prev => ({ ...prev, outcomes: e.target.value }))}
+                      placeholder="e.g., Achieved, Met, Exceeded"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
