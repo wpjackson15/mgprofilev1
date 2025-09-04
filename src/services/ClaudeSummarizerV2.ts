@@ -311,17 +311,24 @@ export class ClaudeSummarizerV2 {
       console.log('Content type:', typeof content);
       console.log('========================');
       
-      // Try to parse JSON response
+      // Handle Claude response (could be JSON or plain text)
       let jsonResponse;
-      try {
-        jsonResponse = JSON.parse(content);
-        console.log('✅ Successfully parsed JSON:', jsonResponse);
-      } catch (parseError) {
-        console.error('❌ Failed to parse Claude response as JSON:', parseError);
-        console.log('Raw content that failed to parse:', content);
-        console.log('Content preview (first 200 chars):', content.substring(0, 200));
-        // Retry with explicit JSON instruction
-        return await this.retryWithJsonInstruction();
+      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+        // Try to parse as JSON
+        try {
+          jsonResponse = JSON.parse(content);
+          console.log('✅ Successfully parsed JSON:', jsonResponse);
+        } catch (parseError) {
+          console.error('❌ Failed to parse Claude response as JSON:', parseError);
+          console.log('Raw content that failed to parse:', content);
+          console.log('Content preview (first 200 chars):', content.substring(0, 200));
+          // Retry with explicit JSON instruction
+          return await this.retryWithJsonInstruction();
+        }
+      } else {
+        // Handle plain text response
+        console.log('✅ Claude returned plain text (no JSON parsing needed)');
+        jsonResponse = content; // Treat the plain text as the response
       }
 
       // Try to extract summary text from any format
