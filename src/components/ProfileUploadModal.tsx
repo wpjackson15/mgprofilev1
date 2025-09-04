@@ -19,25 +19,12 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
     name: '',
     grade: '',
     age: '',
-    learningStyle: '',
-    interests: '',
-    strengths: '',
-    challenges: '',
-    goals: '',
-    culturalBackground: '',
-    languageNeeds: '',
-    specialNeeds: '',
     canDoAttitude: '',
     interestAwareness: '',
     multiculturalNavigation: '',
     racialPride: '',
     selectiveTrust: '',
-    socialJustice: '',
-    holisticWellBeing: '',
-    clarity: '',
-    accessibility: '',
-    credibility: '',
-    outcomes: ''
+    socialJustice: ''
   });
 
   // File upload state
@@ -56,7 +43,7 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
       name: manualForm.name,
       grade: manualForm.grade,
       age: parseInt(manualForm.age),
-      learningStyle: manualForm.learningStyle || 'Not specified',
+      learningStyle: 'Not specified', // This field is removed from manualForm
       interests: [],
       strengths: [],
       challenges: [],
@@ -73,12 +60,7 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
       manualForm.multiculturalNavigation && `Multicultural Navigation: ${manualForm.multiculturalNavigation}`,
       manualForm.racialPride && `Racial Pride: ${manualForm.racialPride}`,
       manualForm.selectiveTrust && `Selective Trust: ${manualForm.selectiveTrust}`,
-      manualForm.socialJustice && `Social Justice: ${manualForm.socialJustice}`,
-      manualForm.holisticWellBeing && `Holistic Well-Being: ${manualForm.holisticWellBeing}`,
-      manualForm.clarity && `Clarity: ${manualForm.clarity}`,
-      manualForm.accessibility && `Accessibility: ${manualForm.accessibility}`,
-      manualForm.credibility && `Credibility: ${manualForm.credibility}`,
-      manualForm.outcomes && `Outcomes: ${manualForm.outcomes}`
+      manualForm.socialJustice && `Social Justice: ${manualForm.socialJustice}`
     ].filter(Boolean);
 
     if (blackGeniusComponents.length > 0) {
@@ -142,25 +124,12 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
       name: '',
       grade: '',
       age: '',
-      learningStyle: '',
-      interests: '',
-      strengths: '',
-      challenges: '',
-      goals: '',
-      culturalBackground: '',
-      languageNeeds: '',
-      specialNeeds: '',
       canDoAttitude: '',
       interestAwareness: '',
       multiculturalNavigation: '',
       racialPride: '',
       selectiveTrust: '',
-      socialJustice: '',
-      holisticWellBeing: '',
-      clarity: '',
-      accessibility: '',
-      credibility: '',
-      outcomes: ''
+      socialJustice: ''
     });
     setUploadedFile(null);
     setError(null);
@@ -279,168 +248,60 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
 
           {activeTab === 'manual' && (
             <form onSubmit={handleManualSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Student Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={manualForm.name}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Grade Level *
-                  </label>
-                  <select
-                    value={manualForm.grade}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, grade: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select Grade</option>
-                    <option value="K">Kindergarten</option>
-                    <option value="1">1st Grade</option>
-                    <option value="2">2nd Grade</option>
-                    <option value="3">3rd Grade</option>
-                    <option value="4">4th Grade</option>
-                    <option value="5">5th Grade</option>
-                    <option value="6">6th Grade</option>
-                    <option value="7">7th Grade</option>
-                    <option value="8">8th Grade</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age *
-                  </label>
-                  <input
-                    type="number"
-                    min="4"
-                    max="15"
-                    value={manualForm.age}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, age: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Learning Style
-                  </label>
-                  <select
-                    value={manualForm.learningStyle}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, learningStyle: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Style</option>
-                    <option value="Visual">Visual</option>
-                    <option value="Auditory">Auditory</option>
-                    <option value="Kinesthetic">Kinesthetic</option>
-                    <option value="Reading/Writing">Reading/Writing</option>
-                  </select>
-                </div>
-              </div>
-
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Interests (comma-separated)
+                  Student Name *
                 </label>
                 <input
                   type="text"
-                  value={manualForm.interests}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, interests: e.target.value }))}
-                  placeholder="e.g., Math, Science, Art, Music"
+                  value={manualForm.name}
+                  onChange={(e) => setManualForm(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Strengths (comma-separated)
+                  Grade Level *
                 </label>
-                <input
-                  type="text"
-                  value={manualForm.strengths}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, strengths: e.target.value }))}
-                  placeholder="e.g., Problem-solving, Creativity, Teamwork"
+                <select
+                  value={manualForm.grade}
+                  onChange={(e) => setManualForm(prev => ({ ...prev, grade: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                  required
+                >
+                  <option value="">Select Grade</option>
+                  <option value="K">Kindergarten</option>
+                  <option value="1">1st Grade</option>
+                  <option value="2">2nd Grade</option>
+                  <option value="3">3rd Grade</option>
+                  <option value="4">4th Grade</option>
+                  <option value="5">5th Grade</option>
+                  <option value="6">6th Grade</option>
+                  <option value="7">7th Grade</option>
+                  <option value="8">8th Grade</option>
+                </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Challenges (comma-separated)
+                  Age *
                 </label>
                 <input
-                  type="text"
-                  value={manualForm.challenges}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, challenges: e.target.value }))}
-                  placeholder="e.g., Reading comprehension, Time management"
+                  type="number"
+                  min="4"
+                  max="15"
+                  value={manualForm.age}
+                  onChange={(e) => setManualForm(prev => ({ ...prev, age: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Goals (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={manualForm.goals}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, goals: e.target.value }))}
-                  placeholder="e.g., Improve reading skills, Develop leadership"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cultural Background
-                  </label>
-                  <input
-                    type="text"
-                    value={manualForm.culturalBackground}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, culturalBackground: e.target.value }))}
-                    placeholder="e.g., African American, Hispanic"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Language Needs
-                  </label>
-                  <input
-                    type="text"
-                    value={manualForm.languageNeeds}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, languageNeeds: e.target.value }))}
-                    placeholder="e.g., English, Spanish, ESL"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Special Needs
-                  </label>
-                  <input
-                    type="text"
-                    value={manualForm.specialNeeds}
-                    onChange={(e) => setManualForm(prev => ({ ...prev, specialNeeds: e.target.value }))}
-                    placeholder="e.g., ADHD, Dyslexia, None"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              
 
               {/* Black Genius Framework Components */}
               <div className="border-t border-gray-200 pt-6">
@@ -528,70 +389,6 @@ export function ProfileUploadModal({ isOpen, onClose, onAddProfile }: ProfileUpl
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Holistic Well-Being
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.holisticWellBeing}
-                      onChange={(e) => setManualForm(prev => ({ ...prev, holisticWellBeing: e.target.value }))}
-                      placeholder="e.g., Healthy, Balanced, Whole"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Clarity
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.clarity}
-                      onChange={(e) => setManualForm(prev => ({ ...prev, clarity: e.target.value }))}
-                      placeholder="e.g., Clear, Concise, Precise"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Accessibility
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.accessibility}
-                      onChange={(e) => setManualForm(prev => ({ ...prev, accessibility: e.target.value }))}
-                      placeholder="e.g., Accessible, Inclusive, Available"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Credibility
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.credibility}
-                      onChange={(e) => setManualForm(prev => ({ ...prev, credibility: e.target.value }))}
-                      placeholder="e.g., Reliable, Trustworthy, Proven"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Outcomes
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.outcomes}
-                      onChange={(e) => setManualForm(prev => ({ ...prev, outcomes: e.target.value }))}
-                      placeholder="e.g., Achieved, Met, Exceeded"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
                 </div>
               </div>
 
