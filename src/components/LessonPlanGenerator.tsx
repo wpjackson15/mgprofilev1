@@ -106,21 +106,27 @@ Format the response as JSON with the following structure:
   "assessment": "Assessment Method"
 }`;
 
+      const requestBody = {
+        prompt,
+        studentProfiles: selectedProfilesList,
+        outputFormat: formData.outputFormat,
+        lessonSettings: formData.lessonSettings
+      };
+      
+      console.log('Sending request to Netlify function:', requestBody);
+      
       const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt,
-          studentProfiles: selectedProfilesList,
-          outputFormat: formData.outputFormat,
-          lessonSettings: formData.lessonSettings
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Netlify function error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
