@@ -54,7 +54,6 @@ export class ClaudeSummarizerV2 {
       }
       evidenceByElement[element]!.push(answer.substring(0, 100)); // Truncate for evidence
     });
-      console.log("Claude API call completed, response status:", response.status);
 
     return evidenceByElement;
   }
@@ -173,7 +172,6 @@ export class ClaudeSummarizerV2 {
       const priorityB = this.getProfilePriority(b);
       return priorityB - priorityA; // Sort descending
     });
-      console.log("Claude API call completed, response status:", response.status);
   }
 
   /**
@@ -201,7 +199,6 @@ export class ClaudeSummarizerV2 {
         console.log(`Category ${category} relevant (${matchCount} keyword matches)`);
       }
     });
-      console.log("Claude API call completed, response status:", response.status);
 
     // Always include core categories if no specific matches
     if (relevantCategories.length === 0) {
@@ -245,7 +242,6 @@ export class ClaudeSummarizerV2 {
         categoryCount[category] = 1;
       }
     });
-      console.log("Claude API call completed, response status:", response.status);
 
     // Second pass: fill remaining slots with highest priority documents
     const remainingSlots = maxDocs - selectedDocs.length;
