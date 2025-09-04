@@ -1,10 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { LessonPlanGenerator } from '@/components/LessonPlanGenerator';
+import { ProfileUploadModal } from '@/components/ProfileUploadModal';
+import { StudentProfile } from '@/services/mongodb';
+import { Plus, Trash2 } from "lucide-react";
 
 export default function LessonPlansPage() {
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(new Set());
-  const [studentProfiles, setStudentProfiles] = useState<any[]>([
+  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([
     {
       id: 'sample-1',
       name: 'Alex Johnson',
@@ -39,6 +42,8 @@ export default function LessonPlansPage() {
     }
   ]);
 
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
   const handleToggleProfile = (profileId: string) => {
     const newSelected = new Set(selectedProfiles);
     if (newSelected.has(profileId)) {
@@ -47,6 +52,25 @@ export default function LessonPlansPage() {
       newSelected.add(profileId);
     }
     setSelectedProfiles(newSelected);
+  };
+
+  const handleAddProfile = (newProfile: Omit<StudentProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const profileWithId: StudentProfile = {
+      ...newProfile,
+      id: `profile-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    setStudentProfiles(prev => [...prev, profileWithId]);
+  };
+
+  const handleDeleteProfile = (profileId: string) => {
+    setStudentProfiles(prev => prev.filter(p => p.id !== profileId));
+    setSelectedProfiles(prev => {
+      const newSelected = new Set(prev);
+      newSelected.delete(profileId);
+      return newSelected;
+    });
   };
 
   const handleGenerateLessonPlan = async (lessonPlan: any): Promise<string> => {
@@ -61,17 +85,33 @@ export default function LessonPlansPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Lesson Plan Generator</h1>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                  <LessonPlanGenerator
-                          studentProfiles={studentProfiles}
-                          selectedProfiles={selectedProfiles}
-                          onGenerate={handleGenerateLessonPlan}
-                          onDownload={handleDownloadLessonPlan}
-                          onToggleProfile={handleToggleProfile}
-                        />
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Lesson Plan Generator</h1>
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Add Student Profile
+          </button>
         </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <LessonPlanGenerator
+            studentProfiles={studentProfiles}
+            selectedProfiles={selectedProfiles}
+            onGenerate={handleGenerateLessonPlan}
+            onDownload={handleDownloadLessonPlan}
+            onToggleProfile={handleToggleProfile}
+            onDeleteProfile={handleDeleteProfile}
+          />
+        </div>
+
+        <ProfileUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onAddProfile={handleAddProfile}
+        />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ interface LessonPlanGeneratorProps {
   onGenerate: (lessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => Promise<string>;
   onDownload: (lessonPlan: LessonPlan) => Promise<void>;
   onToggleProfile: (profileId: string) => void;
+  onDeleteProfile?: (profileId: string) => void;
 }
 
 export function LessonPlanGenerator({ 
@@ -17,7 +18,8 @@ export function LessonPlanGenerator({
   selectedProfiles,
   onGenerate, 
   onDownload,
-  onToggleProfile
+  onToggleProfile,
+  onDeleteProfile
 }: LessonPlanGeneratorProps) {
   const [formData, setFormData] = useState<LessonPlanFormData>({
     lessonSettings: {
@@ -196,26 +198,77 @@ Format the response as JSON with the following structure:
     <div className="space-y-6">
       {/* Student Profiles */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Student Profiles</h3>
-        <p className="text-sm text-gray-700 mb-4">
-          Select the student profiles you want to include in the lesson plan.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {studentProfiles.map(profile => (
-            <div key={profile.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
-              <div className="flex items-center">
-                                  <input
-                    type="checkbox"
-                    checked={selectedProfiles.has(profile.id)}
-                    onChange={() => onToggleProfile(profile.id)}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                <span className="text-sm font-medium text-gray-900">{profile.name}</span>
-              </div>
-              <span className="text-sm text-gray-600">Grade {profile.grade}</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Student Profiles</h3>
+            <p className="text-sm text-gray-700">
+              Select the student profiles you want to include in the lesson plan.
+            </p>
+          </div>
+          <div className="text-sm text-gray-500">
+            {selectedProfiles.size} of {studentProfiles.length} selected
+          </div>
         </div>
+        
+        {studentProfiles.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>No student profiles added yet.</p>
+            <p className="text-sm">Use the "Add Student Profile" button above to get started.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {studentProfiles.map(profile => (
+              <div key={profile.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedProfiles.has(profile.id)}
+                      onChange={() => onToggleProfile(profile.id)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-medium text-gray-900">{profile.name}</h4>
+                        <span className="text-sm text-gray-500">Grade {profile.grade}</span>
+                        <span className="text-sm text-gray-500">Age {profile.age}</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                        {profile.learningStyle && (
+                          <div><span className="font-medium">Learning Style:</span> {profile.learningStyle}</div>
+                        )}
+                        {profile.interests.length > 0 && (
+                          <div><span className="font-medium">Interests:</span> {profile.interests.join(', ')}</div>
+                        )}
+                        {profile.strengths.length > 0 && (
+                          <div><span className="font-medium">Strengths:</span> {profile.strengths.join(', ')}</div>
+                        )}
+                        {profile.challenges.length > 0 && (
+                          <div><span className="font-medium">Challenges:</span> {profile.challenges.join(', ')}</div>
+                        )}
+                        {profile.culturalBackground && (
+                          <div><span className="font-medium">Cultural Background:</span> {profile.culturalBackground}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {onDeleteProfile && (
+                    <button
+                      onClick={() => onDeleteProfile(profile.id)}
+                      className="ml-2 p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete profile"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* RAG Toggle */}
