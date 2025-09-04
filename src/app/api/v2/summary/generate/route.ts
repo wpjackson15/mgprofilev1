@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
     // Debug: Check if API key is available
     console.log('CLAUDE_API_KEY available:', !!process.env.CLAUDE_API_KEY);
     
-    // Connect to MongoDB (temporarily disabled for testing)
-    // await connectToMongoDB();
+    // Connect to MongoDB
+    await connectToMongoDB();
     
     const body = await request.json();
     console.log('Request body parsed successfully');
