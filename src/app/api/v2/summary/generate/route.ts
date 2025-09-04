@@ -4,13 +4,16 @@ import { connectToMongoDB } from '../../../../../services/mongodb';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== API ROUTE START ===');
+    
     // Debug: Check if API key is available
     console.log('CLAUDE_API_KEY available:', !!process.env.CLAUDE_API_KEY);
     
-    // Connect to MongoDB
-    await connectToMongoDB();
+    // Connect to MongoDB (temporarily disabled for testing)
+    // await connectToMongoDB();
     
     const body = await request.json();
+    console.log('Request body parsed successfully');
     
     // Validate input
     if (!body.answers || !Array.isArray(body.answers) || body.answers.length === 0) {
@@ -27,12 +30,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Input validation passed');
+
     // Create V2 summarizer
     const summarizer = new ClaudeSummarizerV2({
       runId: body.runId,
       profileId: body.profileId,
       includeDocuments: false, // Temporarily disabled RAG to test performance
     });
+
+    console.log('Summarizer created, calling generateSummary...');
 
     // Generate summary
     console.log('Generating summary with answers:', body.answers.length, 'answers');
