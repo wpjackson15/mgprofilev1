@@ -110,7 +110,13 @@ Format the response as JSON with the following structure:
         lessonSettings: formData.lessonSettings
       };
       
-      console.log('Sending request to Netlify function:', requestBody);
+      // Safe logging - avoid circular references
+      console.log('Sending request to Netlify function:', {
+        prompt: requestBody.prompt.substring(0, 200) + '...',
+        studentProfilesCount: requestBody.studentProfiles.length,
+        outputFormat: requestBody.outputFormat,
+        lessonSettings: requestBody.lessonSettings
+      });
       
       const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
@@ -126,11 +132,27 @@ Format the response as JSON with the following structure:
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        throw new Error('Invalid response format from server');
+      }
       
       if (result.error) {
         throw new Error(result.error);
       }
+
+      // Validate and sanitize the result
+      console.log('Received lesson plan result:', {
+        title: result.title,
+        subject: result.subject,
+        grade: result.grade,
+        objectivesCount: Array.isArray(result.objectives) ? result.objectives.length : 0,
+        activitiesCount: Array.isArray(result.activities) ? result.activities.length : 0,
+        materialsCount: Array.isArray(result.materials) ? result.materials.length : 0
+      });
 
       const lessonPlan: LessonPlan = {
         id: '',
@@ -139,10 +161,10 @@ Format the response as JSON with the following structure:
         subject: result.subject || formData.lessonSettings.subject,
         grade: result.grade || formData.lessonSettings.grade,
         duration: result.duration || '45 minutes',
-        objectives: result.objectives || [],
+        objectives: Array.isArray(result.objectives) ? result.objectives : [],
         standards: [],
-        materials: result.materials || [],
-        procedures: result.activities || [],
+        materials: Array.isArray(result.materials) ? result.materials : [],
+        procedures: Array.isArray(result.activities) ? result.activities : [],
         assessment: result.assessment || 'Formative assessment through observation and student work',
         differentiation: [],
         culturalResponsiveness: [],
