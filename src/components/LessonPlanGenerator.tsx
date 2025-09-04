@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { BookOpen, Loader2, Download, FileText } from "lucide-react";
+import { BookOpen, Loader2, FileText } from "lucide-react";
+import { LessonPlanDisplay } from './LessonPlanDisplay';
 import { GRADE_OPTIONS, SUBJECT_OPTIONS, STATE_OPTIONS, OUTPUT_FORMAT_OPTIONS, type LessonSettings, type LessonPlanFormData } from '@/lib/lessonPlanConstants';
 import { StudentProfile, LessonPlan } from '@/services/mongodb';
 
@@ -47,29 +48,18 @@ export function LessonPlanGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentLessonPlan, setCurrentLessonPlan] = useState<LessonPlan | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [canRetry, setCanRetry] = useState(false);
 
   const getSelectedProfiles = () => {
     return studentProfiles.filter(p => selectedProfiles.has(p.id));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const generateLessonPlan = async (selectedProfilesList: StudentProfile[]) => {
     setIsGenerating(true);
     setGenerationError(null);
 
     try {
-      const selectedProfilesList = getSelectedProfiles();
-      
-      if (selectedProfilesList.length === 0) {
-        setGenerationError('Please select at least one student profile.');
-        return;
-      }
-      
-      if (!formData.lessonSettings.grade || !formData.lessonSettings.subject || !formData.lessonSettings.state) {
-        setGenerationError('Please select grade level, subject, and state before generating a lesson plan.');
-        return;
-      }
-
       // Create a comprehensive prompt for Claude
       const profilesText = selectedProfilesList.map(profile => 
         `Student: ${profile.name} (Grade ${profile.grade})\nStrengths: ${profile.strengths.join(', ')}\nInterests: ${profile.interests.join(', ')}`
@@ -166,17 +156,44 @@ Format the response as JSON with the following structure:
       
     } catch (error) {
       console.error('Error generating lesson plan:', error);
-      setGenerationError(error instanceof Error ? error.message : 'Failed to generate lesson plan');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate lesson plan';
+      setGenerationError(errorMessage);
+      setCanRetry(true);
+      setRetryCount(prev => prev + 1);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleDownload = async () => {
-    if (currentLessonPlan) {
-      await onDownload(currentLessonPlan);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const selectedProfilesList = getSelectedProfiles();
+    
+    if (selectedProfilesList.length === 0) {
+      setGenerationError('Please select at least one student profile.');
+      return;
+    }
+    
+    if (!formData.lessonSettings.grade || !formData.lessonSettings.subject || !formData.lessonSettings.state) {
+      setGenerationError('Please select grade level, subject, and state before generating a lesson plan.');
+      return;
+    }
+
+    await generateLessonPlan(selectedProfilesList);
+  };
+
+  const handleRetry = () => {
+    setGenerationError(null);
+    setCanRetry(false);
+    // Retry the generation without needing to recreate the form event
+    const selectedProfilesList = getSelectedProfiles();
+    if (selectedProfilesList.length > 0 && formData.lessonSettings.grade && formData.lessonSettings.subject && formData.lessonSettings.state) {
+      generateLessonPlan(selectedProfilesList);
     }
   };
+
+
 
   const updateLessonSettings = (field: keyof LessonSettings, value: string) => {
     setFormData(prev => ({
@@ -378,7 +395,24 @@ Format the response as JSON with the following structure:
         <form onSubmit={handleSubmit} className="space-y-4">
           {generationError && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-sm text-red-800">{generationError}</p>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-red-800">{generationError}</p>
+                  {retryCount > 0 && (
+                    <p className="mt-1 text-xs text-red-600">
+                      Attempt {retryCount} of 3
+                    </p>
+                  )}
+                </div>
+                {canRetry && retryCount < 3 && (
+                  <button
+                    onClick={handleRetry}
+                    className="bg-red-100 text-red-800 px-3 py-1 rounded-md text-sm hover:bg-red-200 transition-colors ml-4"
+                  >
+                    Retry
+                  </button>
+                )}
+              </div>
             </div>
           )}
           
@@ -404,74 +438,10 @@ Format the response as JSON with the following structure:
 
       {/* Generated Lesson Plan Display */}
       {currentLessonPlan && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Generated Lesson Plan</h3>
-            <button
-              onClick={handleDownload}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-gray-900">{currentLessonPlan.title}</h4>
-              <p className="text-sm text-gray-600">
-                {currentLessonPlan.subject} • Grade {currentLessonPlan.grade} • {currentLessonPlan.duration}
-              </p>
-            </div>
-            
-            {currentLessonPlan.objectives.length > 0 && (
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Learning Objectives</h5>
-                <ul className="list-disc list-inside space-y-1">
-                  {currentLessonPlan.objectives.map((objective, index) => (
-                    <li key={index} className="text-sm text-gray-700">{objective}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {currentLessonPlan.procedures.length > 0 && (
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Activities</h5>
-                <ul className="list-disc list-inside space-y-1">
-                  {currentLessonPlan.procedures.map((activity, index) => (
-                    <li key={index} className="text-sm text-gray-700">{activity}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {currentLessonPlan.materials.length > 0 && (
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Materials</h5>
-                <ul className="list-disc list-inside space-y-1">
-                  {currentLessonPlan.materials.map((material, index) => (
-                    <li key={index} className="text-sm text-gray-700">{material}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {currentLessonPlan.assessment && (
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Assessment</h5>
-                <p className="text-sm text-gray-700">
-                  {Array.isArray(currentLessonPlan.assessment) 
-                    ? currentLessonPlan.assessment.join(', ')
-                    : typeof currentLessonPlan.assessment === 'string'
-                    ? currentLessonPlan.assessment
-                    : 'Assessment details available'
-                  }
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        <LessonPlanDisplay 
+          lessonPlan={currentLessonPlan} 
+          onDownload={onDownload} 
+        />
       )}
     </div>
   );

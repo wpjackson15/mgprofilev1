@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { LessonPlanGenerator } from '@/components/LessonPlanGenerator';
 import { ProfileUploadModal } from '@/components/ProfileUploadModal';
 import { StudentProfile } from '@/services/mongodb';
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ArrowLeft } from "lucide-react";
 
 export default function LessonPlansPage() {
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(new Set());
@@ -85,6 +85,17 @@ export default function LessonPlansPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Back to Main Page Button */}
+        <div className="mb-6">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Main Page</span>
+          </a>
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Lesson Plan Generator</h1>
           <button
