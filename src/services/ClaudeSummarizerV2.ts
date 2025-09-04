@@ -302,12 +302,24 @@ export class ClaudeSummarizerV2 {
       const data = await response.json();
       const content = data.content?.[0]?.text || '';
       
+      console.log('=== CLAUDE API DEBUG ===');
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Full response data:', data);
+      console.log('Content extracted:', content);
+      console.log('Content length:', content.length);
+      console.log('Content type:', typeof content);
+      console.log('========================');
+      
       // Try to parse JSON response
       let jsonResponse;
       try {
         jsonResponse = JSON.parse(content);
+        console.log('✅ Successfully parsed JSON:', jsonResponse);
       } catch (parseError) {
-        console.error('Failed to parse Claude response as JSON:', parseError);
+        console.error('❌ Failed to parse Claude response as JSON:', parseError);
+        console.log('Raw content that failed to parse:', content);
+        console.log('Content preview (first 200 chars):', content.substring(0, 200));
         // Retry with explicit JSON instruction
         return await this.retryWithJsonInstruction();
       }
