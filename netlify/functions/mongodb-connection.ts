@@ -8,12 +8,12 @@ export async function connectToMongoDB(): Promise<Db> {
     return db;
   }
 
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is not set');
+  if (!process.env.MONGODB_URI_NEW) {
+    throw new Error('MONGODB_URI_NEW environment variable is not set');
   }
 
   try {
-    client = new MongoClient(process.env.MONGODB_URI);
+    client = new MongoClient(process.env.MONGODB_URI_NEW);
     await client.connect();
     db = client.db('mgprofilev1');
     console.log('Connected to MongoDB');

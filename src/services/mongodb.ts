@@ -68,22 +68,22 @@ let client: MongoClient;
 let db: Db;
 
 export async function connectToMongoDB(): Promise<void> {
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is not set');
+  if (!process.env.MONGODB_URI_NEW) {
+    throw new Error('MONGODB_URI_NEW environment variable is not set');
   }
 
   try {
-    client = new MongoClient(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000,
+    client = new MongoClient(process.env.MONGODB_URI_NEW, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000,
       maxPoolSize: 1,
       retryWrites: true,
       w: "majority"
     });
     await Promise.race([
       client.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("MongoDB connection timeout")), 3000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error("MongoDB connection timeout")), 10000))
     ]);
     db = client.db('mgprofilev1');
     console.log('Connected to MongoDB');

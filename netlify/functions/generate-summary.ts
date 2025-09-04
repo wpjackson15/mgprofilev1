@@ -2,7 +2,7 @@ import type { Handler, HandlerEvent } from '@netlify/functions';
 import { MongoClient } from 'mongodb';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI_NEW;
 
 // Helper function to get relevant documents
 async function getRelevantDocuments(answers: string[]) {

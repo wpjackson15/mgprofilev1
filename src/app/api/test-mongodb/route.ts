@@ -5,13 +5,13 @@ export async function GET(request: NextRequest) {
   console.log('🧪 Testing MongoDB connection...');
   
   try {
-    // Test 1: Check if MONGODB_URI is set
-    const hasUri = !!process.env.MONGODB_URI;
-    console.log('MONGODB_URI available:', hasUri);
+    // Test 1: Check if MONGODB_URI_NEW is set
+    const hasUri = !!process.env.MONGODB_URI_NEW;
+    console.log('MONGODB_URI_NEW available:', hasUri);
     
     if (!hasUri) {
       return NextResponse.json({
-        error: 'MONGODB_URI not set',
+        error: 'MONGODB_URI_NEW not set',
         test: 'environment'
       }, { status: 500 });
     }
