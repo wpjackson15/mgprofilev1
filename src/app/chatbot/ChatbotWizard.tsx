@@ -166,37 +166,8 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
         { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
       ]);
     } else if (currentModule + 1 < flow.length) {
-      // Generate summary for completed module
-      if (user && generateSummary) {
-        // Collect ALL answers from this module
-        const moduleAnswers = [];
-        for (let i = 0; i < currentStep; i++) {
-          const key = `${currentModuleData.module}-${i}`;
-          if (answers[key]) {
-            moduleAnswers.push(...answers[key]);
-          }
-        }
-        console.log("Attempting to generate summary:", {
-          module: currentModuleData.module,
-          step: currentStep,
-          answers: moduleAnswers,
-          generateSummary: !!generateSummary
-        });
-        if (moduleAnswers.length > 0) {
-          setIsGeneratingSummary(true);
-          generateSummary(currentModuleData.module, moduleAnswers)
-            .then(() => {
-              console.log("Summary generated successfully");
-              setIsGeneratingSummary(false);
-            })
-            .catch((err) => {
-              console.error("Failed to generate summary:", err);
-              setIsGeneratingSummary(false);
-            });
-        } else {
-          console.log("No answers to generate summary from");
-        }
-      } else {
+      // Summary already generated in handleStepCompletion, just move to next module
+      console.log("Moving to next module, summary already generated");
         console.log("Cannot generate summary:", { user: !!user, generateSummary: !!generateSummary });
       }
 
