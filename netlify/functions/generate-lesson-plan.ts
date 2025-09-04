@@ -4,9 +4,17 @@ interface StudentProfile {
   id: string;
   name: string;
   grade: string;
-  subject: string;
-  profile: string;
-  createdAt: string;
+  age: number;
+  learningStyle: string;
+  interests: string[];
+  strengths: string[];
+  challenges: string[];
+  goals: string[];
+  culturalBackground?: string;
+  languageNeeds?: string;
+  specialNeeds?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface GenerateLessonPlanRequest {
@@ -60,6 +68,12 @@ export const handler: Handler = async (event) => {
     if (!prompt || !studentProfiles || studentProfiles.length === 0) {
       return {
         statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
         body: JSON.stringify({ error: 'Missing required fields: prompt and studentProfiles' }),
       };
     }
@@ -197,8 +211,8 @@ Assessment should be:
       // Fallback: create a basic lesson plan structure
       lessonPlan = {
         title: 'Customized Lesson Plan',
-        subject: studentProfiles[0]?.subject || 'General',
-        grade: studentProfiles[0]?.grade || 'K-8',
+        subject: lessonSettings?.subject || 'General',
+        grade: lessonSettings?.grade || 'K-8',
         objectives: ['Create engaging learning experiences for diverse learners'],
         activities: ['Differentiated instruction based on student profiles'],
         assessment: 'Ongoing formative assessment',
@@ -233,7 +247,7 @@ ${lessonPlan.materials.map(mat => `• ${mat}`).join('\n')}
 
 Student Profiles:
 ${studentProfiles.map(profile => 
-  `${profile.name} (${profile.grade})\nSubject: ${profile.subject}\nProfile: ${profile.profile.substring(0, 200)}${profile.profile.length > 200 ? '...' : ''}`
+  `${profile.name} (Grade ${profile.grade})\nLearning Style: ${profile.learningStyle}\nStrengths: ${profile.strengths.join(', ')}\nInterests: ${profile.interests.join(', ')}`
 ).join('\n\n')}`;
 
         const googleDocResponse = await fetch('/.netlify/functions/create-google-doc', {

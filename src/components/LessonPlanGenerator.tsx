@@ -113,8 +113,9 @@ Format the response as JSON with the following structure:
         },
         body: JSON.stringify({
           prompt,
-          useRAG: formData.useRAG,
-          outputFormat: formData.outputFormat
+          studentProfiles: selectedProfilesList,
+          outputFormat: formData.outputFormat,
+          lessonSettings: formData.lessonSettings
         }),
       });
 
