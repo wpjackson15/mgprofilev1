@@ -100,7 +100,13 @@ export default function LessonPlansPage() {
         userId: user.uid
       });
       
-      trackLessonPlanCreation();
+      trackLessonPlanCreation({ 
+        profileCount: lessonPlanData.studentProfiles.length, 
+        grade: lessonPlanData.grade, 
+        subject: lessonPlanData.subject,
+        state: 'N/A',
+        outputFormat: 'pdf'
+      });
       await loadUserLessonPlans();
       
       return lessonPlanId;

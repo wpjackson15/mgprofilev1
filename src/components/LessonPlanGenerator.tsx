@@ -23,24 +23,83 @@ export function LessonPlanGenerator({
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentLessonPlan, setCurrentLessonPlan] = useState<LessonPlan | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
+    setGenerationError(null);
 
     try {
+      // Create a comprehensive prompt for Claude
+      const profilesText = studentProfiles.map(profile => 
+        `Student: ${profile.name} (Grade ${profile.grade}, ${profile.subject})\nProfile: ${profile.profile}`
+      ).join('\n\n');
+
+      const prompt = `Create a culturally responsive, differentiated lesson plan for ${formData.grade} grade ${formData.subject}.
+
+Lesson Settings:
+- Grade Level: ${formData.grade}
+- Subject: ${formData.subject}
+- CALES Focus: ${formData.calesCriteria}
+
+Student Profiles:
+${profilesText}
+
+Additional Requirements: ${formData.prompt || 'None specified'}
+
+Please provide a comprehensive lesson plan with:
+1. Title and subject
+2. Grade level
+3. Learning objectives that align with grade-level standards
+4. Engaging activities that accommodate different learning styles and cultural backgrounds
+5. Assessment methods that measure standards mastery
+6. Required materials
+7. Estimated duration
+
+Format the response as JSON with the following structure:
+{
+  "title": "Lesson Title",
+  "subject": "Subject",
+  "grade": "Grade Level",
+  "objectives": ["Objective 1", "Objective 2"],
+  "activities": ["Activity 1", "Activity 2"],
+  "assessment": "Assessment description",
+  "materials": ["Material 1", "Material 2"],
+  "duration": "45 minutes"
+}`;
+
+      // Call the working Netlify function
+      const response = await fetch('/.netlify/functions/generate-lesson-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt, 
+          studentProfiles,
+          outputFormat: 'pdf'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate lesson plan');
+      }
+
+      const data = await response.json();
+      
+      // Create the lesson plan object
       const newLessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
-        title: `Lesson Plan - ${formData.subject} - ${formData.grade}`,
-        grade: formData.grade,
-        subject: formData.subject,
-        calesCriteria: formData.calesCriteria,
-        prompt: formData.prompt,
+        title: data.title,
+        subject: data.subject,
+        grade: data.grade,
+        objectives: data.objectives,
+        activities: data.activities,
+        assessment: data.assessment,
+        materials: data.materials,
+        duration: data.duration,
         studentProfiles: studentProfiles,
+        calesCriteria: { [formData.calesCriteria]: true },
         content: '',
-        assessment: '',
-        materials: '',
-        objectives: '',
-        activities: []
+        prompt: formData.prompt
       };
 
       const lessonPlanId = await onGenerate(newLessonPlan);
@@ -57,6 +116,7 @@ export function LessonPlanGenerator({
       setCurrentLessonPlan(savedLessonPlan);
     } catch (error) {
       console.error('Error generating lesson plan:', error);
+      setGenerationError('Failed to generate lesson plan. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -106,7 +166,7 @@ export function LessonPlanGenerator({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            CALES Criteria
+            CALES Criteria Focus
           </label>
           <select
             value={formData.calesCriteria}
@@ -133,6 +193,12 @@ export function LessonPlanGenerator({
             placeholder="Add any specific requirements or focus areas for this lesson plan..."
           />
         </div>
+
+        {generationError && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-800 text-sm">{generationError}</p>
+          </div>
+        )}
 
         <button
           type="submit"
@@ -167,6 +233,13 @@ export function LessonPlanGenerator({
               <Download className="w-4 h-4" />
               Download PDF
             </button>
+          </div>
+          
+          <div className="mt-4 text-sm text-green-700">
+            <p><strong>Title:</strong> {currentLessonPlan.title}</p>
+            <p><strong>Duration:</strong> {currentLessonPlan.duration}</p>
+            <p><strong>Objectives:</strong> {currentLessonPlan.objectives.length} learning objectives</p>
+            <p><strong>Activities:</strong> {currentLessonPlan.activities.length} engaging activities</p>
           </div>
         </div>
       )}
