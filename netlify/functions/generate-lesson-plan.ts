@@ -13,8 +13,8 @@ interface StudentProfile {
   culturalBackground?: string;
   languageNeeds?: string;
   specialNeeds?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface GenerateLessonPlanRequest {

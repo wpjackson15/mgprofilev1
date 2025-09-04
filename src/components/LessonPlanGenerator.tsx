@@ -106,9 +106,16 @@ Format the response as JSON with the following structure:
   "assessment": "Assessment Method"
 }`;
 
+      // Convert Date objects to strings for JSON serialization
+      const serializedProfiles = selectedProfilesList.map(profile => ({
+        ...profile,
+        createdAt: profile.createdAt.toISOString(),
+        updatedAt: profile.updatedAt.toISOString()
+      }));
+      
       const requestBody = {
         prompt,
-        studentProfiles: selectedProfilesList,
+        studentProfiles: serializedProfiles,
         outputFormat: formData.outputFormat,
         lessonSettings: formData.lessonSettings
       };
