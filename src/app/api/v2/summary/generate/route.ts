@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Generate summary
     console.log('Generating summary with answers:', body.answers.length, 'answers');
-    const summary = await summarizer.generateSummary(body.answers);
+    const summary = await summarizer.generateSummary(body.module || 'Interest Awareness', body.answers);
     
     if (!summary) {
       console.error('Summary generation returned null');

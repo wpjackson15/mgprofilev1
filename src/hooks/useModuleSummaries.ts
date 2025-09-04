@@ -52,7 +52,7 @@ export function useModuleSummaries() {
       });
 
       // Generate structured summary
-      const v2Summary = await summarizer.generateSummary(answers);
+      const v2Summary = await summarizer.generateSummary(module, answers);
       
       if (v2Summary) {
         // Update summary with proper metadata
