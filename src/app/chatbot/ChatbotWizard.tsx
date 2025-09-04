@@ -34,6 +34,16 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Load conversation flow and user progress
   useEffect(() => {
@@ -204,8 +214,9 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
               <div dangerouslySetInnerHTML={{ __html: msg.text }} />
             </div>
           </div>
-                          ))}
-                </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
                 
                 {/* Summary Generation Popup */}
                 {isGeneratingSummary && (
