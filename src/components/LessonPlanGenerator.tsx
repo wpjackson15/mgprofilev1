@@ -89,7 +89,7 @@ Please provide a comprehensive, standards-aligned lesson plan with:
 1. Title and subject
 2. Grade level
 3. Learning objectives that align with ${formData.lessonSettings.state} state standards for ${formData.lessonSettings.grade} grade ${formData.lessonSettings.subject}
-4. Engaging activities that accommodate different learning styles and cultural backgrounds
+4. Engaging activities that accommodate different learning styles and Black Genius Framework components
 5. Assessment methods that measure standards mastery
 6. Required materials
 7. Estimated duration
@@ -238,17 +238,8 @@ Format the response as JSON with the following structure:
                         {profile.learningStyle && (
                           <div><span className="font-medium">Learning Style:</span> {profile.learningStyle}</div>
                         )}
-                        {profile.interests.length > 0 && (
-                          <div><span className="font-medium">Interests:</span> {profile.interests.join(', ')}</div>
-                        )}
                         {profile.strengths.length > 0 && (
-                          <div><span className="font-medium">Strengths:</span> {profile.strengths.join(', ')}</div>
-                        )}
-                        {profile.challenges.length > 0 && (
-                          <div><span className="font-medium">Challenges:</span> {profile.challenges.join(', ')}</div>
-                        )}
-                        {profile.culturalBackground && (
-                          <div><span className="font-medium">Cultural Background:</span> {profile.culturalBackground}</div>
+                          <div><span className="font-medium">Black Genius Framework:</span> {profile.strengths.join(', ')}</div>
                         )}
                       </div>
                     </div>
