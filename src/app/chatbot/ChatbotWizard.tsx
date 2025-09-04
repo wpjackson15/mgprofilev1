@@ -201,7 +201,7 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
         {messages.map((msg, i) => (
           <div key={i} className={`mb-2 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`px-4 py-2 rounded-lg max-w-[80%] ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}>
-              {msg.text}
+              <div dangerouslySetInnerHTML={{ __html: msg.text }} />
             </div>
           </div>
                           ))}

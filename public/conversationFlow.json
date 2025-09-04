@@ -2,9 +2,9 @@
   {
     "module": "Interest Awareness",
     "steps": [
-      {"type": "question", "text": "Ask your child, \"What are 2–3 things you love or like to do?\"\n\nTip: If you both struggle to think of things, think about what they do all the time without anybody asking them to."},
-      {"type": "question", "text": "Ask your child, \"What is it about those 2-3 things that you like them so much?\"\n\nTip: This is trying to understand why children like what they like, but children tend to know the \"what about it\" rather than the \"why\" behind what they like."},
-      {"type": "question", "text": "Ask your child, \"Do you have any new interests, hobbies, or likes?\"\n\nTip: If nothing comes up, ask them about something they'd like to try but haven't had a chance to try yet."},
+      {"type": "question", "text": "Ask your child, \"What are 2–3 things you love or like to do?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If you both struggle to think of things, think about what they do all the time without anybody asking them to.</em></div>"},
+      {"type": "question", "text": "Ask your child, \"What is it about those 2-3 things that you like them so much?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> This is trying to understand why children like what they like, but children tend to know the \"what about it\" rather than the \"why\" behind what they like.</em></div>"},
+      {"type": "question", "text": "Ask your child, \"Do you have any new interests, hobbies, or likes?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If nothing comes up, ask them about something they'd like to try but haven't had a chance to try yet.</em></div>"},
       {"type": "auto_summary", "text": "Great! Are you ready to see a summary of your child's interests? (Type 'yes' to continue)"}
     ]
   },
