@@ -272,7 +272,8 @@ export default function LessonPlansPage() {
                 </div>
               ) : (
                 <LessonPlanGenerator
-                  studentProfiles={getSelectedProfiles()}
+                  studentProfiles={studentProfiles}
+                  selectedProfiles={selectedProfiles}
                   onGenerate={handleGenerateLessonPlan}
                   onDownload={handleDownloadLessonPlan}
                 />
