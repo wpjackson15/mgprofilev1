@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { BookOpen, Loader2, Download, FileText } from "lucide-react";
-import { CALES_CRITERIA_DESCRIPTIONS } from '@/lib/calesCriteria';
 import { GRADE_OPTIONS, SUBJECT_OPTIONS, STATE_OPTIONS, OUTPUT_FORMAT_OPTIONS, type LessonSettings, type LessonPlanFormData } from '@/lib/lessonPlanConstants';
 import { StudentProfile, LessonPlan } from '@/services/mongodb';
 
@@ -10,13 +9,15 @@ interface LessonPlanGeneratorProps {
   selectedProfiles: Set<string>;
   onGenerate: (lessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => Promise<string>;
   onDownload: (lessonPlan: LessonPlan) => Promise<void>;
+  onToggleProfile: (profileId: string) => void;
 }
 
 export function LessonPlanGenerator({ 
   studentProfiles, 
   selectedProfiles,
   onGenerate, 
-  onDownload 
+  onDownload,
+  onToggleProfile
 }: LessonPlanGeneratorProps) {
   const [formData, setFormData] = useState<LessonPlanFormData>({
     lessonSettings: {
@@ -69,7 +70,7 @@ export function LessonPlanGenerator({
 
       // Create a comprehensive prompt for Claude
       const profilesText = selectedProfilesList.map(profile => 
-        `Student: ${profile.name} (Grade ${profile.grade}, ${profile.subject})\nProfile: ${profile.profile}`
+        `Student: ${profile.name} (Grade ${profile.grade})\nStrengths: ${profile.strengths.join(', ')}\nInterests: ${profile.interests.join(', ')}`
       ).join('\n\n');
 
       const prompt = `Create a culturally responsive, differentiated lesson plan that aligns with ${formData.lessonSettings.state} state standards for ${formData.lessonSettings.grade} grade ${formData.lessonSettings.subject}.
@@ -98,65 +99,58 @@ Format the response as JSON with the following structure:
   "grade": "Grade Level",
   "objectives": ["Objective 1", "Objective 2"],
   "activities": ["Activity 1", "Activity 2"],
-  "assessment": "Assessment description",
   "materials": ["Material 1", "Material 2"],
-  "duration": "45 minutes"
+  "duration": "Estimated Duration",
+  "assessment": "Assessment Method"
 }`;
 
-      // Call the working Netlify function
       const response = await fetch('/.netlify/functions/generate-lesson-plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt, 
-          studentProfiles: selectedProfilesList,
-          outputFormat: formData.outputFormat,
-          lessonSettings: formData.lessonSettings,
-          calesCriteria: formData.calesCriteria,
-          useRAG: formData.useRAG
-        })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          useRAG: formData.useRAG,
+          outputFormat: formData.outputFormat
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate lesson plan');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
       
-      // Create the lesson plan object
-      const newLessonPlan: Omit<LessonPlan, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
-        title: data.title,
-        subject: data.subject,
-        grade: data.grade,
-        objectives: data.objectives,
-        activities: data.activities,
-        assessment: data.assessment,
-        materials: data.materials,
-        duration: data.duration,
-        studentProfiles: selectedProfilesList,
-        lessonSettings: formData.lessonSettings,
-        outputFormat: formData.outputFormat,
-        googleDocUrl: data.googleDocUrl,
-        calesCriteria: formData.calesCriteria,
-        content: '',
-        prompt: prompt
-      };
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
-      const lessonPlanId = await onGenerate(newLessonPlan);
-      
-      // Create the full lesson plan object
-      const savedLessonPlan: LessonPlan = {
-        id: lessonPlanId,
-        ...newLessonPlan,
-        userId: '', // Will be set by the parent
+      const lessonPlan: LessonPlan = {
+        id: '',
+        userId: '',
+        title: result.title || 'Generated Lesson Plan',
+        subject: result.subject || formData.lessonSettings.subject,
+        grade: result.grade || formData.lessonSettings.grade,
+        duration: result.duration || '45 minutes',
+        objectives: result.objectives || [],
+        standards: [],
+        materials: result.materials || [],
+        procedures: result.activities || [],
+        assessment: result.assessment || 'Formative assessment through observation and student work',
+        differentiation: [],
+        culturalResponsiveness: [],
         createdAt: new Date(),
         updatedAt: new Date()
       };
+
+      const lessonPlanId = await onGenerate(lessonPlan);
+      lessonPlan.id = lessonPlanId;
+      setCurrentLessonPlan(lessonPlan);
       
-      setCurrentLessonPlan(savedLessonPlan);
     } catch (error) {
       console.error('Error generating lesson plan:', error);
-      setGenerationError('Failed to generate lesson plan. Please try again.');
+      setGenerationError(error instanceof Error ? error.message : 'Failed to generate lesson plan');
     } finally {
       setIsGenerating(false);
     }
@@ -178,30 +172,52 @@ Format the response as JSON with the following structure:
     }));
   };
 
-  const updateCalesCriteria = (field: string, value: boolean) => {
+  const updateCalesCriteria = (key: string, value: boolean) => {
     setFormData(prev => ({
       ...prev,
       calesCriteria: {
         ...prev.calesCriteria,
-        [field]: value
+        [key]: value
       }
     }));
   };
 
   const toggleAllCalesCriteria = (value: boolean) => {
-    const newCriteria = Object.keys(formData.calesCriteria).reduce((acc, key) => {
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, boolean>);
-    
     setFormData(prev => ({
       ...prev,
-      calesCriteria: newCriteria
+      calesCriteria: Object.keys(prev.calesCriteria).reduce((acc, key) => ({
+        ...acc,
+        [key]: value
+      }), {} as Record<string, boolean>)
     }));
   };
 
   return (
     <div className="space-y-6">
+      {/* Student Profiles */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Student Profiles</h3>
+        <p className="text-sm text-gray-700 mb-4">
+          Select the student profiles you want to include in the lesson plan.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {studentProfiles.map(profile => (
+            <div key={profile.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+              <div className="flex items-center">
+                                  <input
+                    type="checkbox"
+                    checked={selectedProfiles.has(profile.id)}
+                    onChange={() => onToggleProfile(profile.id)}
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                <span className="text-sm font-medium text-gray-900">{profile.name}</span>
+              </div>
+              <span className="text-sm text-gray-600">Grade {profile.grade}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* RAG Toggle */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
@@ -308,113 +324,103 @@ Format the response as JSON with the following structure:
         </div>
       </div>
 
-      {/* CALES Criteria */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">CALES Framework Criteria</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => toggleAllCalesCriteria(true)}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Select All
-            </button>
-            <span className="text-gray-400">|</span>
-            <button
-              onClick={() => toggleAllCalesCriteria(false)}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Clear All
-            </button>
-          </div>
-        </div>
-        
-        <p className="text-gray-600 mb-4">
-          Select the CALES (Culturally Affirming Learning Environment) criteria to include in your lesson plan generation.
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(CALES_CRITERIA_DESCRIPTIONS).map(([key, description]) => (
-            <div key={key} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-              <button
-                onClick={() => updateCalesCriteria(key, !formData.calesCriteria[key])}
-                className="mt-1"
-              >
-                {formData.calesCriteria[key] ? (
-                  <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-                    <div className="w-3 h-3 bg-white rounded-sm" />
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 border-2 border-gray-300 rounded" />
-                )}
-              </button>
-              <div className="flex-1">
-                <label className="text-sm font-medium text-gray-900 cursor-pointer">
-                  {description}
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Generate Button */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <button
-          onClick={handleSubmit}
-          disabled={isGenerating || !formData.lessonSettings.grade || !formData.lessonSettings.subject || !formData.lessonSettings.state || selectedProfiles.size === 0}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Generating Lesson Plan...
-            </>
-          ) : (
-            <>
-              <BookOpen className="w-5 h-5" />
-              Generate Lesson Plan
-            </>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {generationError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-sm text-red-800">{generationError}</p>
+            </div>
           )}
-        </button>
-
-        {generationError && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800 text-sm">{generationError}</p>
-          </div>
-        )}
+          
+          <button
+            type="submit"
+            disabled={isGenerating}
+            className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Generating Lesson Plan...
+              </>
+            ) : (
+              <>
+                <BookOpen className="w-5 h-5" />
+                Generate Lesson Plan
+              </>
+            )}
+          </button>
+        </form>
       </div>
 
-      {/* Generated Lesson Plan */}
+      {/* Generated Lesson Plan Display */}
       {currentLessonPlan && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-green-800">
-              <FileText className="w-5 h-5" />
-              <span className="font-medium">Lesson Plan Generated Successfully!</span>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-800">Generated Lesson Plan</h3>
             <button
               onClick={handleDownload}
               className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Download {currentLessonPlan.outputFormat === 'pdf' ? 'PDF' : 'Google Doc'}
+              Download
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
+          <div className="space-y-4">
             <div>
-              <p><strong>Title:</strong> {currentLessonPlan.title}</p>
-              <p><strong>Grade:</strong> {currentLessonPlan.grade}</p>
-              <p><strong>Subject:</strong> {currentLessonPlan.subject}</p>
-              <p><strong>State:</strong> {currentLessonPlan.lessonSettings.state}</p>
+              <h4 className="font-medium text-gray-900">{currentLessonPlan.title}</h4>
+              <p className="text-sm text-gray-600">
+                {currentLessonPlan.subject} • Grade {currentLessonPlan.grade} • {currentLessonPlan.duration}
+              </p>
             </div>
-            <div>
-              <p><strong>Duration:</strong> {currentLessonPlan.duration}</p>
-              <p><strong>Objectives:</strong> {currentLessonPlan.objectives.length} learning objectives</p>
-              <p><strong>Activities:</strong> {currentLessonPlan.activities.length} engaging activities</p>
-              <p><strong>Format:</strong> {currentLessonPlan.outputFormat === 'pdf' ? 'PDF' : 'Google Doc'}</p>
-            </div>
+            
+            {currentLessonPlan.objectives.length > 0 && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Learning Objectives</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  {currentLessonPlan.objectives.map((objective, index) => (
+                    <li key={index} className="text-sm text-gray-700">{objective}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {currentLessonPlan.procedures.length > 0 && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Activities</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  {currentLessonPlan.procedures.map((activity, index) => (
+                    <li key={index} className="text-sm text-gray-700">{activity}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {currentLessonPlan.materials.length > 0 && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Materials</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  {currentLessonPlan.materials.map((material, index) => (
+                    <li key={index} className="text-sm text-gray-700">{material}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {currentLessonPlan.assessment && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Assessment</h5>
+                <p className="text-sm text-gray-700">
+                  {Array.isArray(currentLessonPlan.assessment) 
+                    ? currentLessonPlan.assessment.join(', ')
+                    : typeof currentLessonPlan.assessment === 'string'
+                    ? currentLessonPlan.assessment
+                    : 'Assessment details available'
+                  }
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
