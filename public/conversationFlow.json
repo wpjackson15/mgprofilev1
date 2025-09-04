@@ -5,7 +5,7 @@
       {"type": "question", "text": "Ask your child, \"What are 2–3 things you love or like to do?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If you both struggle to think of things, think about what they do all the time without anybody asking them to.</em></div>"},
       {"type": "question", "text": "Ask your child, \"What is it about those 2-3 things that you like them so much?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> This is trying to understand why children like what they like, but children tend to know the \"what about it\" rather than the \"why\" behind what they like.</em></div>"},
       {"type": "question", "text": "Ask your child, \"Do you have any new interests, hobbies, or likes?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If nothing comes up, ask them about something they'd like to try but haven't had a chance to try yet.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's interests, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's interests, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Interest Awareness"}
     ]
   },
   {
@@ -14,7 +14,7 @@
       {"type": "question", "text": "Ask your child: \"When you really want to do something or finish something, but it's hard, what do you do to keep going?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Kids often come up with their own strategies — like looking up a video game hack, asking a friend, or taking a break. What does your child usually do?</em></div>"},
       {"type": "question", "text": "Ask your child: \"Where do you like to do your work or learn new things? What makes that place feel good to you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Notice if it's about the sound, the look, being outside, or who's there. This gives clues about the kind of learning environments that support your child.</em></div>"},
       {"type": "question", "text": "Ask your child: \"What is it about those places that makes you feel good to learn? What helps you in those spaces?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Understanding the why helps us see how your child supports their own learning — and how teachers can, too.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's can-do attitude, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's can-do attitude, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Can Do Attitude"}
     ]
   },
   {
@@ -22,7 +22,7 @@
     "steps": [
       {"type": "question", "text": "How is your child's behavior or personality different at home compared to school?"},
       {"type": "question", "text": "What does your child usually do when they're somewhere new or unfamiliar?"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child navigates different cultures, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child navigates different cultures, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Multicultural Navigation"}
     ]
   },
   {
@@ -30,7 +30,7 @@
     "steps": [
       {"type": "question", "text": "What are 1-3 things you've taught your child to notice when deciding who to trust?"},
       {"type": "question", "text": "What are some ways a teacher or mentor can earn your child's trust?"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child builds trust, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child builds trust, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Selective Trust"}
     ]
   },
   {
@@ -38,7 +38,7 @@
     "steps": [
       {"type": "question", "text": "Ask your child, 'How do they want to help their community?'"},
       {"type": "question", "text": "Ask your child, 'What do they want to do to make the world a better place?'"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's sense of social justice, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's sense of social justice, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Social Justice"}
     ]
   },
   {
@@ -47,7 +47,7 @@
       {"type": "question", "text": "What are 2 or 3 feelings your child has when they think about being Black? (Good or hard feelings are okay.)"},
       {"type": "question", "text": "Can you name 2 or 3 traditions or cultural things your child connects with being Black?"},
       {"type": "question", "text": "Who are 2 or 3 Black people your child looks up to or feels inspired by?"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's racial identity, are you ready to see a summary of what we've learned? (Type 'yes' to continue)"}
+      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's racial identity, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Racial Pride"}
     ]
   }
 ] 
