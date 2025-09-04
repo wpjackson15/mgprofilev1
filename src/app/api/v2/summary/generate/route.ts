@@ -3,6 +3,7 @@ import { ClaudeSummarizerV2 } from '../../../../../services/ClaudeSummarizerV2';
 import { connectToMongoDB } from '../../../../../services/mongodb';
 
 export async function POST(request: NextRequest) {
+  console.log('🚀 FUNCTION CALLED - BEFORE TRY BLOCK');
   try {
     console.log('=== API ROUTE START ===');
     
