@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Update summary with proper metadata
     summary.studentId = body.profileId;
     summary.meta.runId = body.runId;
-    summary.meta.model = 'claude-3-5-sonnet-20240620';
+    summary.meta.model = 'claude-sonnet-4-20250514';
     summary.meta.createdAt = new Date().toISOString();
 
     // Store in database

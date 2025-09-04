@@ -58,7 +58,7 @@ export function useModuleSummaries() {
         // Update summary with proper metadata
         v2Summary.studentId = profileId;
         v2Summary.meta.runId = runId;
-        v2Summary.meta.model = 'claude-3-5-sonnet-20240620';
+        v2Summary.meta.model = 'claude-sonnet-4-20250514';
         v2Summary.meta.createdAt = new Date().toISOString();
 
         // Store in database
