@@ -97,7 +97,6 @@ export class ClaudeSummarizerV2 {
     if (!this.includeDocuments) return '';
 
     try {
-      console.log("About to make Claude API call...");
       // Search for documents related to the answers (filtered for profiles)
       const searchQuery = answers.join(' ');
       const allDocuments = await searchReferenceDocuments(searchQuery, 10, 'profile'); // Get more documents for filtering
