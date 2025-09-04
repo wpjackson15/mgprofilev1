@@ -168,9 +168,7 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     } else if (currentModule + 1 < flow.length) {
       // Summary already generated in handleStepCompletion, just move to next module
       console.log("Moving to next module, summary already generated");
-        console.log("Cannot generate summary:", { user: !!user, generateSummary: !!generateSummary });
-      }
-
+      
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
       setMessages((msgs) => [
