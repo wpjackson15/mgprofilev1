@@ -86,7 +86,7 @@ export async function connectToMongoDB(): Promise<void> {
       new Promise((_, reject) => setTimeout(() => reject(new Error("MongoDB connection timeout")), 10000))
     ]);
     db = client.db('mgprofilev1');
-    console.log('Connected to MongoDB');
+
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     throw error;
@@ -103,7 +103,7 @@ export function getDb(): Db {
 export async function disconnectFromMongoDB(): Promise<void> {
   if (client) {
     await client.close();
-    console.log('Disconnected from MongoDB');
+
   }
 }
 
@@ -348,7 +348,7 @@ export async function initializeSummaryV2Indexes(): Promise<void> {
   await collection.createIndex({ profileId: 1, createdAt: -1 });
   await collection.createIndex({ runId: 1 }, { unique: true });
   
-  console.log('Summary V2 indexes initialized');
+  
 }
 
 // Document Functions (for reference materials)

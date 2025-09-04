@@ -2,6 +2,7 @@ import { ChildSummaryV1, BlackGeniusKey } from '../lib/schemas';
 import { lintNoPrescriptions } from '../lib/utils';
 import { metrics, V2_METRICS } from '../lib/metrics';
 import { getReferenceDocuments, searchReferenceDocuments } from './mongodb';
+import { moduleDisplayNames } from '../lib/moduleDisplayNames';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 
@@ -63,12 +64,12 @@ export class ClaudeSummarizerV2 {
    */
   private getModuleKey(module: string): string {
     const keyMap: Record<string, string> = {
-      'Interest Awareness': 'interest_awareness',
-      'Can Do Attitude': 'can_do_attitude',
-      'Multicultural Navigation': 'multicultural_navigation',
-      'Selective Trust': 'selective_trust',
-      'Social Justice / Fairness': 'social_justice',
-      'Racial Identity': 'racial_identity'
+      [moduleDisplayNames.interestAwareness]: 'interest_awareness',
+      [moduleDisplayNames.canDoAttitude]: 'can_do_attitude',
+      [moduleDisplayNames.multiculturalNavigation]: 'multicultural_navigation',
+      [moduleDisplayNames.selectiveTrust]: 'selective_trust',
+      [moduleDisplayNames.socialJustice]: 'social_justice',
+      [moduleDisplayNames.racialPride]: 'racial_identity'
     };
     return keyMap[module] || 'interest_awareness';
   }
@@ -78,15 +79,15 @@ export class ClaudeSummarizerV2 {
    */
   private getElementSpecificPrompt(module: string): string {
     const prompts: Record<string, string> = {
-      'Interest Awareness': `Summarize this child's interests in 2-3 sentences for teachers.`,
-      'Can Do Attitude': `Summarize this child's persistence in 2-3 sentences for teachers.`,
-      'Multicultural Navigation': `Summarize this child's adaptability in 2-3 sentences for teachers.`,
-      'Selective Trust': `Summarize this child's trust-building in 2-3 sentences for teachers.`,
-      'Social Justice / Fairness': `Summarize this child's community focus in 2-3 sentences for teachers.`,
-      'Racial Identity': `Summarize this child's cultural connections in 2-3 sentences for teachers.`
+      [moduleDisplayNames.interestAwareness]: `Summarize this child's interests in 2-3 sentences for teachers.`,
+      [moduleDisplayNames.canDoAttitude]: `Summarize this child's persistence in 2-3 sentences for teachers.`,
+      [moduleDisplayNames.multiculturalNavigation]: `Summarize this child's adaptability in 2-3 sentences for teachers.`,
+      [moduleDisplayNames.selectiveTrust]: `Summarize this child's trust-building in 2-3 sentences for teachers.`,
+      [moduleDisplayNames.socialJustice]: `Summarize this child's community focus in 2-3 sentences for teachers.`,
+      [moduleDisplayNames.racialPride]: `Summarize this child's cultural connections in 2-3 sentences for teachers.`
     };
 
-    return prompts[module] || prompts['Interest Awareness'];
+    return prompts[module] || prompts[moduleDisplayNames.interestAwareness];
   }
 
   /**
@@ -113,9 +114,7 @@ export class ClaudeSummarizerV2 {
       // Select balanced documents across relevant categories
       const selectedDocs = this.selectBalancedDocuments(prioritizedDocs, relevantCategories);
       
-      console.log(`Document selection: ${selectedDocs.length} documents selected from ${allDocuments.length} total`);
-      console.log(`Relevant categories: ${relevantCategories.join(', ')}`);
-      console.log(`Selected categories: ${selectedDocs.map(d => d.category).join(', ')}`);
+
       
       const documentContext = selectedDocs.map(doc => 
         `Document: ${doc.title}\nCategory: ${doc.category}\nPriority: ${this.getProfilePriority(doc)}\nContent: ${doc.content.substring(0, 500)}...`
@@ -196,7 +195,7 @@ export class ClaudeSummarizerV2 {
       const matchCount = keywords.filter(keyword => answerText.includes(keyword)).length;
       if (matchCount > 0) {
         relevantCategories.push(category);
-        console.log(`Category ${category} relevant (${matchCount} keyword matches)`);
+
       }
     });
 
@@ -305,14 +304,7 @@ export class ClaudeSummarizerV2 {
       const data = await response.json();
       const content = data.content?.[0]?.text || '';
       
-      console.log('=== CLAUDE API DEBUG ===');
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      console.log('Full response data:', data);
-      console.log('Content extracted:', content);
-      console.log('Content length:', content.length);
-      console.log('Content type:', typeof content);
-      console.log('========================');
+
       
       // Handle Claude response (could be JSON or plain text)
       let jsonResponse;
@@ -321,7 +313,7 @@ export class ClaudeSummarizerV2 {
         try {
       console.log("About to make Claude API call...");
           jsonResponse = JSON.parse(content);
-          console.log('✅ Successfully parsed JSON:', jsonResponse);
+
         } catch (parseError) {
           console.error('❌ Failed to parse Claude response as JSON:', parseError);
           console.log('Raw content that failed to parse:', content);
@@ -331,7 +323,7 @@ export class ClaudeSummarizerV2 {
         }
       } else {
         // Handle plain text response
-        console.log('✅ Claude returned plain text (no JSON parsing needed)');
+        
         jsonResponse = content; // Treat the plain text as the response
       }
 

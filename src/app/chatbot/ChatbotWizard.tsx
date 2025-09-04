@@ -21,10 +21,7 @@ interface Message {
 export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>> }) {
   const { generateSummary } = useModuleSummaries();
   
-  // Debug: Check if generateSummary is available (only once on mount)
-  useEffect(() => {
-    console.log("ChatbotWizard mounted - generateSummary available:", !!generateSummary);
-  }, []);
+
   const [flow, setFlow] = useState<Module[]>([]);
   const [currentModule, setCurrentModule] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -94,7 +91,7 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     setInput("");
 
     if (step.type === "question") {
-      console.log("User answered question:", { step: currentStep, text, module: currentModuleData.module });
+
       
       // Save answer to both local state and parent
       const key = `${currentModuleData.module}-${currentStep}`;
@@ -108,7 +105,7 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
       setTimeout(() => nextStep(), 500);
     } else if (step.type === "auto_summary") {
       // Auto-generate summary for completed module
-      console.log("Auto-generating summary for module:", currentModuleData.module);
+
       if (user && generateSummary) {
         // Collect ALL answers from this module
         const moduleAnswers = [];
@@ -118,12 +115,11 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
             moduleAnswers.push(...answers[key]);
           }
         }
-        console.log("Collected module answers:", moduleAnswers);
+
         if (moduleAnswers.length > 0) {
           setIsGeneratingSummary(true);
           generateSummary(currentModuleData.module, moduleAnswers)
             .then(() => {
-              console.log("Summary generated successfully");
               setIsGeneratingSummary(false);
               // Move to next step after summary
               setTimeout(() => nextStep(), 1000);
@@ -135,11 +131,9 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
               setTimeout(() => nextStep(), 1000);
             });
         } else {
-          console.log("No answers to generate summary from, moving to next step");
           setTimeout(() => nextStep(), 1000);
         }
       } else {
-        console.log("Cannot generate summary, moving to next step");
         setTimeout(() => nextStep(), 1000);
       }
     } else if (step.type === "offer_summary") {
@@ -177,7 +171,7 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
       ]);
     } else if (currentModule + 1 < flow.length) {
       // Summary already generated in handleStepCompletion, just move to next module
-      console.log("Moving to next module, summary already generated");
+
       
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);

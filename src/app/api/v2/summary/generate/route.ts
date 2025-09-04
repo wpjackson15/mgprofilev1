@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ClaudeSummarizerV2 } from '../../../../../services/ClaudeSummarizerV2';
 import { connectToMongoDB } from '../../../../../services/mongodb';
+import { moduleDisplayNames } from '../../../../../lib/moduleDisplayNames';
 
 export async function POST(request: NextRequest) {
-  console.log('🚀 FUNCTION CALLED - BEFORE TRY BLOCK');
   try {
-    console.log('=== API ROUTE START ===');
-    
-    // Debug: Check if API key is available
-    console.log('CLAUDE_API_KEY available:', !!process.env.CLAUDE_API_KEY);
     
     
     const body = await request.json();
-    console.log('Request body parsed successfully');
-    
     // Validate input
     if (!body.answers || !Array.isArray(body.answers) || body.answers.length === 0) {
       return NextResponse.json(
@@ -29,8 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Input validation passed');
-
     // Create V2 summarizer
     const summarizer = new ClaudeSummarizerV2({
       runId: body.runId,
@@ -38,14 +30,10 @@ export async function POST(request: NextRequest) {
       includeDocuments: false, // Temporarily disabled RAG to test performance
     });
 
-    console.log('Summarizer created, calling generateSummary...');
-
     // Generate summary
-    console.log('Generating summary with answers:', body.answers.length, 'answers');
-    const summary = await summarizer.generateSummary(body.module || 'Interest Awareness', body.answers);
+    const summary = await summarizer.generateSummary(body.module || moduleDisplayNames.interestAwareness, body.answers);
     
     await connectToMongoDB();
-    console.log("MongoDB connected, proceeding to save summary");
     
     if (!summary) {
       console.error('Summary generation returned null');
