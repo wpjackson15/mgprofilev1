@@ -153,26 +153,49 @@ Format the response as JSON with the following structure:
         activitiesCount: Array.isArray(result.activities) ? result.activities.length : 0,
         materialsCount: Array.isArray(result.materials) ? result.materials.length : 0
       });
+      
+      // Log all keys to see what we're getting
+      console.log('All result keys:', Object.keys(result));
 
+      // Create a clean lesson plan object with only the properties we need
       const lessonPlan: LessonPlan = {
         id: '',
         userId: '',
-        title: result.title || 'Generated Lesson Plan',
-        subject: result.subject || formData.lessonSettings.subject,
-        grade: result.grade || formData.lessonSettings.grade,
-        duration: result.duration || '45 minutes',
-        objectives: Array.isArray(result.objectives) ? result.objectives : [],
+        title: String(result.title || 'Generated Lesson Plan'),
+        subject: String(result.subject || formData.lessonSettings.subject),
+        grade: String(result.grade || formData.lessonSettings.grade),
+        duration: String(result.duration || '45 minutes'),
+        objectives: Array.isArray(result.objectives) ? result.objectives.map(String) : [],
         standards: [],
-        materials: Array.isArray(result.materials) ? result.materials : [],
-        procedures: Array.isArray(result.activities) ? result.activities : [],
-        assessment: result.assessment || 'Formative assessment through observation and student work',
+        materials: Array.isArray(result.materials) ? result.materials.map(String) : [],
+        procedures: Array.isArray(result.activities) ? result.activities.map(String) : [],
+        assessment: String(result.assessment || 'Formative assessment through observation and student work'),
         differentiation: [],
         culturalResponsiveness: [],
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      const lessonPlanId = await onGenerate(lessonPlan);
+      // Ensure we only pass the properties defined in the LessonPlan interface
+      const cleanLessonPlan = {
+        id: lessonPlan.id,
+        userId: lessonPlan.userId,
+        title: lessonPlan.title,
+        subject: lessonPlan.subject,
+        grade: lessonPlan.grade,
+        duration: lessonPlan.duration,
+        objectives: lessonPlan.objectives,
+        standards: lessonPlan.standards,
+        materials: lessonPlan.materials,
+        procedures: lessonPlan.procedures,
+        assessment: lessonPlan.assessment,
+        differentiation: lessonPlan.differentiation,
+        culturalResponsiveness: lessonPlan.culturalResponsiveness,
+        createdAt: lessonPlan.createdAt,
+        updatedAt: lessonPlan.updatedAt
+      };
+
+      const lessonPlanId = await onGenerate(cleanLessonPlan);
       lessonPlan.id = lessonPlanId;
       setCurrentLessonPlan(lessonPlan);
       
