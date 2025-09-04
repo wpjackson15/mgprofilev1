@@ -54,6 +54,7 @@ export class ClaudeSummarizerV2 {
       }
       evidenceByElement[element]!.push(answer.substring(0, 100)); // Truncate for evidence
     });
+      console.log("Claude API call completed, response status:", response.status);
 
     return evidenceByElement;
   }
@@ -96,6 +97,7 @@ export class ClaudeSummarizerV2 {
     if (!this.includeDocuments) return '';
 
     try {
+      console.log("About to make Claude API call...");
       // Search for documents related to the answers (filtered for profiles)
       const searchQuery = answers.join(' ');
       const allDocuments = await searchReferenceDocuments(searchQuery, 10, 'profile'); // Get more documents for filtering
@@ -171,6 +173,7 @@ export class ClaudeSummarizerV2 {
       const priorityB = this.getProfilePriority(b);
       return priorityB - priorityA; // Sort descending
     });
+      console.log("Claude API call completed, response status:", response.status);
   }
 
   /**
@@ -198,6 +201,7 @@ export class ClaudeSummarizerV2 {
         console.log(`Category ${category} relevant (${matchCount} keyword matches)`);
       }
     });
+      console.log("Claude API call completed, response status:", response.status);
 
     // Always include core categories if no specific matches
     if (relevantCategories.length === 0) {
@@ -241,6 +245,7 @@ export class ClaudeSummarizerV2 {
         categoryCount[category] = 1;
       }
     });
+      console.log("Claude API call completed, response status:", response.status);
 
     // Second pass: fill remaining slots with highest priority documents
     const remainingSlots = maxDocs - selectedDocs.length;
@@ -275,6 +280,7 @@ export class ClaudeSummarizerV2 {
     const userPrompt = `Answers: ${answers.join(' | ')}`;
 
     try {
+      console.log("About to make Claude API call...");
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -291,6 +297,7 @@ export class ClaudeSummarizerV2 {
           ]
         }),
       });
+      console.log("Claude API call completed, response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -316,6 +323,7 @@ export class ClaudeSummarizerV2 {
       if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
         // Try to parse as JSON
         try {
+      console.log("About to make Claude API call...");
           jsonResponse = JSON.parse(content);
           console.log('✅ Successfully parsed JSON:', jsonResponse);
         } catch (parseError) {
@@ -386,6 +394,7 @@ export class ClaudeSummarizerV2 {
     const retryPrompt = `Return ONLY valid JSON. No additional text or explanation. Generate the summary in the exact format specified.`;
 
     try {
+      console.log("About to make Claude API call...");
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -401,6 +410,7 @@ export class ClaudeSummarizerV2 {
           ]
         }),
       });
+      console.log("Claude API call completed, response status:", response.status);
 
       if (!response.ok) return null;
 
@@ -408,6 +418,7 @@ export class ClaudeSummarizerV2 {
       const content = data.content?.[0]?.text || '';
       
       try {
+      console.log("About to make Claude API call...");
         const jsonResponse = JSON.parse(content);
         const validationResult = ChildSummaryV1.safeParse(jsonResponse);
         return validationResult.success ? validationResult.data : null;
@@ -425,6 +436,7 @@ export class ClaudeSummarizerV2 {
    */
   async finalizeSummary(summary: ChildSummaryV1, tokens?: { input: number; output: number }): Promise<boolean> {
     try {
+      console.log("About to make Claude API call...");
       // For server-side calls, we can call the function directly instead of making an HTTP request
       const { saveSummaryV2 } = await import('./mongodb');
       

@@ -74,7 +74,10 @@ export async function connectToMongoDB(): Promise<void> {
 
   try {
     client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
+    await Promise.race([
+      client.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("MongoDB connection timeout")), 5000))
+    ]);
     db = client.db('mgprofilev1');
     console.log('Connected to MongoDB');
   } catch (error) {
