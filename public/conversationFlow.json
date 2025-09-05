@@ -29,16 +29,17 @@
   {
     "module": "Selective Trust",
     "steps": [
-      {"type": "question", "text": "What are 1-3 things you've taught your child to notice when deciding who to trust?"},
-      {"type": "question", "text": "What are some ways a teacher or mentor can earn your child's trust?"},
+      {"type": "question", "text": "Ask your child, \"How can you tell if someone - like a teacher, coach, or other kid - can be trusted?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle, ask about specific behaviors like \"Do they keep promises?\" or \"Do they listen when you talk?\" or \"How do they act when you're upset?\"</em></div>"},
+      {"type": "question", "text": "Ask your child, \"What can somebody do to make or build trust with you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anything, remind them of someone they trust and ask \"What did that person do that made you feel good about them?\"</em></div>"},
+      {"type": "question", "text": "Ask your child, \"How do you know you can't trust somebody or don't feel safe with them?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they hesitate, ask about feelings like \"Does something feel wrong in your stomach?\" or \"Do you want to stay away from them?\" Help them notice their own warning feelings.</em></div>"},
       {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child builds trust, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Selective Trust"}
     ]
   },
   {
     "module": "Social Justice / Fairness",
     "steps": [
-      {"type": "question", "text": "Ask your child, 'How do they want to help their community?'"},
-      {"type": "question", "text": "Ask your child, 'What do they want to do to make the world a better place?'"},
+      {"type": "question", "text": "Ask your child, \"How do they want to help their community?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they say \"I don't know,\" ask about problems they've noticed around them like \"What makes you sad when you see it?\" or \"What would you want to fix in our neighborhood?\"</em></div>"},
+      {"type": "question", "text": "Ask your child, \"What do they want to do to make the world a better place?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle with this big question, start smaller by asking \"What bothers you that you see on TV, social media or hear adults talking about?\" or \"If you could change one thing, what would it be?\"</em></div>"},
       {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's sense of social justice, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Social Justice"}
     ]
   },
