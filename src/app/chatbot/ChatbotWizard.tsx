@@ -30,12 +30,20 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
   const [answers, setLocalAnswers] = useState<Record<string, string[]>>({});
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [userContext, setUserContext] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Replace dynamic placeholders in text with user context values
+  const replaceDynamicText = (text: string): string => {
+    return text.replace(/\{(\w+)\}/g, (match, key) => {
+      return userContext[key] || match; // Return the original placeholder if not found
+    });
   };
 
   useEffect(() => {
@@ -50,8 +58,9 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
         setFlow(data);
         // Start with the first question
         if (data.length > 0 && data[0].steps.length > 0) {
+          const firstQuestion = replaceDynamicText(data[0].steps[0].text);
           setMessages([
-            { sender: "bot", text: data[0].steps[0].text },
+            { sender: "bot", text: firstQuestion },
           ]);
         }
       });
@@ -91,8 +100,15 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     setInput("");
 
     if (step.type === "question") {
+      // Handle setup questions (like racial identity setup)
+      if (currentModuleData.module === "Racial Identity Setup") {
+        // Store the race in user context
+        setUserContext(prev => ({ ...prev, race: text }));
+        // Move to next step
+        setTimeout(() => nextStep(), 500);
+        return;
+      }
 
-      
       // Save answer to both local state and parent
       const key = `${currentModuleData.module}-${currentStep}`;
       const newAnswers = {
@@ -165,24 +181,24 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     const currentModuleData = flow[currentModule];
     if (currentStep + 1 < currentModuleData.steps.length) {
       setCurrentStep(currentStep + 1);
+      const nextStepText = replaceDynamicText(currentModuleData.steps[currentStep + 1].text);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: currentModuleData.steps[currentStep + 1].text },
+        { sender: "bot", text: nextStepText },
       ]);
     } else if (currentModule + 1 < flow.length) {
       // Summary already generated in handleStepCompletion, just move to next module
-
-      
       setCurrentModule(currentModule + 1);
       setCurrentStep(0);
+      const nextModuleText = replaceDynamicText(flow[currentModule + 1].steps[0].text);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: flow[currentModule + 1].steps[0].text },
+        { sender: "bot", text: nextModuleText },
       ]);
     } else {
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: "Thank you! You’ve completed the conversation. You can now view or share your child’s Genius Profile." },
+        { sender: "bot", text: "Thank you! You've completed the conversation. You can now view or share your child's Genius Profile." },
       ]);
     }
   };

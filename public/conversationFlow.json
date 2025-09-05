@@ -43,11 +43,17 @@
     ]
   },
   {
+    "module": "Racial Identity Setup",
+    "steps": [
+      {"type": "question", "text": "What racial or ethnic identity would you like to discuss for your child? (e.g., Black, Hispanic, Asian, White, Mixed, Native American, etc.)"}
+    ]
+  },
+  {
     "module": "Racial Identity",
     "steps": [
-      {"type": "question", "text": "What are 2 or 3 feelings your child has when they think about being Black? (Good or hard feelings are okay.)"},
-      {"type": "question", "text": "Can you name 2 or 3 traditions or cultural things your child connects with being Black?"},
-      {"type": "question", "text": "Who are 2 or 3 Black people your child looks up to or feels inspired by?"},
+      {"type": "question", "text": "What are 2 or 3 feelings your child has when they think about being {race}? (Good or hard feelings are okay.)"},
+      {"type": "question", "text": "Can you name 2 or 3 traditions or cultural things your child connects with being {race}?"},
+      {"type": "question", "text": "Who are 2 or 3 {race} people your child looks up to or feels inspired by?"},
       {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's racial identity, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Racial Pride"}
     ]
   }
