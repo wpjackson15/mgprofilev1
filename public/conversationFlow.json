@@ -20,8 +20,9 @@
   {
     "module": "Multicultural Navigation",
     "steps": [
-      {"type": "question", "text": "How is your child's behavior or personality different at home compared to school?"},
-      {"type": "question", "text": "What does your child usually do when they're somewhere new or unfamiliar?"},
+      {"type": "question", "text": "Ask your child, \"How do you act or feel different at home compared to school?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Learning happens at home and at school differences children notice could be keys to increase your child's comfort with the uncomfortable but rewarding process of learning</em></div>"},
+      {"type": "question", "text": "Ask your child, \"When you go to a place you've never been before or meet people you've never met before, how do you tend to act?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anything, remind them of a specific time (like the first day at a new school, visiting a relative's house, or going to a new store) and ask what they remember doing.</em></div>"},
+      {"type": "question", "text": "Ask your child, \"What would help you feel comfortable in a new places or around new people?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tips for parents:</strong> If they say \"I don't know,\" try asking about specific things like \"Would it help to know what you're supposed to do?\" or \"What do you like to have nearby when you feel good?\"</em></div>"},
       {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child navigates different cultures, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Multicultural Navigation"}
     ]
   },
