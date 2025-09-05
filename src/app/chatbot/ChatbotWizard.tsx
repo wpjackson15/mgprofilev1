@@ -100,8 +100,8 @@ export default function ChatbotWizard({ user, setAnswers }: { user: any; setAnsw
     setInput("");
 
     if (step.type === "question") {
-      // Handle setup questions (like racial identity setup)
-      if (currentModuleData.module === "Racial Identity Setup") {
+      // Handle setup questions (like racial identity setup - first question in Racial Identity module)
+      if (currentModuleData.module === "Racial Identity" && currentStep === 0) {
         // Store the race in user context
         setUserContext(prev => ({ ...prev, race: text }));
         // Move to next step

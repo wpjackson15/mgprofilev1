@@ -43,14 +43,9 @@
     ]
   },
   {
-    "module": "Racial Identity Setup",
-    "steps": [
-      {"type": "question", "text": "What racial or ethnic identity would you like to discuss for your child? (e.g., Black, Hispanic, Asian, White, Mixed, Native American, etc.)"}
-    ]
-  },
-  {
     "module": "Racial Identity",
     "steps": [
+      {"type": "question", "text": "What racial or ethnic identity would you like to discuss for your child? (e.g., Black, Hispanic, Asian, White, Mixed, Native American, etc.)"},
       {"type": "question", "text": "Ask your child, \"What are some things you like about being {race}?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they say \"I don't know,\" try asking about specific things like \"What do you like about your hair?\" or \"What do you like about your family's traditions?\" or \"Is there anything special about being {race} that makes you feel good?\"</em></div>"},
       {"type": "question", "text": "Ask your child, \"Who are some {race} people you think are cool or that you look up to?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anyone, mention some people they might know from movies, sports, music, or books and ask what they think about them.</em></div>"},
       {"type": "question", "text": "Ask your child, \"What are some things your family does that feel special to you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle, ask about holidays, foods you eat together, music you listen to, or stories family members tell.</em></div>"},
