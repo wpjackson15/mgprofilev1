@@ -48,6 +48,10 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import json
 
+# Get city and state from command line arguments
+city = "${city}"
+state = "${state}"
+
 # Override settings for single city scraping
 settings = get_project_settings()
 settings.set('FEEDS', {
@@ -57,12 +61,12 @@ settings.set('FEEDS', {
     },
 })
 
-# Create spider instance with specific city
-spider = CommunityResourcesSpider()
-spider.start_urls = [f"https://www.google.com/search?q={city}+{state}+K-8+community+resources"]
+# Create spider class with specific city
+class CitySpider(CommunityResourcesSpider):
+    start_urls = [f"https://www.google.com/search?q={city}+{state}+K-8+community+resources"]
 
 process = CrawlerProcess(settings)
-process.crawl(spider)
+process.crawl(CitySpider)
 process.start()
 
 # Read results and output
@@ -81,7 +85,8 @@ except:
 
     // Run the scraper
     const scrapePromise = new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python3', [tempScriptPath], {
+      const pythonPath = path.join(scraperPath, 'venv', 'bin', 'python3');
+      const pythonProcess = spawn(pythonPath, [tempScriptPath], {
         cwd: scraperPath,
         stdio: ['pipe', 'pipe', 'pipe']
       });

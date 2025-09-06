@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef, useCallback, useMemo } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { saveUserProgress, loadUserProgress } from "@/services/firestore";
 import { SummaryHandoffService } from "@/services/summaryHandoffService";
@@ -46,6 +46,10 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
   const [awaitingSummaryConsent, setAwaitingSummaryConsent] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [userContext, setUserContext] = useState<Record<string, string>>({});
+  
+  // Memoize userContext to prevent infinite re-renders
+  const userContextString = JSON.stringify(userContext);
+  const stableUserContext = useMemo(() => userContext, [userContextString]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -60,9 +64,9 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
   // Replace dynamic placeholders in text with user context values
   const replaceDynamicText = useCallback((text: string): string => {
     return text.replace(/\{(\w+)\}/g, (match, key) => {
-      return userContext[key] || match; // Return the original placeholder if not found
+      return stableUserContext[key] || match; // Return the original placeholder if not found
     });
-  }, [userContext]);
+  }, [stableUserContext]);
 
   // Save progress to Firebase and localStorage
   const saveProgress = async (answersToSave: Record<string, string[]>, currentModuleIndex: number) => {
