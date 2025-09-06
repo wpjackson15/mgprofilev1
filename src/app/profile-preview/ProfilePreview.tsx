@@ -192,8 +192,37 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
         )}
       </div>
       
-      {/* Demarcation line at the bottom of the container */}
-      <div className="border-t border-gray-200 mt-2"></div>
+      {/* Email button at the bottom - only show if there are summaries */}
+      {Object.keys(grouped).length > 0 && (
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          {checkingAuth ? (
+            <button className="w-full px-4 py-2 bg-gray-300 rounded-lg text-gray-600 text-sm" disabled>
+              Checking login...
+            </button>
+          ) : user ? (
+            <button
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium text-sm"
+              onClick={handleEmailSummary}
+              disabled={isSending || success}
+            >
+              {isSending ? "Sending..." : success ? "Email Sent!" : "📧 Email Summary"}
+            </button>
+          ) : (
+            <div className="text-sm text-gray-600 text-center">Please log in to email your summary.</div>
+          )}
+          
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-2">
+              {error} <button className="underline ml-2" onClick={resetEmail}>Retry</button>
+            </div>
+          )}
+          {success && (
+            <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-2 text-center">
+              Email sent! Check your inbox.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 } 
