@@ -307,6 +307,7 @@ export interface SummaryV2 {
   profileId: string;
   runId: string;
   summary: ChildSummaryV1;
+  userId?: string; // Link to parent account
   tokens?: {
     input: number;
     output: number;
@@ -338,6 +339,16 @@ export async function getSummaryV2ByRunId(runId: string): Promise<SummaryV2 | nu
 export async function getSummariesV2ByProfileId(profileId: string): Promise<SummaryV2[]> {
   const collection = getCollection<SummaryV2>('summaries_v2');
   return await collection.find({ profileId }).sort({ createdAt: -1 }).toArray();
+}
+
+export async function getSummariesV2ByUserId(userId: string): Promise<SummaryV2[]> {
+  const collection = getCollection<SummaryV2>('summaries_v2');
+  return await collection.find({ userId }).sort({ createdAt: -1 }).toArray();
+}
+
+export async function getAllSummariesV2(): Promise<SummaryV2[]> {
+  const collection = getCollection<SummaryV2>('summaries_v2');
+  return await collection.find({}).sort({ createdAt: -1 }).toArray();
 }
 
 // Initialize indexes for summaries_v2 collection

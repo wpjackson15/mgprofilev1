@@ -28,7 +28,7 @@ interface ChatbotWizardProps {
 
 const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
   ({ user, setAnswers, clearChatSignal = 0, onModuleComplete }, ref) => {
-  const { generateSummary } = useModuleSummaries();
+  const { generateSummary, loadSummariesFromProgress } = useModuleSummaries();
   
 
   const [flow, setFlow] = useState<Module[]>([]);
@@ -60,11 +60,19 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
   // Save progress to Firebase and localStorage
   const saveProgress = async (answersToSave: Record<string, string[]>, currentModuleIndex: number) => {
+    // Extract child information from Interest Awareness module (steps 3 and 4)
+    const childNameAnswers = answersToSave["Interest Awareness-3"] || [];
+    const childName = childNameAnswers[0] || "";
+    const childPronounsAnswers = answersToSave["Interest Awareness-4"] || [];
+    const childPronounsText = childPronounsAnswers[0] || "";
+
     const progressData = {
       answers: answersToSave,
       lastStep: currentModuleIndex,
       currentModule: currentModuleIndex,
       updatedAt: new Date().toISOString(),
+      childName,
+      childPronouns: childPronounsText,
     };
 
     if (user) {
@@ -153,50 +161,126 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
   // Load conversation flow and user progress
   useEffect(() => {
+    let flowData: any[] = [];
+    
     fetch("/conversationFlow.json")
       .then((res) => res.json())
       .then((data) => {
+        flowData = data;
         setFlow(data);
-        // Start with the first question
-        if (data.length > 0 && data[0].steps.length > 0) {
-          const firstQuestion = replaceDynamicText(data[0].steps[0].text);
-          setMessages([
-            { sender: "bot", text: firstQuestion },
-          ]);
+        
+        // Load user progress if logged in
+        if (user) {
+          loadUserProgress(user.uid)
+            .then((progress) => {
+              if (progress) {
+                const loadedAnswers = progress.answers || {};
+                setLocalAnswers(loadedAnswers);
+                setAnswers(loadedAnswers); // Sync with parent
+                setCurrentModule(progress.lastStep || 0);
+                console.log("Loaded user progress from Firebase:", progress);
+                
+                // Reconstruct conversation history from loaded progress
+                reconstructConversationFromProgress(loadedAnswers, progress.lastStep || 0, data);
+                
+                // Load summaries from MongoDB
+                loadSummariesFromProgress(loadedAnswers, user.uid);
+              } else {
+                // No progress found, start with first question
+                if (data.length > 0 && data[0].steps.length > 0) {
+                  const firstQuestion = replaceDynamicText(data[0].steps[0].text);
+                  setMessages([
+                    { sender: "bot", text: firstQuestion },
+                  ]);
+                }
+              }
+            })
+            .catch((err) => {
+              console.warn("Failed to load user progress from Firebase, trying localStorage:", err);
+              // Fallback to localStorage
+              try {
+                const localProgress = localStorage.getItem(`mgp_profile_progress_${user.uid}`);
+                if (localProgress) {
+                  const parsed = JSON.parse(localProgress);
+                  const loadedAnswers = parsed.answers || {};
+                  setLocalAnswers(loadedAnswers);
+                  setAnswers(loadedAnswers); // Sync with parent
+                  setCurrentModule(parsed.lastStep || 0);
+                  console.log("Loaded user progress from localStorage:", parsed);
+                  
+                  // Reconstruct conversation history from loaded progress
+                  reconstructConversationFromProgress(loadedAnswers, parsed.lastStep || 0, data);
+                  
+                  // Load summaries from MongoDB
+                  loadSummariesFromProgress(loadedAnswers, user.uid);
+                } else {
+                  // No progress found, start with first question
+                  if (data.length > 0 && data[0].steps.length > 0) {
+                    const firstQuestion = replaceDynamicText(data[0].steps[0].text);
+                    setMessages([
+                      { sender: "bot", text: firstQuestion },
+                    ]);
+                  }
+                }
+              } catch (localErr) {
+                console.warn("LocalStorage fallback also failed:", localErr);
+                // Start with first question as fallback
+                if (data.length > 0 && data[0].steps.length > 0) {
+                  const firstQuestion = replaceDynamicText(data[0].steps[0].text);
+                  setMessages([
+                    { sender: "bot", text: firstQuestion },
+                  ]);
+                }
+              }
+            });
+        } else {
+          // No user, start with first question
+          if (data.length > 0 && data[0].steps.length > 0) {
+            const firstQuestion = replaceDynamicText(data[0].steps[0].text);
+            setMessages([
+              { sender: "bot", text: firstQuestion },
+            ]);
+          }
         }
       });
-
-    // Load user progress if logged in
-    if (user) {
-      loadUserProgress(user.uid)
-        .then((progress) => {
-          if (progress) {
-            const loadedAnswers = progress.answers || {};
-            setLocalAnswers(loadedAnswers);
-            setAnswers(loadedAnswers); // Sync with parent
-            setCurrentModule(progress.lastStep || 0);
-            console.log("Loaded user progress from Firebase:", progress);
-          }
-        })
-        .catch((err) => {
-          console.warn("Failed to load user progress from Firebase, trying localStorage:", err);
-          // Fallback to localStorage
-          try {
-            const localProgress = localStorage.getItem(`mgp_profile_progress_${user.uid}`);
-            if (localProgress) {
-              const parsed = JSON.parse(localProgress);
-              const loadedAnswers = parsed.answers || {};
-              setLocalAnswers(loadedAnswers);
-              setAnswers(loadedAnswers); // Sync with parent
-              setCurrentModule(parsed.lastStep || 0);
-              console.log("Loaded user progress from localStorage:", parsed);
-            }
-          } catch (localErr) {
-            console.warn("LocalStorage fallback also failed:", localErr);
-          }
-        });
-    }
   }, [user, setAnswers]);
+
+  // Reconstruct conversation history from loaded progress
+  const reconstructConversationFromProgress = (loadedAnswers: Record<string, string[]>, lastStep: number, flowData: any[]) => {
+    if (!flowData.length) return;
+    
+    const conversationMessages: Message[] = [];
+    
+    // Go through each module and step to rebuild the conversation
+    for (let moduleIndex = 0; moduleIndex <= lastStep && moduleIndex < flowData.length; moduleIndex++) {
+      const moduleData = flowData[moduleIndex];
+      
+      for (let stepIndex = 0; stepIndex < moduleData.steps.length; stepIndex++) {
+        const step = moduleData.steps[stepIndex];
+        const answerKey = `${moduleData.module}-${stepIndex}`;
+        const answers = loadedAnswers[answerKey] || [];
+        
+        // Add the bot's question
+        const questionText = replaceDynamicText(step.text);
+        conversationMessages.push({
+          sender: "bot",
+          text: questionText
+        });
+        
+        // Add the user's answers
+        answers.forEach(answer => {
+          conversationMessages.push({
+            sender: "user",
+            text: answer
+          });
+        });
+      }
+    }
+    
+    // Set the reconstructed conversation
+    setMessages(conversationMessages);
+    console.log("Reconstructed conversation with", conversationMessages.length, "messages");
+  };
 
   // Handle sending a message
   const sendMessage = (text: string) => {
@@ -245,7 +329,13 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
         if (moduleAnswers.length > 0) {
           setIsGeneratingSummary(true);
-          generateSummary(currentModuleData.module, moduleAnswers, user?.uid)
+          // Get child information from Interest Awareness module (steps 3 and 4)
+          const childNameAnswers = answers["Interest Awareness-3"] || [];
+          const childName = childNameAnswers[0] || "";
+          const childPronounsAnswers = answers["Interest Awareness-4"] || [];
+          const childPronouns = childPronounsAnswers[0] || "";
+          
+          generateSummary(currentModuleData.module, moduleAnswers, user?.uid, childName, childPronouns)
             .then(async (summaryText) => {
               // Handle Firebase-MongoDB handoff if user is logged in
               if (user?.uid && summaryText) {

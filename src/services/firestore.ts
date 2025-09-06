@@ -6,6 +6,12 @@ export interface ProfileProgress {
   lastStep: number;
   currentModule?: number;
   updatedAt: string;
+  // MongoDB integration fields
+  summaryIds?: string[]; // Array of MongoDB summary IDs
+  lastSummarySync?: string; // Last time summaries were synced to MongoDB
+  // Child information
+  childName?: string;
+  childPronouns?: string;
 }
 
 export interface StudentProfile {

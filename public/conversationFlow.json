@@ -5,7 +5,9 @@
       {"type": "question", "text": "Ask your child, \"What are 2–3 things you love or like to do?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If you both struggle to think of things, think about what they do all the time without anybody asking them to.</em></div>"},
       {"type": "question", "text": "Ask your child, \"What is it about those 2-3 things that you like them so much?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> This is trying to understand why children like what they like, but children tend to know the \"what about it\" rather than the \"why\" behind what they like.</em></div>"},
       {"type": "question", "text": "Ask your child, \"Do you have any new interests, hobbies, or likes?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If nothing comes up, ask them about something they'd like to try but haven't had a chance to try yet.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's interests, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Interest Awareness"}
+      {"type": "question", "text": "What is your child's name?"},
+      {"type": "question", "text": "What pronouns does your child use? (e.g., he/him, she/her, they/them, or other)"},
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Interest Awareness summary."}
     ]
   },
   {
@@ -14,7 +16,7 @@
       {"type": "question", "text": "Ask your child: \"When you really want to do something or finish something, but it's hard, what do you do to keep going?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Kids often come up with their own strategies — like looking up a video game hack, asking a friend, or taking a break. What does your child usually do?</em></div>"},
       {"type": "question", "text": "Ask your child: \"Where do you like to do your work or learn new things? What makes that place feel good to you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Notice if it's about the sound, the look, being outside, or who's there. This gives clues about the kind of learning environments that support your child.</em></div>"},
       {"type": "question", "text": "Ask your child: \"What is it about those places that makes you feel good to learn? What helps you in those spaces?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Understanding the why helps us see how your child supports their own learning — and how teachers can, too.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's can-do attitude, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Can Do Attitude"}
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Can Do Attitude summary."}
     ]
   },
   {
@@ -23,7 +25,7 @@
       {"type": "question", "text": "Ask your child, \"How do you act or feel different at home compared to school?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip for parents:</strong> Learning happens at home and at school differences children notice could be keys to increase your child's comfort with the uncomfortable but rewarding process of learning</em></div>"},
       {"type": "question", "text": "Ask your child, \"When you go to a place you've never been before or meet people you've never met before, how do you tend to act?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anything, remind them of a specific time (like the first day at a new school, visiting a relative's house, or going to a new store) and ask what they remember doing.</em></div>"},
       {"type": "question", "text": "Ask your child, \"What would help you feel comfortable in a new places or around new people?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tips for parents:</strong> If they say \"I don't know,\" try asking about specific things like \"Would it help to know what you're supposed to do?\" or \"What do you like to have nearby when you feel good?\"</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child navigates different cultures, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Multicultural Navigation"}
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Multicultural Navigation summary."}
     ]
   },
   {
@@ -32,7 +34,7 @@
       {"type": "question", "text": "Ask your child, \"How can you tell if someone - like a teacher, coach, or other kid - can be trusted?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle, ask about specific behaviors like \"Do they keep promises?\" or \"Do they listen when you talk?\" or \"How do they act when you're upset?\"</em></div>"},
       {"type": "question", "text": "Ask your child, \"What can somebody do to make or build trust with you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anything, remind them of someone they trust and ask \"What did that person do that made you feel good about them?\"</em></div>"},
       {"type": "question", "text": "Ask your child, \"How do you know you can't trust somebody or don't feel safe with them?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they hesitate, ask about feelings like \"Does something feel wrong in your stomach?\" or \"Do you want to stay away from them?\" Help them notice their own warning feelings.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored how your child builds trust, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Selective Trust"}
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Selective Trust summary."}
     ]
   },
   {
@@ -40,7 +42,7 @@
     "steps": [
       {"type": "question", "text": "Ask your child, \"How do they want to help their community?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they say \"I don't know,\" ask about problems they've noticed around them like \"What makes you sad when you see it?\" or \"What would you want to fix in our neighborhood?\"</em></div>"},
       {"type": "question", "text": "Ask your child, \"What do they want to do to make the world a better place?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle with this big question, start smaller by asking \"What bothers you that you see on TV, social media or hear adults talking about?\" or \"If you could change one thing, what would it be?\"</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's sense of social justice, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Social Justice"}
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Social Justice summary."}
     ]
   },
   {
@@ -50,7 +52,7 @@
       {"type": "question", "text": "Ask your child, \"What are some things you like about being {race}?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they say \"I don't know,\" try asking about specific things like \"What do you like about your hair?\" or \"What do you like about your family's traditions?\" or \"Is there anything special about being {race} that makes you feel good?\"</em></div>"},
       {"type": "question", "text": "Ask your child, \"Who are some {race} people you think are cool or that you look up to?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they can't think of anyone, mention some people they might know from movies, sports, music, or books and ask what they think about them.</em></div>"},
       {"type": "question", "text": "Ask your child, \"What are some things your family does that feel special to you?\"\n\n<div style=\"margin-top: 12px; padding: 8px; background-color: #f3f4f6; border-left: 3px solid #3b82f6; border-radius: 4px;\"><em><strong>Tip:</strong> If they struggle, ask about holidays, foods you eat together, music you listen to, or stories family members tell.</em></div>"},
-      {"type": "auto_summary", "text": "Perfect! Now that we've explored your child's racial identity, are you ready to see a summary of what we've learned? Type 'yes' to see the summary of your child's Racial Pride"}
+      {"type": "auto_summary", "text": "Type 'yes' to see your child's Racial Identity summary."}
     ]
   }
 ] 

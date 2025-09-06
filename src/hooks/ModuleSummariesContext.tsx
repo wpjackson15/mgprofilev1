@@ -9,9 +9,10 @@ interface ModuleSummary {
 
 interface ModuleSummariesContextType {
   summaries: ModuleSummary[];
-  generateSummary: (module: string, answers: string[]) => Promise<string>;
+  generateSummary: (module: string, answers: string[], userId?: string, childName?: string, childPronouns?: string) => Promise<string>;
   getModuleSummary: (module: string) => ModuleSummary | undefined;
   resetSummaries: () => void;
+  loadSummariesFromProgress: (answers: Record<string, string[]>, userId?: string) => Promise<void>;
 }
 
 const ModuleSummariesContext = createContext<ModuleSummariesContextType | undefined>(undefined);
@@ -19,7 +20,7 @@ const ModuleSummariesContext = createContext<ModuleSummariesContextType | undefi
 export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
   const [summaries, setSummaries] = useState<ModuleSummary[]>([]);
 
-  const generateSummary = useCallback(async (module: string, answers: string[]) => {
+  const generateSummary = useCallback(async (module: string, answers: string[], userId?: string, childName?: string, childPronouns?: string) => {
     // Always use functional setSummaries to avoid stale closure
     setSummaries(prev => {
       const newSummaries = [...prev];
@@ -39,11 +40,12 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
     });
 
     try {
-      // Generate unique IDs for V2 system
-      const profileId = `profile-${module}-${Date.now()}`;
+      // Generate unique IDs for V2 system - include userId for account linking
+      const userPrefix = userId ? `user-${userId}` : 'anonymous';
+      const profileId = `${userPrefix}-${module}-${Date.now()}`;
       const runId = `${profileId}-${Math.random().toString(36).substr(2, 9)}`;
       
-      console.log("Generating V2 summary for module:", module);
+      console.log("Generating V2 summary for module:", module, "for user:", userId);
       
       // Call server-side V2 API
       const response = await fetch("/api/v2/summary/generate", {
@@ -53,7 +55,10 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
           module,
           answers, 
           runId, 
-          profileId, 
+          profileId,
+          userId, // Include userId for account linking
+          childName,
+          childPronouns,
           includeDocuments: true 
         }),
       });
@@ -120,8 +125,47 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
     setSummaries([]);
   }, []);
 
+  const loadSummariesFromProgress = useCallback(async (answers: Record<string, string[]>, userId?: string) => {
+    if (!userId) return;
+    
+    try {
+      // Get all summaries for this user from MongoDB
+      const response = await fetch(`/api/v2/summaries?userId=${userId}`);
+      const data = await response.json();
+      
+      if (data.success && data.summaries) {
+        const loadedSummaries: ModuleSummary[] = [];
+        
+        // Process each summary from MongoDB
+        for (const summaryData of data.summaries) {
+          // Extract module name from profileId (format: user-{userId}-{module}-{timestamp})
+          const profileIdParts = summaryData.profileId.split('-');
+          if (profileIdParts.length >= 3) {
+            const module = profileIdParts[2]; // The module name
+            
+            // Get the summary text from the first section
+            const summaryText = summaryData.summary?.sections?.[Object.keys(summaryData.summary.sections)[0]]?.text || '';
+            
+            if (summaryText) {
+              loadedSummaries.push({
+                module,
+                summary: summaryText,
+                status: "completed"
+              });
+            }
+          }
+        }
+        
+        setSummaries(loadedSummaries);
+        console.log("Loaded summaries from progress:", loadedSummaries);
+      }
+    } catch (error) {
+      console.error("Failed to load summaries from progress:", error);
+    }
+  }, []);
+
   return (
-    <ModuleSummariesContext.Provider value={{ summaries, generateSummary, getModuleSummary, resetSummaries }}>
+    <ModuleSummariesContext.Provider value={{ summaries, generateSummary, getModuleSummary, resetSummaries, loadSummariesFromProgress }}>
       {children}
     </ModuleSummariesContext.Provider>
   );

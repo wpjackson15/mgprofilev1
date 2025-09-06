@@ -23,11 +23,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create V2 summarizer
+    // Create V2 summarizer with child information
     const summarizer = new ClaudeSummarizerV2({
       runId: body.runId,
       profileId: body.profileId,
       includeDocuments: false, // Temporarily disabled RAG to test performance
+      childName: body.childName,
+      childPronouns: body.childPronouns,
     });
 
     // Generate summary
@@ -49,8 +51,8 @@ export async function POST(request: NextRequest) {
     summary.meta.model = 'claude-sonnet-4-20250514';
     summary.meta.createdAt = new Date().toISOString();
 
-    // Store in database
-    const success = await summarizer.finalizeSummary(summary);
+    // Store in database with userId
+    const success = await summarizer.finalizeSummary(summary, undefined, body.userId);
     
     if (!success) {
       return NextResponse.json(

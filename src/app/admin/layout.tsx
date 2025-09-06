@@ -139,6 +139,28 @@ export default function AdminLayout({
                          <span>Test MongoDB</span>
                        </a>
                        <a
+                         href="/admin/summaries"
+                         className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 ${
+                           pathname === '/admin/summaries'
+                             ? 'bg-blue-100 text-blue-700'
+                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                         }`}
+                       >
+                         <FileText className="w-4 h-4" />
+                         <span>Parent Summaries</span>
+                       </a>
+                       <a
+                         href="/admin/handoff"
+                         className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 ${
+                           pathname === '/admin/handoff'
+                             ? 'bg-blue-100 text-blue-700'
+                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                         }`}
+                       >
+                         <Database className="w-4 h-4" />
+                         <span>Firebase-MongoDB Handoff</span>
+                       </a>
+                       <a
                          href="/admin/users"
                          className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 ${
                            pathname === '/admin/users'

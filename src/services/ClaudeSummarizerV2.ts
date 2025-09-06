@@ -11,6 +11,8 @@ interface SummarizerV2Options {
   profileId: string;
   model?: string;
   includeDocuments?: boolean;
+  childName?: string;
+  childPronouns?: string;
 }
 
 interface EvidenceByElement {
@@ -22,12 +24,16 @@ export class ClaudeSummarizerV2 {
   private profileId: string;
   private model: string;
   private includeDocuments: boolean;
+  private childName?: string;
+  private childPronouns?: string;
 
   constructor(options: SummarizerV2Options) {
     this.runId = options.runId;
     this.profileId = options.profileId;
     this.model = options.model || 'claude-sonnet-4-20250514';
     this.includeDocuments = options.includeDocuments || false;
+    this.childName = options.childName;
+    this.childPronouns = options.childPronouns;
   }
 
   /**
@@ -78,16 +84,35 @@ export class ClaudeSummarizerV2 {
    * Generate ultra-simple prompt based on module
    */
   private getElementSpecificPrompt(module: string): string {
+    const childName = this.childName || "this child";
+    const pronouns = this.childName ? this.getPronouns() : "they/them";
+    
     const prompts: Record<string, string> = {
-      [moduleDisplayNames.interestAwareness]: `Summarize this child's interests in 2-3 sentences for teachers.`,
-      [moduleDisplayNames.canDoAttitude]: `Summarize this child's persistence in 2-3 sentences for teachers.`,
-      [moduleDisplayNames.multiculturalNavigation]: `Summarize this child's adaptability in 2-3 sentences for teachers.`,
-      [moduleDisplayNames.selectiveTrust]: `Summarize this child's trust-building in 2-3 sentences for teachers.`,
-      [moduleDisplayNames.socialJustice]: `Summarize this child's community focus in 2-3 sentences for teachers.`,
-      [moduleDisplayNames.racialPride]: `Summarize this child's cultural connections in 2-3 sentences for teachers.`
+      [moduleDisplayNames.interestAwareness]: `Summarize ${childName}'s interests in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`,
+      [moduleDisplayNames.canDoAttitude]: `Summarize ${childName}'s persistence in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`,
+      [moduleDisplayNames.multiculturalNavigation]: `Summarize ${childName}'s adaptability in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`,
+      [moduleDisplayNames.selectiveTrust]: `Summarize ${childName}'s trust-building in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`,
+      [moduleDisplayNames.socialJustice]: `Summarize ${childName}'s community focus in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`,
+      [moduleDisplayNames.racialPride]: `Summarize ${childName}'s cultural connections in 2-3 sentences for teachers. Use ${childName}'s name and ${pronouns} pronouns throughout.`
     };
 
     return prompts[module] || prompts[moduleDisplayNames.interestAwareness];
+  }
+
+  /**
+   * Get pronouns in a readable format
+   */
+  private getPronouns(): string {
+    if (!this.childPronouns) return "they/them";
+    
+    // Convert common pronoun formats to readable format
+    const pronouns = this.childPronouns.toLowerCase();
+    if (pronouns.includes("he/him")) return "he/him";
+    if (pronouns.includes("she/her")) return "she/her";
+    if (pronouns.includes("they/them")) return "they/them";
+    
+    // Return the original if it doesn't match common patterns
+    return this.childPronouns;
   }
 
   /**
@@ -421,7 +446,7 @@ export class ClaudeSummarizerV2 {
   /**
    * Send summary to finalize endpoint
    */
-  async finalizeSummary(summary: ChildSummaryV1, tokens?: { input: number; output: number }): Promise<boolean> {
+  async finalizeSummary(summary: ChildSummaryV1, tokens?: { input: number; output: number }, userId?: string): Promise<boolean> {
     try {
       console.log("About to make Claude API call...");
       // For server-side calls, we can call the function directly instead of making an HTTP request
@@ -432,11 +457,12 @@ export class ClaudeSummarizerV2 {
         runId: this.runId,
         summary,
         tokens,
-        model: this.model
+        model: this.model,
+        userId // Include userId for account linking
       };
 
       const id = await saveSummaryV2(summaryData);
-      console.log('Summary saved with ID:', id);
+      console.log('Summary saved with ID:', id, 'for user:', userId);
       return true;
     } catch (error) {
       console.error('Failed to finalize summary:', error);

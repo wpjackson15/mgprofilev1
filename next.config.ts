@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  // Suppress hydration warnings from browser extensions
+  reactStrictMode: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't resolve Node.js modules on the client to prevent build errors
