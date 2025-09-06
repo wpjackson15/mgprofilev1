@@ -1,7 +1,7 @@
 "use client";
 import * as React from 'react';
 import Link from 'next/link';
-import { Home, TestTube, FileText, Filter, Search } from 'lucide-react';
+import { Home, TestTube, FileText, Search } from 'lucide-react';
 
 export default function TestRAGSystem() {
   const [testAnswers, setTestAnswers] = React.useState('');

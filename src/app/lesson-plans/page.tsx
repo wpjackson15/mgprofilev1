@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { LessonPlanGenerator } from '@/components/LessonPlanGenerator';
 import { ProfileUploadModal } from '@/components/ProfileUploadModal';
 import { StudentProfile } from '@/services/mongodb';
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
 
 export default function LessonPlansPage() {
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(new Set());

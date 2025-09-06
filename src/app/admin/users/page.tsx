@@ -1,7 +1,6 @@
 "use client";
 import * as React from 'react';
 import { getAllUserRoles, setUserRole, deleteUserRole, UserRoleRecord } from '@/lib/userRoleManager';
-import { canChangeUserRoles } from '@/lib/userRoleManager';
 import { getCurrentAdminUser } from '@/lib/adminAuth';
 import { UserRole, getRoleDisplayName, getRoleBadgeColor } from '@/lib/userRoles';
 import { Shield, UserPlus, Trash2, Edit, Save, X } from 'lucide-react';

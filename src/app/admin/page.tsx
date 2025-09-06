@@ -1,6 +1,6 @@
 "use client";
 import * as React from 'react';
-import { Shield, FileText, Users, BarChart3, Settings } from 'lucide-react';
+import { FileText, Users, BarChart3, Settings } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = React.useState({

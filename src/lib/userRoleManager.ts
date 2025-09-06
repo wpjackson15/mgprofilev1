@@ -1,5 +1,5 @@
 import { User } from 'firebase/auth';
-import { UserRole, UserPermissions, getUserPermissions } from './userRoles';
+import { UserRole } from './userRoles';
 
 // Database interface for user roles
 export interface UserRoleRecord {

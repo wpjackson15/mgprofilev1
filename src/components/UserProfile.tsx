@@ -1,6 +1,6 @@
 "use client";
 import { User } from 'firebase/auth';
-import { getUserUsage, hasPermission } from '@/lib/userRoles';
+import { getUserUsage } from '@/lib/userRoles';
 import UserRoleBadge from './UserRoleBadge';
 import { Crown, Zap, Lock, BarChart3 } from 'lucide-react';
 

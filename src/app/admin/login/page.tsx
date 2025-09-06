@@ -34,7 +34,7 @@ export default function AdminLogin() {
       } else {
         setError(result.error || 'Login failed');
       }
-    } catch (error) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

@@ -1,7 +1,6 @@
 import { ChildSummaryV1, BlackGeniusKey } from '../lib/schemas';
-import { lintNoPrescriptions } from '../lib/utils';
 import { metrics, V2_METRICS } from '../lib/metrics';
-import { getReferenceDocuments, searchReferenceDocuments } from './mongodb';
+import { searchReferenceDocuments } from './mongodb';
 import { moduleDisplayNames } from '../lib/moduleDisplayNames';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
@@ -290,8 +289,9 @@ export class ClaudeSummarizerV2 {
       return null;
     }
 
-    const evidenceByElement = this.buildEvidenceByElement(answers);
-    const documentContext = await this.getRelevantDocuments(answers);
+    // Note: Evidence and document context functionality available but not currently used
+    // const evidenceByElement = this.buildEvidenceByElement(answers);
+    // const documentContext = await this.getRelevantDocuments(answers);
 
     // Generate element-specific prompt based on module
     const systemPrompt = this.getElementSpecificPrompt(module);

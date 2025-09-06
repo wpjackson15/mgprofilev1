@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { X, Upload, FileText, Plus, User } from "lucide-react";
+import { X, Upload, Plus, User } from "lucide-react";
 import { StudentProfile } from "@/services/mongodb";
 
 interface ProfileUploadModalProps {

@@ -24,7 +24,6 @@ export default function HandoffManagement() {
   const [success, setSuccess] = useState<string | null>(null);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [validationResults, setValidationResults] = useState<Record<string, ValidationResult>>({});
-  const [selectedUserId, setSelectedUserId] = useState('');
 
   const handleSyncUser = async (userId: string) => {
     try {

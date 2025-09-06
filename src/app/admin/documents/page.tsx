@@ -41,7 +41,7 @@ export default function DocumentsAdmin() {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         setMessage('Document uploaded successfully!');
         setTitle('');
         setContent('');

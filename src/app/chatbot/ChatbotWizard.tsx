@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { saveUserProgress, loadUserProgress } from "@/services/firestore";
 import { SummaryHandoffService } from "@/services/summaryHandoffService";
@@ -20,15 +20,20 @@ interface Message {
   text: string;
 }
 
+interface User {
+  uid: string;
+  email?: string;
+}
+
 interface ChatbotWizardProps {
-  user: any;
+  user: User | null;
   setAnswers: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   clearChatSignal?: number;
   onModuleComplete?: (module: string, answers: string[]) => void;
 }
 
 const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
-  ({ user, setAnswers, clearChatSignal = 0, onModuleComplete }, ref) => {
+  ({ user, setAnswers, clearChatSignal = 0 }, ref) => {
   const { generateSummary, loadSummariesFromProgress } = useModuleSummaries();
   
 
@@ -53,11 +58,11 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
   };
 
   // Replace dynamic placeholders in text with user context values
-  const replaceDynamicText = (text: string): string => {
+  const replaceDynamicText = useCallback((text: string): string => {
     return text.replace(/\{(\w+)\}/g, (match, key) => {
       return userContext[key] || match; // Return the original placeholder if not found
     });
-  };
+  }, [userContext]);
 
   // Save progress to Firebase and localStorage
   const saveProgress = async (answersToSave: Record<string, string[]>, currentModuleIndex: number) => {
@@ -99,7 +104,7 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
   };
 
   // Clear all progress and reset chat
-  const clearChat = () => {
+  const clearChat = useCallback(() => {
     const emptyAnswers = {};
     setLocalAnswers(emptyAnswers);
     setAnswers(emptyAnswers);
@@ -139,7 +144,7 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
     }
     
     console.log("Chat cleared and reset");
-  };
+  }, [user, setAnswers, flow, replaceDynamicText]);
 
   // Expose clearChat function via ref
   useImperativeHandle(ref, () => ({
@@ -151,7 +156,7 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
     if (clearChatSignal > 0) {
       clearChat();
     }
-  }, [clearChatSignal]);
+  }, [clearChatSignal, clearChat]);
 
   useEffect(() => {
     scrollToBottom();
@@ -159,12 +164,46 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
   // Load conversation flow and user progress
   useEffect(() => {
-    let flowData: any[] = [];
+    // Reconstruct conversation history from loaded progress
+    const reconstructConversationFromProgress = (loadedAnswers: Record<string, string[]>, lastStep: number, flowData: Module[]) => {
+      if (!flowData.length) return;
+      
+      const conversationMessages: Message[] = [];
+      
+      // Go through each module and step to rebuild the conversation
+      for (let moduleIndex = 0; moduleIndex <= lastStep && moduleIndex < flowData.length; moduleIndex++) {
+        const moduleData = flowData[moduleIndex];
+        
+        for (let stepIndex = 0; stepIndex < moduleData.steps.length; stepIndex++) {
+          const step = moduleData.steps[stepIndex];
+          const answerKey = `${moduleData.module}-${stepIndex}`;
+          const answers = loadedAnswers[answerKey] || [];
+          
+          // Add the bot's question
+          const questionText = replaceDynamicText(step.text);
+          conversationMessages.push({
+            sender: "bot",
+            text: questionText
+          });
+          
+          // Add the user's answers
+          answers.forEach(answer => {
+            conversationMessages.push({
+              sender: "user",
+              text: answer
+            });
+          });
+        }
+      }
+      
+      // Set the reconstructed conversation
+      setMessages(conversationMessages);
+      console.log("Reconstructed conversation with", conversationMessages.length, "messages");
+    };
     
     fetch("/conversationFlow.json")
       .then((res) => res.json())
       .then((data) => {
-        flowData = data;
         setFlow(data);
         
         // Load user progress if logged in
@@ -241,44 +280,7 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
           }
         }
       });
-  }, [user, setAnswers]);
-
-  // Reconstruct conversation history from loaded progress
-  const reconstructConversationFromProgress = (loadedAnswers: Record<string, string[]>, lastStep: number, flowData: any[]) => {
-    if (!flowData.length) return;
-    
-    const conversationMessages: Message[] = [];
-    
-    // Go through each module and step to rebuild the conversation
-    for (let moduleIndex = 0; moduleIndex <= lastStep && moduleIndex < flowData.length; moduleIndex++) {
-      const moduleData = flowData[moduleIndex];
-      
-      for (let stepIndex = 0; stepIndex < moduleData.steps.length; stepIndex++) {
-        const step = moduleData.steps[stepIndex];
-        const answerKey = `${moduleData.module}-${stepIndex}`;
-        const answers = loadedAnswers[answerKey] || [];
-        
-        // Add the bot's question
-        const questionText = replaceDynamicText(step.text);
-        conversationMessages.push({
-          sender: "bot",
-          text: questionText
-        });
-        
-        // Add the user's answers
-        answers.forEach(answer => {
-          conversationMessages.push({
-            sender: "user",
-            text: answer
-          });
-        });
-      }
-    }
-    
-    // Set the reconstructed conversation
-    setMessages(conversationMessages);
-    console.log("Reconstructed conversation with", conversationMessages.length, "messages");
-  };
+  }, [user, setAnswers, loadSummariesFromProgress, replaceDynamicText]);
 
   // Handle sending a message
   const sendMessage = (text: string) => {

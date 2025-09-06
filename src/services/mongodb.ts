@@ -462,7 +462,7 @@ export async function saveUserRole(roleRecord: UserRoleRecord): Promise<string> 
   
   if (existing) {
     // Update existing role
-    const result = await collection.updateOne(
+    await collection.updateOne(
       { email: roleRecord.email },
       { 
         $set: { 

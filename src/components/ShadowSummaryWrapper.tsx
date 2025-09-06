@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useShadowSummary } from '../hooks/useShadowSummary';
-import { isFeatureEnabled } from '../lib/flags';
 
 interface ShadowSummaryWrapperProps {
   profileId: string;

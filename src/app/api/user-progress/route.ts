@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Upsert: update if exists, insert if not
-    const result = await collection.updateOne(
+    await collection.updateOne(
       { userId, moduleId },
       { $set: progressData },
       { upsert: true }

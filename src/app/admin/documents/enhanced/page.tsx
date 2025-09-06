@@ -1,7 +1,7 @@
 "use client";
 import * as React from 'react';
 import Link from 'next/link';
-import { Home, Search, Filter, SortAsc, SortDesc, Tag, Calendar, User, Edit, Trash2, Eye, Download } from 'lucide-react';
+import { Home, Search, Filter, SortAsc, SortDesc, Tag, Calendar, User, Edit, Trash2, Eye } from 'lucide-react';
 
 interface Document {
   id: string;

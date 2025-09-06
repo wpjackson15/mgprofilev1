@@ -6,7 +6,7 @@ import { getUserRole } from '@/lib/userRoles';
 import UserRoleBadge from '@/components/UserRoleBadge';
 
 export default function AdminTest() {
-  const [adminUser, setAdminUser] = React.useState(getCurrentAdminUser());
+  const [adminUser] = React.useState(getCurrentAdminUser());
   const [userRole, setUserRole] = React.useState<string>('Loading...');
   const [loading, setLoading] = React.useState(true);
 
@@ -16,7 +16,7 @@ export default function AdminTest() {
         try {
           const role = await getUserRole(adminUser);
           setUserRole(role);
-        } catch (error) {
+        } catch {
           setUserRole('Error loading role');
         }
       } else {

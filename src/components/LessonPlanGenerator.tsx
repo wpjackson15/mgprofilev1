@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { BookOpen, Loader2, FileText } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 import { LessonPlanDisplay } from './LessonPlanDisplay';
 import { GRADE_OPTIONS, SUBJECT_OPTIONS, STATE_OPTIONS, OUTPUT_FORMAT_OPTIONS, type LessonSettings, type LessonPlanFormData } from '@/lib/lessonPlanConstants';
 import { StudentProfile, LessonPlan } from '@/services/mongodb';
@@ -250,25 +250,26 @@ Format the response as JSON with the following structure:
     }));
   };
 
-  const updateCalesCriteria = (key: string, value: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      calesCriteria: {
-        ...prev.calesCriteria,
-        [key]: value
-      }
-    }));
-  };
+  // Note: These functions are available for future CALES criteria functionality
+  // const updateCalesCriteria = (key: string, value: boolean) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     calesCriteria: {
+  //       ...prev.calesCriteria,
+  //       [key]: value
+  //     }
+  //   }));
+  // };
 
-  const toggleAllCalesCriteria = (value: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      calesCriteria: Object.keys(prev.calesCriteria).reduce((acc, key) => ({
-        ...acc,
-        [key]: value
-      }), {} as Record<string, boolean>)
-    }));
-  };
+  // const toggleAllCalesCriteria = (value: boolean) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     calesCriteria: Object.keys(prev.calesCriteria).reduce((acc, key) => ({
+  //       ...acc,
+  //       [key]: value
+  //     }), {} as Record<string, boolean>)
+  //   }));
+  // };
 
   return (
     <div className="space-y-6">

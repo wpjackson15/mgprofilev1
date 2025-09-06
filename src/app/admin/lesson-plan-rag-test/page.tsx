@@ -1,7 +1,7 @@
 "use client";
 import * as React from 'react';
 import Link from 'next/link';
-import { Home, BookOpen, TestTube, CheckCircle, XCircle } from 'lucide-react';
+import { Home, BookOpen, CheckCircle, XCircle } from 'lucide-react';
 
 export default function LessonPlanRAGTest() {
   const [testResults, setTestResults] = React.useState<any>(null);

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAllUserRoles } from '@/lib/userRoleManager';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const users = await getAllUserRoles();
     return NextResponse.json(users);
