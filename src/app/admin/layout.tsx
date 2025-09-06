@@ -1,7 +1,7 @@
 "use client";
 import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Shield, FileText, Filter, TestTube, BookOpen, Database, Users, LogOut } from 'lucide-react';
+import { Shield, FileText, Filter, TestTube, BookOpen, Database, Users, LogOut, Globe } from 'lucide-react';
 import { onAdminAuthStateChanged, signOutAdmin, getCurrentAdminUser } from '@/lib/adminAuth';
 import UserRoleBadge from '@/components/UserRoleBadge';
 
@@ -159,6 +159,17 @@ export default function AdminLayout({
                        >
                          <Database className="w-4 h-4" />
                          <span>Firebase-MongoDB Handoff</span>
+                       </a>
+                       <a
+                         href="/admin/resources"
+                         className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 ${
+                           pathname === '/admin/resources'
+                             ? 'bg-blue-100 text-blue-700'
+                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                         }`}
+                       >
+                         <Globe className="w-4 h-4" />
+                         <span>Resource Cache</span>
                        </a>
                        <a
                          href="/admin/users"

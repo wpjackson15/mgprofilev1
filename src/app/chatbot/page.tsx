@@ -23,6 +23,7 @@ interface ChatbotContentProps {
   resources: Resource[];
   resourcesLoading: boolean;
   resourcesError: string | null;
+  isScraping: boolean;
   isProfileComplete: boolean;
   showResourceForm: boolean;
   resourcePreferences: { grade: string; location: string } | null;
@@ -49,6 +50,7 @@ function ChatbotContent({
   resources,
   resourcesLoading,
   resourcesError,
+  isScraping,
   isProfileComplete,
   showResourceForm,
   resourcePreferences,
@@ -238,7 +240,17 @@ function ChatbotContent({
                     </div>
                     <h3 className="text-lg font-semibold mb-4 text-green-700">Recommended Local Resources</h3>
                     {resourcesLoading ? (
-                      <div className="text-gray-500 text-sm text-center py-8">Loading resources...</div>
+                      <div className="text-gray-500 text-sm text-center py-8">
+                        {isScraping ? (
+                          <div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p>🔍 Scraping local resources for {resourcePreferences?.location}...</p>
+                            <p className="text-xs text-gray-400 mt-1">This may take 30-60 seconds</p>
+                          </div>
+                        ) : (
+                          "Loading resources..."
+                        )}
+                      </div>
                     ) : resourcesError ? (
                       <div className="text-red-500 text-sm text-center py-8">{resourcesError}</div>
                     ) : resources.length === 0 ? (
@@ -307,7 +319,7 @@ export default function ChatbotPage() {
   const [resourcePreferences, setResourcePreferences] = React.useState<{ grade: string; location: string } | null>(null);
   const [showResourceForm, setShowResourceForm] = React.useState(false);
   const chatbotRef = React.useRef<{ clearChat: () => void } | null>(null);
-  const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
+  const { resources, loading: resourcesLoading, error: resourcesError, isScraping, fetchResourcesForCity } = useResourceMatches();
 
   // Filter resources based on preferences
   const filteredResources = React.useMemo(() => {
@@ -387,9 +399,17 @@ export default function ChatbotPage() {
     setTimeout(() => setClearChatSignal((sig) => sig + 1), 0);
   };
 
-  const handleResourcePreferencesSubmit = (preferences: { grade: string; location: string }) => {
+  const handleResourcePreferencesSubmit = async (preferences: { grade: string; location: string }) => {
     setResourcePreferences(preferences);
     setShowResourceForm(false);
+    
+    // Extract city and state from location (assuming format like "Atlanta, GA")
+    const [city, state] = preferences.location.split(',').map(s => s.trim());
+    
+    if (city && state) {
+      // Fetch resources for this specific city
+      await fetchResourcesForCity(city, state);
+    }
   };
 
   const handleResourcePreferencesSkip = () => {
@@ -413,6 +433,7 @@ export default function ChatbotPage() {
         resources={filteredResources}
         resourcesLoading={resourcesLoading}
         resourcesError={resourcesError}
+        isScraping={isScraping}
         isProfileComplete={isProfileComplete}
         showResourceForm={showResourceForm}
         resourcePreferences={resourcePreferences}

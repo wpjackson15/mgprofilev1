@@ -34,23 +34,74 @@ export interface Resource {
   accreditation: string | null;
 }
 
-export function useResourceMatches() {
+export function useResourceMatches(city?: string, state?: string) {
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isScraping, setIsScraping] = useState(false);
 
-  useEffect(() => {
-    fetch("/improved_results.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setResources(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load resources");
-        setLoading(false);
+  // Function to fetch resources for a specific city
+  const fetchResourcesForCity = async (cityName: string, stateName: string) => {
+    setLoading(true);
+    setError(null);
+    setIsScraping(false);
+
+    try {
+      const response = await fetch('/api/v2/resources/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          city: cityName,
+          state: stateName
+        }),
       });
-  }, []);
 
-  return { resources, loading, error };
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch resources');
+      }
+
+      setResources(data.resources);
+      
+      if (!data.cached) {
+        setIsScraping(true);
+        // Hide scraping indicator after a short delay
+        setTimeout(() => setIsScraping(false), 2000);
+      }
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to load resources');
+      setResources([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load default resources if no city/state specified
+  useEffect(() => {
+    if (!city || !state) {
+      setLoading(true);
+      fetch("/improved_results.json")
+        .then((res) => res.json())
+        .then((data) => {
+          setResources(data);
+          setLoading(false);
+        })
+        .catch(() => {
+          setError("Failed to load default resources");
+          setLoading(false);
+        });
+    }
+  }, [city, state]);
+
+  return { 
+    resources, 
+    loading, 
+    error, 
+    isScraping,
+    fetchResourcesForCity 
+  };
 } 
