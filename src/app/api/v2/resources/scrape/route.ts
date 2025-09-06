@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedResources, saveCachedResources, getCacheStatus } from '@/services/resourceCache';
+import { connectToMongoDB } from '@/services/mongodb';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
@@ -15,8 +16,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Connect to MongoDB
+    await connectToMongoDB();
+
     // Check if we already have cached resources for this city
-    const cachedResources = getCachedResources(city, state);
+    const cachedResources = await getCachedResources(city, state);
     if (cachedResources) {
       console.log(`Returning ${cachedResources.length} cached resources for ${city}, ${state}`);
       return NextResponse.json({
@@ -130,7 +134,7 @@ except:
     }));
 
     // Save to cache
-    saveCachedResources(city, state, processedResources);
+    await saveCachedResources(city, state, processedResources);
 
     return NextResponse.json({
       success: true,
@@ -164,9 +168,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Connect to MongoDB
+    await connectToMongoDB();
+
     // Check cache status
-    const cacheStatus = getCacheStatus(city, state);
-    const cachedResources = getCachedResources(city, state);
+    const cacheStatus = await getCacheStatus(city, state);
+    const cachedResources = await getCachedResources(city, state);
 
     return NextResponse.json({
       success: true,

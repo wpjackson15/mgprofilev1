@@ -318,6 +318,50 @@ export interface SummaryV2 {
   updatedAt: Date;
 }
 
+export interface Resource {
+  name: string;
+  description: string | null;
+  url: string;
+  source: string;
+  scraped_at: string;
+  category: string;
+  subcategory: string | null;
+  tags: string[];
+  age_min: number;
+  age_max: number;
+  grade_min: string;
+  grade_max: string;
+  location: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  cost_range: string;
+  cost_details: string | null;
+  availability: string;
+  program_type: string;
+  schedule: string | null;
+  duration: string | null;
+  cultural_focus: string;
+  identity_support: string[];
+  reviews: string | null;
+  rating: string | null;
+  accreditation: string | null;
+}
+
+export interface ResourceCache {
+  _id?: ObjectId;
+  city: string;
+  state: string;
+  resources: Resource[];
+  scrapedAt: Date;
+  expiresAt: Date;
+  resourceCount: number;
+}
+
 export async function saveSummaryV2(summary: SummaryV2): Promise<string> {
   const collection = getCollection<SummaryV2>('summaries_v2');
   
@@ -499,4 +543,98 @@ export async function deleteUserRoleByEmail(email: string): Promise<void> {
 export async function getRoleChangeHistory(email: string): Promise<UserRoleRecord[]> {
   const collection = getCollection<UserRoleRecord>('userRoles');
   return await collection.find({ email: email.toLowerCase() }).sort({ updatedAt: -1 }).toArray();
+}
+
+// Resource Cache Functions
+export async function getCachedResources(city: string, state: string): Promise<Resource[] | null> {
+  const collection = getCollection<ResourceCache>('resourceCache');
+  
+  const cache = await collection.findOne({ 
+    city: city.toLowerCase(), 
+    state: state.toLowerCase() 
+  });
+  
+  if (!cache) {
+    return null;
+  }
+  
+  // Check if cache is expired
+  const now = new Date();
+  if (now > cache.expiresAt) {
+    // Cache expired, delete it
+    await collection.deleteOne({ _id: cache._id });
+    return null;
+  }
+  
+  return cache.resources;
+}
+
+export async function saveCachedResources(city: string, state: string, resources: Resource[]): Promise<void> {
+  const collection = getCollection<ResourceCache>('resourceCache');
+  
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+  
+  const cache: ResourceCache = {
+    city: city.toLowerCase(),
+    state: state.toLowerCase(),
+    resources,
+    scrapedAt: now,
+    expiresAt,
+    resourceCount: resources.length
+  };
+  
+  // Use upsert to update existing cache or create new one
+  await collection.replaceOne(
+    { city: city.toLowerCase(), state: state.toLowerCase() },
+    cache,
+    { upsert: true }
+  );
+}
+
+export async function getCacheStatus(city: string, state: string): Promise<{ exists: boolean; expiresAt?: string; resourceCount?: number }> {
+  const collection = getCollection<ResourceCache>('resourceCache');
+  
+  const cache = await collection.findOne({ 
+    city: city.toLowerCase(), 
+    state: state.toLowerCase() 
+  });
+  
+  if (!cache) {
+    return { exists: false };
+  }
+  
+  const now = new Date();
+  if (now > cache.expiresAt) {
+    return { exists: false };
+  }
+  
+  return {
+    exists: true,
+    expiresAt: cache.expiresAt.toISOString(),
+    resourceCount: cache.resourceCount
+  };
+}
+
+export async function listCachedCities(): Promise<Array<{ city: string; state: string; resourceCount: number; scrapedAt: string; expiresAt: string }>> {
+  const collection = getCollection<ResourceCache>('resourceCache');
+  
+  const caches = await collection.find({}).sort({ scrapedAt: -1 }).toArray();
+  
+  return caches.map(cache => ({
+    city: cache.city,
+    state: cache.state,
+    resourceCount: cache.resourceCount,
+    scrapedAt: cache.scrapedAt.toISOString(),
+    expiresAt: cache.expiresAt.toISOString()
+  }));
+}
+
+export async function clearExpiredCaches(): Promise<number> {
+  const collection = getCollection<ResourceCache>('resourceCache');
+  
+  const now = new Date();
+  const result = await collection.deleteMany({ expiresAt: { $lt: now } });
+  
+  return result.deletedCount || 0;
 }

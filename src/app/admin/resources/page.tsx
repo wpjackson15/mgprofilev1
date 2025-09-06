@@ -19,7 +19,7 @@ export default function ResourceCacheAdmin() {
   const loadCachedCities = async () => {
     try {
       setLoading(true);
-      const cities = listCachedCities();
+      const cities = await listCachedCities();
       setCachedCities(cities);
     } catch (error) {
       console.error("Error loading cached cities:", error);
@@ -31,9 +31,9 @@ export default function ResourceCacheAdmin() {
   const handleClearExpired = async () => {
     try {
       setClearing(true);
-      const clearedCount = clearExpiredCaches();
+      const clearedCount = await clearExpiredCaches();
       await loadCachedCities();
-      alert(`Cleared ${clearedCount} expired cache files`);
+      alert(`Cleared ${clearedCount} expired cache entries`);
     } catch (error) {
       console.error("Error clearing expired caches:", error);
       alert("Error clearing expired caches");
@@ -170,7 +170,7 @@ export default function ResourceCacheAdmin() {
                 <li>System checks cache first - if found, returns immediately</li>
                 <li>If not cached, runs scraper for that specific city</li>
                 <li>Results are cached for 30 days for future users</li>
-                <li>Cache files are stored in <code className="bg-gray-200 px-1 rounded">public/resource-cache/</code></li>
+                <li>Cache entries are stored in MongoDB <code className="bg-gray-200 px-1 rounded">resourceCache</code> collection</li>
               </ul>
             </div>
           </div>
