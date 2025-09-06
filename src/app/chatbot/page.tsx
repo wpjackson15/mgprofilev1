@@ -9,6 +9,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { MessageCircle, User as UserIcon, RotateCcw } from "lucide-react";
 import { useResourceMatches, type Resource } from "@/hooks/useResourceMatches";
+import ResourcePreferencesForm from "@/components/ResourcePreferencesForm";
 
 interface ChatbotContentProps {
   answers: Record<string, string[]>;
@@ -22,6 +23,12 @@ interface ChatbotContentProps {
   resources: Resource[];
   resourcesLoading: boolean;
   resourcesError: string | null;
+  isProfileComplete: boolean;
+  showResourceForm: boolean;
+  resourcePreferences: { grade: string; location: string } | null;
+  onShowResourceForm: () => void;
+  onResourcePreferencesSubmit: (preferences: { grade: string; location: string }) => void;
+  onResourcePreferencesSkip: () => void;
   onStart: () => void;
   onClearChat: () => void;
   onQuickClear: () => void;
@@ -42,6 +49,12 @@ function ChatbotContent({
   resources,
   resourcesLoading,
   resourcesError,
+  isProfileComplete,
+  showResourceForm,
+  resourcePreferences,
+  onShowResourceForm,
+  onResourcePreferencesSubmit,
+  onResourcePreferencesSkip,
   onStart,
   onClearChat,
   onQuickClear,
@@ -191,43 +204,92 @@ function ChatbotContent({
               </div>
             </div>
 
-            {/* Recommended Resources Section - Spans across bottom */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-center text-sm font-medium">
-                When you finish, you&apos;ll unlock local resources matched to your child&apos;s Genius Profile!
-              </div>
-              <h3 className="text-lg font-semibold mb-4 text-green-700">Recommended Local Resources</h3>
-              {resourcesLoading ? (
-                <div className="text-gray-500 text-sm text-center py-8">Loading resources...</div>
-              ) : resourcesError ? (
-                <div className="text-red-500 text-sm text-center py-8">{resourcesError}</div>
-              ) : resources.length === 0 ? (
-                <div className="text-gray-500 text-sm text-center py-8">No matches yet. Complete your profile to unlock local resources!</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {resources.slice(0, 6).map((res) => (
-                    <div key={res.url} className="border border-gray-200 rounded-lg p-4 bg-green-50 hover:bg-green-100 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-green-900 text-sm">{res.name}</span>
-                        <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">{res.category}</span>
-                      </div>
-                      <div className="text-gray-700 text-xs mb-2 line-clamp-2">{res.description}</div>
-                      <div className="text-xs text-gray-500 mb-2">
-                        {res.city && res.state ? `${res.city}, ${res.state}` : ""}
-                      </div>
-                      <Link
-                        href={res.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block text-green-700 underline text-xs hover:text-green-800"
-                      >
-                        Visit Website
-                      </Link>
+            {/* Recommended Resources Section - Only show after profile completion */}
+            {isProfileComplete && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                {!resourcePreferences && !showResourceForm ? (
+                  // Show initial completion message with button to get resources
+                  <div className="text-center py-8">
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-center text-sm font-medium">
+                      🎉 Profile Complete! Ready to find resources for your child?
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <h3 className="text-lg font-semibold mb-4 text-green-700">Get Personalized Resource Recommendations</h3>
+                    <p className="text-gray-600 text-sm mb-6">
+                      Tell us your child's grade and location to see the most relevant local resources.
+                    </p>
+                    <button
+                      onClick={onShowResourceForm}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    >
+                      Find My Resources
+                    </button>
+                  </div>
+                ) : showResourceForm ? (
+                  // Show the preferences form
+                  <ResourcePreferencesForm
+                    onSubmit={onResourcePreferencesSubmit}
+                    onSkip={onResourcePreferencesSkip}
+                  />
+                ) : (
+                  // Show filtered resources
+                  <>
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-center text-sm font-medium">
+                      🎯 Resources for Grade {resourcePreferences?.grade} in {resourcePreferences?.location}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-4 text-green-700">Recommended Local Resources</h3>
+                    {resourcesLoading ? (
+                      <div className="text-gray-500 text-sm text-center py-8">Loading resources...</div>
+                    ) : resourcesError ? (
+                      <div className="text-red-500 text-sm text-center py-8">{resourcesError}</div>
+                    ) : resources.length === 0 ? (
+                      <div className="text-gray-500 text-sm text-center py-8">
+                        No resources found for your criteria. Try adjusting your location or grade.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {resources.slice(0, 6).map((res) => (
+                            <div key={res.url} className="border border-gray-200 rounded-lg p-4 bg-green-50 hover:bg-green-100 transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-semibold text-green-900 text-sm">{res.name}</span>
+                                <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">{res.category}</span>
+                              </div>
+                              <div className="text-gray-700 text-xs mb-2 line-clamp-2">{res.description}</div>
+                              <div className="text-xs text-gray-500 mb-2">
+                                {res.city && res.state ? `${res.city}, ${res.state}` : ""}
+                              </div>
+                              <Link
+                                href={res.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block text-green-700 underline text-xs hover:text-green-800"
+                              >
+                                Visit Website
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                        {resources.length > 6 && (
+                          <div className="mt-4 text-center">
+                            <button className="text-green-600 hover:text-green-800 text-sm font-medium underline">
+                              View All {resources.length} Resources
+                            </button>
+                          </div>
+                        )}
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={onShowResourceForm}
+                            className="text-gray-600 hover:text-gray-800 text-sm underline"
+                          >
+                            Change preferences
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -242,8 +304,46 @@ export default function ChatbotPage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [clearChatSignal, setClearChatSignal] = React.useState(0);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const [resourcePreferences, setResourcePreferences] = React.useState<{ grade: string; location: string } | null>(null);
+  const [showResourceForm, setShowResourceForm] = React.useState(false);
   const chatbotRef = React.useRef<{ clearChat: () => void } | null>(null);
   const { resources, loading: resourcesLoading, error: resourcesError } = useResourceMatches();
+
+  // Filter resources based on preferences
+  const filteredResources = React.useMemo(() => {
+    if (!resources || !resourcePreferences) return resources || [];
+    
+    return resources.filter((resource) => {
+      // Filter by grade/age
+      if (resourcePreferences.grade) {
+        const gradeNum = parseInt(resourcePreferences.grade);
+        const resourceAgeMin = resource.age_min || 5;
+        const resourceAgeMax = resource.age_max || 14;
+        
+        // Check if the grade falls within the resource's age range
+        // Rough conversion: K=5, 1st=6, 2nd=7, etc.
+        const childAge = gradeNum === 0 ? 5 : gradeNum + 5; // K=5, 1st=6, etc.
+        
+        if (childAge < resourceAgeMin || childAge > resourceAgeMax) {
+          return false;
+        }
+      }
+      
+      // Filter by location (simple string matching)
+      if (resourcePreferences.location && resource.city && resource.state) {
+        const locationLower = resourcePreferences.location.toLowerCase();
+        const cityLower = resource.city.toLowerCase();
+        const stateLower = resource.state.toLowerCase();
+        
+        // Check if location contains city or state
+        if (!locationLower.includes(cityLower) && !locationLower.includes(stateLower)) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [resources, resourcePreferences]);
 
   React.useEffect(() => {
     // Check localStorage for prior acceptance
@@ -281,9 +381,23 @@ export default function ChatbotPage() {
     // Immediate state reset for better UX
     setAnswers({});
     setShowConfirm(false);
+    setResourcePreferences(null);
+    setShowResourceForm(false);
     // Trigger clear with minimal delay
     setTimeout(() => setClearChatSignal((sig) => sig + 1), 0);
   };
+
+  const handleResourcePreferencesSubmit = (preferences: { grade: string; location: string }) => {
+    setResourcePreferences(preferences);
+    setShowResourceForm(false);
+  };
+
+  const handleResourcePreferencesSkip = () => {
+    setShowResourceForm(false);
+  };
+
+  // Check if profile is complete (has answers)
+  const isProfileComplete = Object.keys(answers).length > 0;
 
   return (
     <ModuleSummariesProvider>
@@ -296,9 +410,15 @@ export default function ChatbotPage() {
         clearChatSignal={clearChatSignal}
         showConfirm={showConfirm}
         chatbotRef={chatbotRef}
-        resources={resources}
+        resources={filteredResources}
         resourcesLoading={resourcesLoading}
         resourcesError={resourcesError}
+        isProfileComplete={isProfileComplete}
+        showResourceForm={showResourceForm}
+        resourcePreferences={resourcePreferences}
+        onShowResourceForm={() => setShowResourceForm(true)}
+        onResourcePreferencesSubmit={handleResourcePreferencesSubmit}
+        onResourcePreferencesSkip={handleResourcePreferencesSkip}
         onStart={handleStart}
         onClearChat={handleClearChat}
         onQuickClear={handleQuickClear}

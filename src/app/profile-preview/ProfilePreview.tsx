@@ -4,6 +4,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEmailSender } from "@/hooks/useEmailSender";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
+import { useResourceMatches } from "@/hooks/useResourceMatches";
 import ModuleProgressBar from "@/components/ModuleProgressBar";
 
 interface ProfilePreviewProps {
@@ -11,7 +12,7 @@ interface ProfilePreviewProps {
   onClearChat?: () => void;
 }
 
-function generateLLMSummaryEmail(summaries: { module: string; summary: string }[], answers: Record<string, string[]>) {
+function generateLLMSummaryEmail(summaries: { module: string; summary: string }[], answers: Record<string, string[]>, resources: any[] = []) {
   let email = "My Genius Profile (LLM Summaries)\n\n";
   summaries.forEach(({ module, summary }) => {
     if (summary && summary.trim()) {
@@ -19,6 +20,31 @@ function generateLLMSummaryEmail(summaries: { module: string; summary: string }[
       email += summary + "\n\n";
     }
   });
+  
+  // Add recommended resources section
+  if (resources.length > 0) {
+    email += "\n\n--- Recommended Local Resources ---\n";
+    email += "Based on your child's profile, here are some local resources that might be helpful:\n\n";
+    
+    resources.slice(0, 5).forEach((resource, index) => {
+      email += `${index + 1}. ${resource.name}\n`;
+      if (resource.description) {
+        email += `   ${resource.description}\n`;
+      }
+      if (resource.city && resource.state) {
+        email += `   Location: ${resource.city}, ${resource.state}\n`;
+      }
+      if (resource.cost_range) {
+        email += `   Cost: ${resource.cost_range.replace('_', ' ')}\n`;
+      }
+      email += `   Website: ${resource.url}\n\n`;
+    });
+    
+    if (resources.length > 5) {
+      email += `... and ${resources.length - 5} more resources available in your profile!\n\n`;
+    }
+  }
+  
   if (Object.keys(answers).length > 0) {
     email += "\n\n--- Appendix: Raw Responses ---\n";
     Object.entries(answers).forEach(([key, value]) => {
@@ -40,6 +66,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const { summaries, generateSummary } = useModuleSummaries();
+  const { resources } = useResourceMatches();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -88,7 +115,7 @@ export default function ProfilePreview({ answers }: ProfilePreviewProps) {
   });
 
   const handleEmailSummary = async () => {
-    const summaryText = generateLLMSummaryEmail(summaries, answers);
+    const summaryText = generateLLMSummaryEmail(summaries, answers, resources);
     await send({
       to: user?.email || "",
       subject: "Your Genius Profile Summary",
