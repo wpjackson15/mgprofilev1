@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { useModuleSummaries } from "@/hooks/ModuleSummariesContext";
 import { saveUserProgress, loadUserProgress } from "@/services/firestore";
-import { handleSummaryHandoff } from "@/services/firebaseMongoHandoff";
+import { SummaryHandoffService } from "@/services/summaryHandoffService";
+import { extractChildInfo } from "@/lib/chatbotUtils";
 
 interface Step {
   type: "question" | "offer_summary";
@@ -60,11 +61,8 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
   // Save progress to Firebase and localStorage
   const saveProgress = async (answersToSave: Record<string, string[]>, currentModuleIndex: number) => {
-    // Extract child information from Interest Awareness module (steps 3 and 4)
-    const childNameAnswers = answersToSave["Interest Awareness-3"] || [];
-    const childName = childNameAnswers[0] || "";
-    const childPronounsAnswers = answersToSave["Interest Awareness-4"] || [];
-    const childPronounsText = childPronounsAnswers[0] || "";
+    // Extract child information using utility function
+    const { name: childName, pronouns: childPronounsText } = extractChildInfo(answersToSave);
 
     const progressData = {
       answers: answersToSave,
@@ -329,57 +327,21 @@ const ChatbotWizard = forwardRef<{ clearChat: () => void }, ChatbotWizardProps>(
 
         if (moduleAnswers.length > 0) {
           setIsGeneratingSummary(true);
-          // Get child information from Interest Awareness module (steps 3 and 4)
-          const childNameAnswers = answers["Interest Awareness-3"] || [];
-          const childName = childNameAnswers[0] || "";
-          const childPronounsAnswers = answers["Interest Awareness-4"] || [];
-          const childPronouns = childPronounsAnswers[0] || "";
+          // Get child information using utility function
+          const { name: childName, pronouns: childPronouns } = extractChildInfo(answers);
           
           generateSummary(currentModuleData.module, moduleAnswers, user?.uid, childName, childPronouns)
             .then(async (summaryText) => {
               // Handle Firebase-MongoDB handoff if user is logged in
               if (user?.uid && summaryText) {
-                try {
-                  // Generate the same IDs that were used in the summary generation
-                  const userPrefix = `user-${user.uid}`;
-                  const profileId = `${userPrefix}-${currentModuleData.module}-${Date.now()}`;
-                  const runId = `${profileId}-${Math.random().toString(36).substr(2, 9)}`;
-                  
-                  // Create a summary object for the handoff
-                  const summaryObject = {
-                    schemaVersion: "1.0.0",
-                    studentId: profileId,
-                    sections: {
-                      [currentModuleData.module.toLowerCase().replace(/\s+/g, '_')]: {
-                        text: summaryText,
-                        evidence: [],
-                        confidence: 1.0
-                      }
-                    },
-                    meta: {
-                      runId,
-                      model: 'claude-sonnet-4-20250514',
-                      createdAt: new Date().toISOString()
-                    }
-                  };
-                  
-                  // Perform the handoff
-                  const handoffResult = await handleSummaryHandoff(
-                    user.uid,
-                    summaryObject,
-                    profileId,
-                    runId,
-                    currentModuleData.module
-                  );
-                  
-                  if (handoffResult.success) {
-                    console.log("Firebase-MongoDB handoff successful:", handoffResult);
-                  } else {
-                    console.warn("Firebase-MongoDB handoff failed:", handoffResult.error);
-                  }
-                } catch (handoffError) {
-                  console.error("Handoff error:", handoffError);
-                  // Don't fail the entire process if handoff fails
+                const handoffResult = await SummaryHandoffService.processSummaryHandoff(
+                  user.uid,
+                  currentModuleData.module,
+                  summaryText
+                );
+                
+                if (!handoffResult.success) {
+                  console.warn("Summary handoff failed:", handoffResult.error);
                 }
               }
               

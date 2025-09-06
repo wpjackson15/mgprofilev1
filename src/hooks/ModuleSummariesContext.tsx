@@ -141,14 +141,14 @@ export function ModuleSummariesProvider({ children }: { children: ReactNode }) {
           // Extract module name from profileId (format: user-{userId}-{module}-{timestamp})
           const profileIdParts = summaryData.profileId.split('-');
           if (profileIdParts.length >= 3) {
-            const module = profileIdParts[2]; // The module name
+            const moduleName = profileIdParts[2]; // The module name
             
             // Get the summary text from the first section
             const summaryText = summaryData.summary?.sections?.[Object.keys(summaryData.summary.sections)[0]]?.text || '';
             
             if (summaryText) {
               loadedSummaries.push({
-                module,
+                module: moduleName,
                 summary: summaryText,
                 status: "completed"
               });
